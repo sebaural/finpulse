@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinPulse — Financial News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #1e2530;
+    --text: #e8eaf0;
+    --muted: #6b7385;
+    --accent: #e8b84b;
+    --accent2: #4b9fe8;
+    --reuters: #ff6b35;
+    --bloomberg: #4b9fe8;
+    --positive: #3ecf8e;
+    --negative: #f55f5f;
+    --reading: #e8b84b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 8px 0;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 35s linear infinite;
+  }
+  .ticker-inner:hover { animation-play-state: paused; }
+  .ticker-item {
+    display: inline-block;
+    padding: 0 32px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .ticker-item .sym { color: var(--accent); margin-right: 6px; }
+  .ticker-item .pos { color: var(--positive); }
+  .ticker-item .neg { color: var(--negative); }
+  @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); font-weight: 700; }
+  nav { display: flex; gap: 8px; }
+  .nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,184,75,0.07);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .page { max-width: 1320px; margin: 0 auto; padding: 32px 24px; }
+
+  .layout { display: grid; grid-template-columns: 1fr 340px; gap: 28px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge {
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-reuters { background: rgba(255,107,53,0.15); color: var(--reuters); border: 1px solid rgba(255,107,53,0.3); }
+  .badge-bloomberg { background: rgba(75,159,232,0.15); color: var(--bloomberg); border: 1px solid rgba(75,159,232,0.3); }
+  .badge-live {
+    background: rgba(62,207,142,0.15);
+    color: var(--positive);
+    border: 1px solid rgba(62,207,142,0.3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--positive);
+    border-radius: 50%;
+    animation: pulse 1.5s ease infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ── NEWS CARD ── */
+  .news-feed { display: flex; flex-direction: column; gap: 16px; }
+
+  .news-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .news-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .news-card.reuters::before { background: var(--reuters); }
+  .news-card.bloomberg::before { background: var(--bloomberg); }
+  .news-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .news-card.is-reading {
+    border-color: var(--reading);
+    background: rgba(232,184,75,0.04);
+    box-shadow: 0 0 0 2px rgba(232,184,75,0.2);
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .source-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .source-tag.reuters { color: var(--reuters); }
+  .source-tag.bloomberg { color: var(--bloomberg); }
+  .card-time { font-size: 12px; color: var(--muted); }
+  .card-category {
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    line-height: 1.38;
+    color: var(--text);
+    margin-bottom: 8px;
+    transition: color 0.2s;
+  }
+  .news-card:hover .card-title, .news-card.is-reading .card-title { color: var(--accent); }
+  .card-summary {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+  .read-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .read-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .read-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(232,184,75,0.08); }
+  .read-btn svg { width: 14px; height: 14px; }
+
+  .card-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .card-link:hover { color: var(--accent2); }
+
+  /* ── FEATURED / HERO ── */
+  .hero-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 22px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle at 80% 20%, rgba(232,184,75,0.07), transparent 60%);
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(232,184,75,0.3);
+    border-radius: 4px;
+    padding: 3px 10px;
+    margin-bottom: 14px;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hero-summary {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 18px;
+  }
+  .hero-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  /* ── VOICE PLAYER ── */
+  .voice-player {
+    background: linear-gradient(135deg, #141820, #0e1117);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+    position: sticky;
+    top: 72px;
+    z-index: 50;
+  }
+  .player-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .player-label svg { width: 14px; height: 14px; }
+  .player-now-reading {
+    font-family: 'DM Serif Display', serif;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 16px;
+    min-height: 44px;
+  }
+  .player-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover, .ctrl-btn.active { border-color: var(--accent); color: var(--accent); }
+  .ctrl-btn.play-main {
+    width: 46px; height: 46px;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0c0f;
+  }
+  .ctrl-btn.play-main:hover { background: #f5ca6a; }
+  .ctrl-btn svg { width: 18px; height: 18px; }
+  .ctrl-btn.play-main svg { width: 20px; height: 20px; }
+
+  .speed-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    outline: none;
+  }
+  .speed-select:hover { border-color: var(--accent); }
+
+  .progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 14px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #f5ca6a);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar { display: flex; flex-direction: column; gap: 22px; }
+
+  /* ── MARKET WIDGET ── */
+  .widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .widget-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    margin-bottom: 14px;
+    color: var(--text);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .market-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .market-row:last-child { border-bottom: none; }
+  .market-name { font-size: 13px; font-weight: 500; }
+  .market-val { font-size: 13px; color: var(--muted); margin-left: auto; margin-right: 14px; }
+  .market-chg { font-size: 12px; font-weight: 600; min-width: 52px; text-align: right; }
+  .pos { color: var(--positive); }
+  .neg { color: var(--negative); }
+
+  /* ── TOP STORIES SIDEBAR ── */
+  .side-story {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .side-story:last-child { border-bottom: none; }
+  .side-story-source { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+  .side-story-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+  .side-story:hover .side-story-title { color: var(--accent); }
+  .side-story-time { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  /* ── LOADING STATE ── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .loading-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  /* ── AI VOICE WAVE ── */
+  .wave-container {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 24px;
+    margin-left: 8px;
+  }
+  .wave-bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+    opacity: 0;
+  }
+  .speaking .wave-bar { opacity: 1; }
+  .wave-bar:nth-child(1) { animation-delay: 0s; height: 8px; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 14px; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 20px; }
+  .wave-bar:nth-child(4) { animation-delay: 0.15s; height: 14px; }
+  .wave-bar:nth-child(5) { animation-delay: 0.05s; height: 8px; }
+  @keyframes wave {
+    0%,100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1.3); }
+  }
+
+  /* ── ERROR / OFFLINE STATE ── */
+  .error-banner {
+    background: rgba(245,95,95,0.08);
+    border: 1px solid rgba(245,95,95,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--negative);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── FILTER TABS ── */
+  .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0c0f;
+    font-weight: 600;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: 1fr; }
+    .voice-player { position: relative; top: 0; }
+    header { padding: 14px 20px; }
+    .page { padding: 20px 16px; }
+  }
+  @media (max-width: 600px) {
+    .hero-title { font-size: 22px; }
+    .logo { font-size: 20px; }
+    nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner" id="ticker">
+    <span class="ticker-item"><span class="sym">S&P 500</span> 5,234.18 <span class="pos">▲ +0.82%</span></span>
+    <span class="ticker-item"><span class="sym">NASDAQ</span> 16,428.90 <span class="pos">▲ +1.14%</span></span>
+    <span class="ticker-item"><span class="sym">DOW</span> 39,114.86 <span class="neg">▼ −0.31%</span></span>
+    <span class="ticker-item"><span class="sym">FTSE 100</span> 7,932.60 <span class="pos">▲ +0.55%</span></span>
+    <span class="ticker-item"><span class="sym">EUR/USD</span> 1.0842 <span class="neg">▼ −0.12%</span></span>
+    <span class="ticker-item"><span class="sym">GBP/USD</span> 1.2714 <span class="pos">▲ +0.08%</span></span>
+    <span class="ticker-item"><span class="sym">USD/JPY</span> 151.32 <span class="pos">▲ +0.44%</span></span>
+    <span class="ticker-item"><span class="sym">BTC/USD</span> 67,440 <span class="pos">▲ +2.31%</span></span>
+    <span class="ticker-item"><span class="sym">GOLD</span> $2,183 <span class="pos">▲ +0.19%</span></span>
+    <span class="ticker-item"><span class="sym">CRUDE OIL</span> $81.42 <span class="neg">▼ −0.67%</span></span>
+    <span class="ticker-item"><span class="sym">10Y YIELD</span> 4.312% <span class="pos">▲ +3bps</span></span>
+    <span class="ticker-item"><span class="sym">VIX</span> 14.82 <span class="neg">▼ −0.94%</span></span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item"><span class="sym">S&P 500</span> 5,234.18 <span class="pos">▲ +0.82%</span></span>
+    <span class="ticker-item"><span class="sym">NASDAQ</span> 16,428.90 <span class="pos">▲ +1.14%</span></span>
+    <span class="ticker-item"><span class="sym">DOW</span> 39,114.86 <span class="neg">▼ −0.31%</span></span>
+    <span class="ticker-item"><span class="sym">FTSE 100</span> 7,932.60 <span class="pos">▲ +0.55%</span></span>
+    <span class="ticker-item"><span class="sym">EUR/USD</span> 1.0842 <span class="neg">▼ −0.12%</span></span>
+    <span class="ticker-item"><span class="sym">GBP/USD</span> 1.2714 <span class="pos">▲ +0.08%</span></span>
+    <span class="ticker-item"><span class="sym">BTC/USD</span> 67,440 <span class="pos">▲ +2.31%</span></span>
+    <span class="ticker-item"><span class="sym">GOLD</span> $2,183 <span class="pos">▲ +0.19%</span></span>
+    <span class="ticker-item"><span class="sym">CRUDE OIL</span> $81.42 <span class="neg">▼ −0.67%</span></span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Fin<span>Pulse</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="filterNews('all')">All</button>
+    <button class="nav-btn" onclick="filterNews('reuters')">Reuters</button>
+    <button class="nav-btn" onclick="filterNews('bloomberg')">Bloomberg</button>
+    <button class="nav-btn" onclick="filterNews('markets')">Markets</button>
+    <button class="nav-btn" onclick="filterNews('economy')">Economy</button>
+  </nav>
+</header>
+
+<!-- MAIN -->
+<div class="page">
+  <div class="layout">
+
+    <!-- LEFT: NEWS FEED -->
+    <div>
+      <!-- HERO CARD (top story) -->
+      <div class="hero-card" id="hero-card">
+        <div class="hero-label">⚡ Breaking</div>
+        <div class="hero-title" id="hero-title">Loading top story…</div>
+        <div class="hero-summary" id="hero-summary">Fetching the latest financial news…</div>
+        <div class="hero-footer">
+          <span class="source-tag reuters" id="hero-source">Reuters</span>
+          <span class="card-time" id="hero-time"></span>
+          <button class="read-btn" id="hero-read-btn" onclick="readHero()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            Read Aloud
+          </button>
+          <a href="#" id="hero-link" class="card-link" target="_blank">Read full story →</a>
+        </div>
+      </div>
+
+      <!-- FILTER TABS -->
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-tab active" data-filter="all" onclick="setFilter(this,'all')">All News</button>
+        <button class="filter-tab" data-filter="reuters" onclick="setFilter(this,'reuters')">Reuters</button>
+        <button class="filter-tab" data-filter="bloomberg" onclick="setFilter(this,'bloomberg')">Bloomberg</button>
+        <button class="filter-tab" data-filter="markets" onclick="setFilter(this,'markets')">Markets</button>
+        <button class="filter-tab" data-filter="economy" onclick="setFilter(this,'economy')">Economy</button>
+        <button class="filter-tab" data-filter="tech" onclick="setFilter(this,'tech')">Tech</button>
+        <button class="filter-tab" data-filter="energy" onclick="setFilter(this,'energy')">Energy</button>
+      </div>
+
+      <div class="error-banner" id="error-banner">
+        ⚠ Could not load live RSS feeds. Showing cached/demo stories. <a href="#" onclick="loadNews()" style="color:var(--negative);font-weight:600">Retry</a>
+      </div>
+
+      <!-- NEWS CARDS -->
+      <div class="news-feed" id="news-feed">
+        <!-- Loading skeletons -->
+        <div class="loading-card"><div class="skeleton" style="height:12px;width:120px;margin-bottom:14px"></div><div class="skeleton" style="height:22px;margin-bottom:10px"></div><div class="skeleton" style="height:14px;width:80%"></div></div>
+        <div class="loading-card"><div class="skeleton" style="height:12px;width:100px;margin-bottom:14px"></div><div class="skeleton" style="height:22px;margin-bottom:10px"></div><div class="skeleton" style="height:14px;width:70%"></div></div>
+        <div class="loading-card"><div class="skeleton" style="height:12px;width:140px;margin-bottom:14px"></div><div class="skeleton" style="height:22px;margin-bottom:10px"></div><div class="skeleton" style="height:14px;width:85%"></div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- VOICE PLAYER -->
+      <div class="voice-player">
+        <div class="player-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          AI Voice Reader
+          <div class="wave-container" id="wave-container">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+        </div>
+        <div class="player-now-reading" id="player-title">Select a story to read aloud</div>
+        <div class="player-controls">
+          <button class="ctrl-btn" title="Previous" onclick="prevArticle()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button class="ctrl-btn play-main" id="main-play-btn" title="Play/Pause" onclick="togglePlay()">
+            <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="ctrl-btn" title="Next" onclick="nextArticle()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 6-4.25v8.5L8.5 12zM16 6h2v12h-2z"/></svg>
+          </button>
+          <button class="ctrl-btn" id="stop-btn" title="Stop" onclick="stopReading()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+          </button>
+          <select class="speed-select" id="speed-select" onchange="changeSpeed(this.value)">
+            <option value="0.8">0.8×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.2">1.2×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+          </select>
+          <button class="ctrl-btn" id="autoplay-btn" title="Auto-play all" onclick="toggleAutoplay()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+          </button>
+        </div>
+        <div class="progress-bar" onclick="seekProgress(event)">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- MARKETS WIDGET -->
+      <div class="widget">
+        <div class="widget-title">📊 Market Snapshot</div>
+        <div class="market-row"><span class="market-name">S&P 500</span><span class="market-val">5,234.18</span><span class="market-chg pos">+0.82%</span></div>
+        <div class="market-row"><span class="market-name">NASDAQ</span><span class="market-val">16,428.90</span><span class="market-chg pos">+1.14%</span></div>
+        <div class="market-row"><span class="market-name">DOW JONES</span><span class="market-val">39,114.86</span><span class="market-chg neg">−0.31%</span></div>
+        <div class="market-row"><span class="market-name">GOLD</span><span class="market-val">$2,183</span><span class="market-chg pos">+0.19%</span></div>
+        <div class="market-row"><span class="market-name">CRUDE OIL</span><span class="market-val">$81.42</span><span class="market-chg neg">−0.67%</span></div>
+        <div class="market-row"><span class="market-name">EUR/USD</span><span class="market-val">1.0842</span><span class="market-chg neg">−0.12%</span></div>
+        <div class="market-row"><span class="market-name">BTC/USD</span><span class="market-val">$67,440</span><span class="market-chg pos">+2.31%</span></div>
+        <div class="market-row"><span class="market-name">10Y Treasury</span><span class="market-val">4.312%</span><span class="market-chg pos">+3bps</span></div>
+      </div>
+
+      <!-- TOP STORIES SIDEBAR -->
+      <div class="widget">
+        <div class="widget-title">🔥 Most Read</div>
+        <div id="sidebar-stories">
+          <div class="side-story"><div class="side-story-title skeleton" style="height:14px;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:80px"></div></div>
+          <div class="side-story"><div class="side-story-title skeleton" style="height:14px;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:80px"></div></div>
+          <div class="side-story"><div class="side-story-title skeleton" style="height:14px;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:80px"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// NEWS DATA — RSS via CORS proxy
+// ═══════════════════════════════════
+const RSS_FEEDS = [
+  { name: 'Reuters', cls: 'reuters', url: 'https://feeds.reuters.com/reuters/businessNews' },
+  { name: 'Reuters', cls: 'reuters', url: 'https://feeds.reuters.com/reuters/topNews' },
+];
+
+// Fallback / demo articles in case RSS blocked
+const DEMO_ARTICLES = [
+  { source: 'Reuters', cls: 'reuters', category: 'Markets', title: 'Fed signals slower pace of rate cuts as inflation proves sticky', summary: 'Federal Reserve officials signaled Wednesday they are in no rush to reduce interest rates further this year, citing persistent inflation pressures and a resilient labor market that give them room to stay on hold.', link: 'https://reuters.com', time: '2 min ago' },
+  { source: 'Bloomberg', cls: 'bloomberg', category: 'Economy', title: 'US consumer spending rises for second consecutive month', summary: 'American consumers increased their spending for the second month in a row, a sign of underlying economic resilience despite elevated borrowing costs and stubborn price pressures across services.', link: 'https://bloomberg.com', time: '18 min ago' },
+  { source: 'Reuters', cls: 'reuters', category: 'Energy', title: 'OPEC+ agrees to extend output cuts through mid-year', summary: 'The OPEC+ alliance reached a consensus to maintain its current production restrictions through June, seeking to stabilize oil prices amid concerns about slowing demand growth in major consumer economies.', link: 'https://reuters.com', time: '34 min ago' },
+  { source: 'Bloomberg', cls: 'bloomberg', category: 'Tech', title: 'AI chipmaker surge pushes tech stocks to record highs', summary: 'Shares of semiconductor companies benefiting from artificial intelligence demand led a broad technology rally, driving the Nasdaq Composite to its highest level this year as investors bet on sustained infrastructure spending.', link: 'https://bloomberg.com', time: '51 min ago' },
+  { source: 'Reuters', cls: 'reuters', category: 'Markets', title: 'Dollar strengthens as Treasury yields climb on strong jobs data', summary: 'The US dollar extended gains against major currencies after payroll figures beat forecasts, reinforcing the case for the Federal Reserve to keep borrowing costs elevated for longer than markets had previously anticipated.', link: 'https://reuters.com', time: '1 hr ago' },
+  { source: 'Bloomberg', cls: 'bloomberg', category: 'Markets', title: 'China property sector stress resurfaces as developer misses payment', summary: 'A major Chinese real estate developer missed a bond payment deadline, rekindling worries about the health of the country\'s property sector and raising questions about the effectiveness of recent government stimulus measures.', link: 'https://bloomberg.com', time: '1.5 hr ago' },
+  { source: 'Reuters', cls: 'reuters', category: 'Economy', title: 'ECB holds rates steady, flags further data dependence ahead', summary: 'The European Central Bank left its key interest rates unchanged for the third consecutive meeting, with President Christine Lagarde emphasizing a data-driven approach as policymakers wait for more evidence of durable disinflation.', link: 'https://reuters.com', time: '2 hr ago' },
+  { source: 'Bloomberg', cls: 'bloomberg', category: 'Tech', title: 'Hedge funds pile into short bets against commercial real estate REITs', summary: 'Short interest in commercial real estate investment trusts hit multi-year highs as institutional investors position for further declines in office valuations, exacerbated by slow return-to-office trends and refinancing pressures.', link: 'https://bloomberg.com', time: '2.5 hr ago' },
+  { source: 'Reuters', cls: 'reuters', category: 'Energy', title: 'Lithium prices stabilize after 18-month rout, analysts see floor', summary: 'Battery-grade lithium carbonate prices showed tentative signs of stabilization after an extended sell-off, with analysts noting that production cutbacks by major miners were beginning to rebalance the oversupplied market.', link: 'https://reuters.com', time: '3 hr ago' },
+  { source: 'Bloomberg', cls: 'bloomberg', category: 'Markets', title: 'Japanese yen slumps to weakest level in three decades versus dollar', summary: 'The yen fell to its lowest point against the US dollar since 1990, prompting verbal warnings from Japanese authorities about potential intervention as the currency\'s weakness fuels imported inflation concerns.', link: 'https://bloomberg.com', time: '3.5 hr ago' },
+];
+
+let allArticles = [];
+let currentFilter = 'all';
+let currentReadIndex = -1;
+let isPlaying = false;
+let autoplay = false;
+let utterance = null;
+let speechRate = 1;
+
+// ═══════════════════════════════════
+// LOAD NEWS
+// ═══════════════════════════════════
+async function loadNews() {
+  document.getElementById('error-banner').style.display = 'none';
+  
+  // Try fetching via public CORS proxy
+  const proxyUrl = 'https://api.allorigins.win/get?url=';
+  let fetched = [];
+  
+  try {
+    const promises = RSS_FEEDS.map(async (feed) => {
+      try {
+        const res = await fetch(proxyUrl + encodeURIComponent(feed.url), { signal: AbortSignal.timeout(6000) });
+        const json = await res.json();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(json.contents, 'text/xml');
+        const items = [...xml.querySelectorAll('item')].slice(0, 8);
+        return items.map(item => ({
+          source: feed.name,
+          cls: feed.cls,
+          category: 'Markets',
+          title: item.querySelector('title')?.textContent?.trim() || '',
+          summary: (item.querySelector('description')?.textContent?.replace(/<[^>]+>/g,'').trim() || '').slice(0,200),
+          link: item.querySelector('link')?.textContent?.trim() || '#',
+          time: timeAgo(new Date(item.querySelector('pubDate')?.textContent || Date.now()))
+        })).filter(a => a.title.length > 10);
+      } catch { return []; }
+    });
+    const results = await Promise.all(promises);
+    fetched = results.flat();
+  } catch(e) { }
+
+  if (fetched.length < 3) {
+    allArticles = DEMO_ARTICLES;
+    document.getElementById('error-banner').style.display = 'block';
+  } else {
+    // Tag categories
+    fetched.forEach(a => {
+      a.category = detectCategory(a.title + ' ' + a.summary);
+    });
+    allArticles = fetched;
+  }
+
+  renderNews();
+  renderHero();
+  renderSidebar();
+}
+
+function detectCategory(text) {
+  const t = text.toLowerCase();
+  if (/oil|gas|energy|opec|crude|refin|lithium/.test(t)) return 'Energy';
+  if (/tech|ai|chip|software|amazon|google|apple|microsoft|meta|nvidia/.test(t)) return 'Tech';
+  if (/gdp|inflation|jobs|employment|cpi|recession|growth|consumer/.test(t)) return 'Economy';
+  return 'Markets';
+}
+
+function timeAgo(date) {
+  const diff = (Date.now() - date) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff/60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} hr ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+// ═══════════════════════════════════
+// RENDER
+// ═══════════════════════════════════
+function renderNews() {
+  const feed = document.getElementById('news-feed');
+  let articles = allArticles;
+  if (currentFilter !== 'all') {
+    articles = allArticles.filter(a =>
+      (currentFilter === 'reuters' && a.cls === 'reuters') ||
+      (currentFilter === 'bloomberg' && a.cls === 'bloomberg') ||
+      a.category.toLowerCase() === currentFilter
+    );
+  }
+  if (!articles.length) {
+    feed.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">No stories match this filter.</div>';
+    return;
+  }
+  feed.innerHTML = articles.map((a, i) => `
+    <div class="news-card ${a.cls}" id="card-${i}" onclick="readArticle(${i})">
+      <div class="card-meta">
+        <span class="source-tag ${a.cls}">${a.source}</span>
+        <span class="card-time">${a.time}</span>
+        <span class="card-category">${a.category}</span>
+      </div>
+      <div class="card-title">${a.title}</div>
+      <div class="card-summary">${a.summary}</div>
+      <div class="card-actions">
+        <button class="read-btn" id="read-btn-${i}" onclick="event.stopPropagation();readArticle(${i})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Read Aloud
+        </button>
+        <a href="${a.link}" class="card-link" target="_blank" onclick="event.stopPropagation()">Full story →</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHero() {
+  if (!allArticles.length) return;
+  const a = allArticles[0];
+  document.getElementById('hero-title').textContent = a.title;
+  document.getElementById('hero-summary').textContent = a.summary;
+  document.getElementById('hero-source').textContent = a.source;
+  document.getElementById('hero-source').className = 'source-tag ' + a.cls;
+  document.getElementById('hero-time').textContent = a.time;
+  document.getElementById('hero-link').href = a.link;
+}
+
+function renderSidebar() {
+  const top = allArticles.slice(0, 6);
+  document.getElementById('sidebar-stories').innerHTML = top.map((a, i) => `
+    <div class="side-story" onclick="readArticle(${i})">
+      <div class="side-story-source ${a.cls === 'reuters' ? 'reuters' : 'bloomberg'}" style="color:var(--${a.cls})">${a.source}</div>
+      <div class="side-story-title">${a.title}</div>
+      <div class="side-story-time">${a.time}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════
+// FILTER
+// ═══════════════════════════════════
+function setFilter(btn, filter) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = filter;
+  renderNews();
+}
+
+function filterNews(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderNews();
+}
+
+// ═══════════════════════════════════
+// VOICE / TTS
+// ═══════════════════════════════════
+function speak(text, onEnd) {
+  if (!('speechSynthesis' in window)) {
+    alert('Your browser does not support text-to-speech. Please use Chrome or Edge.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = speechRate;
+  utterance.pitch = 1;
+  utterance.lang = 'en-US';
+
+  // Prefer a high-quality English voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Neural') || v.name.includes('Samantha') || v.name.includes('Daniel'))
+  ) || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onstart = () => {
+    isPlaying = true;
+    setPlayIcon(true);
+    document.getElementById('wave-container').classList.add('speaking');
+  };
+  utterance.onend = () => {
+    isPlaying = false;
+    setPlayIcon(false);
+    document.getElementById('wave-container').classList.remove('speaking');
+    document.getElementById('progress-fill').style.width = '100%';
+    setTimeout(() => { document.getElementById('progress-fill').style.width = '0%'; }, 600);
+    if (onEnd) onEnd();
+  };
+  utterance.onerror = () => {
+    isPlaying = false;
+    setPlayIcon(false);
+    document.getElementById('wave-container').classList.remove('speaking');
+  };
+  // Progress simulation
+  const dur = text.length / (utterance.rate * 14);
+  let prog = 0;
+  const interval = setInterval(() => {
+    if (!isPlaying) { clearInterval(interval); return; }
+    prog = Math.min(prog + (100 / (dur * 10)), 96);
+    document.getElementById('progress-fill').style.width = prog + '%';
+  }, 100);
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function readArticle(i) {
+  // Determine article from current filtered list
+  let articles = currentFilter === 'all' ? allArticles : allArticles.filter(a =>
+    (currentFilter === 'reuters' && a.cls === 'reuters') ||
+    (currentFilter === 'bloomberg' && a.cls === 'bloomberg') ||
+    a.category.toLowerCase() === currentFilter
+  );
+  if (!articles[i]) return;
+  const a = articles[i];
+  currentReadIndex = i;
+
+  // Update card highlights
+  document.querySelectorAll('.news-card').forEach(c => c.classList.remove('is-reading'));
+  document.querySelectorAll('.read-btn').forEach(b => b.classList.remove('active'));
+  const card = document.getElementById('card-' + i);
+  const btn = document.getElementById('read-btn-' + i);
+  if (card) card.classList.add('is-reading');
+  if (btn) btn.classList.add('active');
+
+  document.getElementById('player-title').textContent = a.title;
+
+  const text = `${a.source} reports: ${a.title}. ${a.summary}`;
+  speak(text, () => {
+    if (autoplay) nextArticle();
+  });
+}
+
+function readHero() {
+  readArticle(0);
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    window.speechSynthesis.pause();
+    isPlaying = false;
+    setPlayIcon(false);
+    document.getElementById('wave-container').classList.remove('speaking');
+  } else if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+    isPlaying = true;
+    setPlayIcon(true);
+    document.getElementById('wave-container').classList.add('speaking');
+  } else if (currentReadIndex >= 0) {
+    readArticle(currentReadIndex);
+  } else if (allArticles.length) {
+    readArticle(0);
+  }
+}
+
+function stopReading() {
+  window.speechSynthesis.cancel();
+  isPlaying = false;
+  setPlayIcon(false);
+  document.getElementById('wave-container').classList.remove('speaking');
+  document.getElementById('progress-fill').style.width = '0%';
+  document.querySelectorAll('.news-card').forEach(c => c.classList.remove('is-reading'));
+  document.querySelectorAll('.read-btn').forEach(b => b.classList.remove('active'));
+}
+
+function nextArticle() {
+  const len = currentFilter === 'all' ? allArticles.length : allArticles.filter(a =>
+    (currentFilter === 'reuters' && a.cls === 'reuters') ||
+    (currentFilter === 'bloomberg' && a.cls === 'bloomberg') ||
+    a.category.toLowerCase() === currentFilter
+  ).length;
+  readArticle((currentReadIndex + 1) % len);
+}
+
+function prevArticle() {
+  const len = currentFilter === 'all' ? allArticles.length : allArticles.length;
+  readArticle(currentReadIndex <= 0 ? len - 1 : currentReadIndex - 1);
+}
+
+function changeSpeed(val) {
+  speechRate = parseFloat(val);
+  if (utterance) utterance.rate = speechRate;
+}
+
+function toggleAutoplay() {
+  autoplay = !autoplay;
+  document.getElementById('autoplay-btn').classList.toggle('active', autoplay);
+}
+
+function setPlayIcon(playing) {
+  document.getElementById('play-icon').innerHTML = playing
+    ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+
+function seekProgress(e) {
+  // Approximate seek by percent
+  const pct = e.offsetX / e.currentTarget.offsetWidth;
+  document.getElementById('progress-fill').style.width = (pct * 100) + '%';
+}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+window.speechSynthesis && window.speechSynthesis.getVoices(); // preload voices
+loadNews();
+
+// Auto-refresh every 5 minutes
+setInterval(loadNews, 5 * 60 * 1000);
+</script>
+</body>
+</html>
