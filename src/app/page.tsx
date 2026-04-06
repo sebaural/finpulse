@@ -721,13 +721,6 @@ export default function Page() {
                 <button className="action-btn" onClick={saveFeedSource} disabled={feedSaving}>
                   {editingFeedId ? 'Queue update' : 'Queue add'}
                 </button>
-                <button
-                  className="action-btn play-btn"
-                  onClick={() => void applyFeedChanges()}
-                  disabled={feedSaving || !hasPendingFeedChanges}
-                >
-                  {feedSaving ? 'Applying...' : 'Apply'}
-                </button>
                 {editingFeedId && (
                   <button className="action-btn" onClick={resetFeedForm}>
                     Cancel edit
@@ -738,6 +731,8 @@ export default function Page() {
               {hasPendingFeedChanges && (
                 <div className="side-story-time">You have unapplied feed changes.</div>
               )}
+
+              <div className="feed-list-label">Choose Feed/s to display</div>
 
               <div className="feed-list">
                 {feedLoading && <div className="side-story-time">Loading sources...</div>}
@@ -768,6 +763,16 @@ export default function Page() {
                       </button>
                     </div>
                   ))}
+              </div>
+
+              <div className="feed-apply-actions">
+                <button
+                  className={`action-btn feed-apply-btn ${hasPendingFeedChanges ? 'pending' : ''}`}
+                  onClick={() => void applyFeedChanges()}
+                  disabled={feedSaving || !hasPendingFeedChanges}
+                >
+                  {feedSaving ? 'Applying...' : 'Apply'}
+                </button>
               </div>
             </section>
 

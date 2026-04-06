@@ -439,7 +439,7 @@ nav {
 .card-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 14px;
 }
 
@@ -505,7 +505,8 @@ nav {
   font-family: var(--font-dm-serif), serif;
   font-size: 14px;
   color: var(--text);
-  height: 28px;
+  min-height: 28px;
+  margin-bottom: 10px;
 }
 
 .player-controls {
@@ -769,10 +770,37 @@ nav {
   flex-wrap: wrap;
 }
 
+.feed-list-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
 .feed-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 12px;
+}
+
+.feed-apply-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.feed-apply-btn.pending {
+  color: var(--positive);
+  border-color: rgba(62, 207, 142, 0.45);
+  background: rgba(62, 207, 142, 0.12);
+}
+
+.feed-apply-btn.pending:hover {
+  color: #8df0be;
+  border-color: rgba(62, 207, 142, 0.7);
+  background: rgba(62, 207, 142, 0.18);
 }
 
 .feed-row {
@@ -905,6 +933,10 @@ nav {
     display: none;
   }
 
+  .card-actions {
+    justify-content: space-between;
+  }
+
   .card-hover-preview {
     display: none;
   }
@@ -995,6 +1027,7 @@ nav {
 .card-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-top: 14px;
   flex-wrap: wrap;
