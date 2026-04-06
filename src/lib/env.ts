@@ -3,6 +3,8 @@ interface NewsProviderEnv {
   gnewsApiKey: string;
   alphaVantageApiKey: string;
   fmpApiKey: string;
+  marketauxKey: string;
+  finnhubKey: string;
 }
 
 function readKey(
@@ -10,7 +12,9 @@ function readKey(
     | 'NEWSAPI_KEY'
     | 'GNEWS_API_KEY'
     | 'ALPHAVANTAGE_API_KEY'
-    | 'NEXT_PUBLIC_FMP_API_KEY',
+    | 'FMP_API_KEY'
+    | 'MARKETAUX_KEY'
+    | 'FINNHUB_KEY',
 ): string {
   return (process.env[name] ?? '').trim();
 }
@@ -20,7 +24,9 @@ function getNewsProviderEnv(): NewsProviderEnv {
     newsApiKey: readKey('NEWSAPI_KEY'),
     gnewsApiKey: readKey('GNEWS_API_KEY'),
     alphaVantageApiKey: readKey('ALPHAVANTAGE_API_KEY'),
-    fmpApiKey: readKey('NEXT_PUBLIC_FMP_API_KEY'),
+    fmpApiKey: readKey('FMP_API_KEY'),
+    marketauxKey: readKey('MARKETAUX_KEY'),
+    finnhubKey: readKey('FINNHUB_KEY'),
   };
 
   const missing = Object.entries(env)
@@ -33,9 +39,10 @@ function getNewsProviderEnv(): NewsProviderEnv {
     );
   }
 
-  if (process.env.NODE_ENV === 'production' && missing.length === 4) {
+  const totalKeys = Object.keys(env).length;
+  if (process.env.NODE_ENV === 'production' && missing.length === totalKeys) {
     throw new Error(
-      'No news provider keys configured for production. Set at least one of NEWSAPI_KEY, GNEWS_API_KEY, ALPHAVANTAGE_API_KEY, or NEXT_PUBLIC_FMP_API_KEY in your deployment secrets.',
+      'No news provider keys configured for production. Set at least one API key in your deployment secrets.',
     );
   }
 

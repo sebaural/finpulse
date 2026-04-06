@@ -369,6 +369,87 @@ async function fetchFromFmp(apiKey: string): Promise<ProviderResult> {
   }
 }
 
+async function fetchFromMarketaux(apiKey: string): Promise<ProviderResult> {
+  interface MarketauxArticle {
+    title?: string;
+    description?: string;
+    url?: string;
+    published_at?: string;
+    source?: string;
+  }
+
+  interface MarketauxResponse {
+    data?: MarketauxArticle[];
+    error?: { message?: string };
+  }
+
+  try {
+    const url = `https://api.marketaux.com/v1/news/all?filter_entities=true&language=en&limit=20&api_token=${encodeURIComponent(apiKey)}`;
+    const data = await fetchJson<MarketauxResponse>(url);
+
+    if (data.error) {
+      return { provider: 'marketaux', articles: [], ok: false, error: data.error.message };
+    }
+
+    const articles = (data.data ?? [])
+      .map((item) =>
+        normalizeExternalArticle({
+          source: item.source ?? 'Marketaux',
+          title: item.title ?? '',
+          summary: item.description ?? '',
+          link: item.url ?? '',
+          publishedAt: item.published_at ?? null,
+        }),
+      )
+      .filter((item): item is NewsArticle => Boolean(item));
+
+    return { provider: 'marketaux', articles, ok: true };
+  } catch (error) {
+    return {
+      provider: 'marketaux',
+      articles: [],
+      ok: false,
+      error: error instanceof Error ? error.message : 'Unknown Marketaux error',
+    };
+  }
+}
+
+async function fetchFromFinnhub(apiKey: string): Promise<ProviderResult> {
+  interface FinnhubArticle {
+    headline?: string;
+    summary?: string;
+    url?: string;
+    datetime?: number;
+    source?: string;
+  }
+
+  try {
+    const url = `https://finnhub.io/api/v1/news?category=general&token=${encodeURIComponent(apiKey)}`;
+    const data = await fetchJson<FinnhubArticle[]>(url);
+
+    const articles = (data ?? [])
+      .map((item) =>
+        normalizeExternalArticle({
+          source: item.source ?? 'Finnhub',
+          title: item.headline ?? '',
+          summary: item.summary ?? '',
+          link: item.url ?? '',
+          publishedAt: item.datetime ? new Date(item.datetime * 1000).toISOString() : null,
+        }),
+      )
+      .filter((item): item is NewsArticle => Boolean(item));
+
+    return { provider: 'finnhub', articles, ok: true };
+  } catch (error) {
+    return {
+      provider: 'finnhub',
+      articles: [],
+      ok: false,
+      error: error instanceof Error ? error.message : 'Unknown Finnhub error',
+    };
+  }
+}
+
 async function fetchProviderChain(): Promise<ProviderResult[]> {
   const results: ProviderResult[] = [];
 
@@ -376,6 +457,8 @@ async function fetchProviderChain(): Promise<ProviderResult[]> {
   const gnewsKey = newsProviderEnv.gnewsApiKey;
   const alphaVantageKey = newsProviderEnv.alphaVantageApiKey;
   const fmpApiKey = newsProviderEnv.fmpApiKey;
+  const marketauxKey = newsProviderEnv.marketauxKey;
+  const finnhubKey = newsProviderEnv.finnhubKey;
 
   if (newsApiKey) {
     const result = await fetchFromNewsApi(newsApiKey);
@@ -397,6 +480,18 @@ async function fetchProviderChain(): Promise<ProviderResult[]> {
 
   if (fmpApiKey) {
     const result = await fetchFromFmp(fmpApiKey);
+    results.push(result);
+    if (result.articles.length >= 3) return results;
+  }
+
+  if (marketauxKey) {
+    const result = await fetchFromMarketaux(marketauxKey);
+    results.push(result);
+    if (result.articles.length >= 3) return results;
+  }
+
+  if (finnhubKey) {
+    const result = await fetchFromFinnhub(finnhubKey);
     results.push(result);
     if (result.articles.length >= 3) return results;
   }
