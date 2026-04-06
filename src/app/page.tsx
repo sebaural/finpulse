@@ -2,9 +2,16 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { loadNewsArticles, marketRows, tickerItems } from '../lib/news';
+import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../lib/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
-import type { NewsArticle } from '../types';
+import type { MarketRow, NewsArticle, TickerItem } from '../types';
+
+interface MarketResponse {
+  tickerItems: TickerItem[];
+  marketRows: MarketRow[];
+  cachedAt: string;
+  live: boolean;
+}
 
 type FilterKey =
   | 'all'
@@ -53,6 +60,9 @@ export default function Page() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [, setTick] = useState(0);
+  const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
+  const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
+  const [marketLive, setMarketLive] = useState(false);
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
@@ -77,6 +87,19 @@ export default function Page() {
     setLoading(false);
   }
 
+  async function refreshMarket() {
+    try {
+      const res = await fetch('/api/market', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = (await res.json()) as MarketResponse;
+      setTickerItems(data.tickerItems);
+      setMarketRows(data.marketRows);
+      setMarketLive(data.live);
+    } catch {
+      // Keep showing last state on error.
+    }
+  }
+
   useEffect(() => {
     const kickoff = window.setTimeout(() => {
       void refresh();
@@ -88,6 +111,12 @@ export default function Page() {
       window.clearTimeout(kickoff);
       window.clearInterval(id);
     };
+  }, []);
+
+  useEffect(() => {
+    void refreshMarket();
+    const id = window.setInterval(() => { void refreshMarket(); }, 60_000);
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -381,7 +410,10 @@ export default function Page() {
             </div>
 
             <section className="widget">
-              <div className="widget-title">Market Snapshot</div>
+              <div className="widget-title">
+                Market Snapshot
+                {marketLive && <span className="market-live-dot" title="Live data" />}
+              </div>
               {marketRows.map((row) => (
                 <div className="market-row" key={row.name}>
                   <span className="market-name">{row.name}</span>

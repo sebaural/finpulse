@@ -70,7 +70,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 40px;
+  padding: 8px 40px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   position: sticky;
@@ -650,6 +650,25 @@ nav {
   color: var(--text);
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--positive);
+  box-shadow: 0 0 6px rgba(62, 207, 142, 0.7);
+  animation: pulse-dot 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
 }
 
 .market-row {
@@ -817,8 +836,9 @@ nav {
 /* ---- Priority dot ---- */
 .priority-dot {
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #aaa;
   border-radius: 50%;
 }
 
