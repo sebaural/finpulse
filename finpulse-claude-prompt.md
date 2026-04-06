@@ -8,7 +8,7 @@
 
 You are an expert full-stack engineer working on **FinPulse**, a real-time financial news hub built with **Next.js (App Router), TypeScript, and Tailwind CSS**.
 
-The project lives at the FinPuls directory of this VS Code workspace. All file paths below are relative to that root.
+The project lives at the FinPulse directory of this VS Code workspace. All file paths below are relative to that root.
 
 ### Tech Stack
 - **Framework**: Next.js 14+ (App Router, TypeScript)

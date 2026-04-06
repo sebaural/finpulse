@@ -351,6 +351,7 @@ export default function Page() {
                     speech.setVoice(selected);
                   }}
                   disabled={!hasHydrated || !speech.isSupported || selectableVoices.length === 0}
+                  suppressHydrationWarning
                   title="Voice"
                 >
                   {!hasHydrated ? (
