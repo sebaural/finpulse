@@ -4,13 +4,29 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../lib/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
-import type { MarketRow, NewsArticle, TickerItem } from '../types';
+import type { FeedParser, FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
   marketRows: MarketRow[];
   cachedAt: string;
   live: boolean;
+}
+
+interface FeedSourcesResponse {
+  sources: FeedSource[];
+}
+
+interface FeedFormState {
+  name: string;
+  type: 'rss' | 'api';
+  url: string;
+  category: string;
+  parser: FeedParser;
+  apiKeyEnv: string;
+  refreshIntervalSec: number;
+  priority: 1 | 2 | 3;
+  enabled: boolean;
 }
 
 type FilterKey =
@@ -38,6 +54,18 @@ const filterTabs: Array<{ key: FilterKey; label: string }> = [
   { key: 'energy', label: 'Energy' },
 ];
 
+const initialFeedFormState: FeedFormState = {
+  name: '',
+  type: 'rss',
+  url: '',
+  category: 'Markets',
+  parser: 'custom',
+  apiKeyEnv: '',
+  refreshIntervalSec: 60,
+  priority: 2,
+  enabled: true,
+};
+
 function subscribeToHydration() {
   return () => {};
 }
@@ -63,6 +91,12 @@ export default function Page() {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
+  const [feedSources, setFeedSources] = useState<FeedSource[]>([]);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [feedSaving, setFeedSaving] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [editingFeedId, setEditingFeedId] = useState<string | null>(null);
+  const [feedForm, setFeedForm] = useState<FeedFormState>(initialFeedFormState);
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
@@ -100,6 +134,105 @@ export default function Page() {
     }
   }
 
+  async function loadFeedSources() {
+    setFeedLoading(true);
+    setFeedError(null);
+
+    try {
+      const res = await fetch('/api/feeds', { cache: 'no-store' });
+      if (!res.ok) {
+        setFeedError('Unable to load feed sources');
+        return;
+      }
+
+      const data = (await res.json()) as FeedSourcesResponse;
+      setFeedSources(Array.isArray(data.sources) ? data.sources : []);
+    } catch {
+      setFeedError('Unable to load feed sources');
+    } finally {
+      setFeedLoading(false);
+    }
+  }
+
+  function resetFeedForm() {
+    setEditingFeedId(null);
+    setFeedForm(initialFeedFormState);
+  }
+
+  function startEditFeed(source: FeedSource) {
+    setEditingFeedId(source.id);
+    setFeedForm({
+      name: source.name,
+      type: source.type,
+      url: source.url,
+      category: source.category,
+      parser: source.parser,
+      apiKeyEnv: source.apiKeyEnv ?? '',
+      refreshIntervalSec: source.refreshIntervalSec,
+      priority: source.priority,
+      enabled: source.enabled,
+    });
+  }
+
+  async function saveFeedSource() {
+    setFeedSaving(true);
+    setFeedError(null);
+
+    const payload = {
+      ...feedForm,
+      apiKeyEnv: feedForm.apiKeyEnv.trim() || undefined,
+    };
+
+    try {
+      const endpoint = editingFeedId ? `/api/feeds/${editingFeedId}` : '/api/feeds';
+      const method = editingFeedId ? 'PATCH' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const message = await res.text();
+        setFeedError(message || 'Failed to save source');
+        return;
+      }
+
+      await loadFeedSources();
+      resetFeedForm();
+    } catch {
+      setFeedError('Failed to save source');
+    } finally {
+      setFeedSaving(false);
+    }
+  }
+
+  async function toggleFeedEnabled(source: FeedSource) {
+    try {
+      await fetch(`/api/feeds/${source.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !source.enabled }),
+      });
+      await loadFeedSources();
+    } catch {
+      setFeedError('Failed to update source state');
+    }
+  }
+
+  async function deleteFeedSource(id: string) {
+    try {
+      await fetch(`/api/feeds/${id}`, { method: 'DELETE' });
+      if (editingFeedId === id) {
+        resetFeedForm();
+      }
+      await loadFeedSources();
+    } catch {
+      setFeedError('Failed to delete source');
+    }
+  }
+
   useEffect(() => {
     const kickoff = window.setTimeout(() => {
       void refresh();
@@ -117,6 +250,10 @@ export default function Page() {
     void refreshMarket();
     const id = window.setInterval(() => { void refreshMarket(); }, 60_000);
     return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    void loadFeedSources();
   }, []);
 
   useEffect(() => {
@@ -421,6 +558,126 @@ export default function Page() {
                   <span className={`market-chg ${row.direction}`}>{row.change}</span>
                 </div>
               ))}
+            </section>
+
+            <section className="widget">
+              <div className="widget-title">Admin Feed Settings</div>
+
+              {feedError && <div className="feed-error">{feedError}</div>}
+
+              <div className="feed-form-grid">
+                <input
+                  className="feed-input"
+                  placeholder="Source name"
+                  value={feedForm.name}
+                  onChange={(e) => setFeedForm((prev) => ({ ...prev, name: e.target.value }))}
+                />
+                <select
+                  className="feed-input"
+                  value={feedForm.type}
+                  onChange={(e) =>
+                    setFeedForm((prev) => ({
+                      ...prev,
+                      type: e.target.value as 'rss' | 'api',
+                      parser: e.target.value === 'rss' ? 'custom' : 'json',
+                    }))
+                  }
+                >
+                  <option value="rss">RSS</option>
+                  <option value="api">API</option>
+                </select>
+                <input
+                  className="feed-input feed-input-full"
+                  placeholder="https://..."
+                  value={feedForm.url}
+                  onChange={(e) => setFeedForm((prev) => ({ ...prev, url: e.target.value }))}
+                />
+                <input
+                  className="feed-input"
+                  placeholder="Category"
+                  value={feedForm.category}
+                  onChange={(e) => setFeedForm((prev) => ({ ...prev, category: e.target.value }))}
+                />
+                <select
+                  className="feed-input"
+                  value={feedForm.parser}
+                  onChange={(e) =>
+                    setFeedForm((prev) => ({ ...prev, parser: e.target.value as FeedParser }))
+                  }
+                >
+                  <option value="custom">custom</option>
+                  <option value="json">json</option>
+                  <option value="rss2json">rss2json</option>
+                </select>
+                <input
+                  className="feed-input"
+                  placeholder="API key env (optional)"
+                  value={feedForm.apiKeyEnv}
+                  onChange={(e) => setFeedForm((prev) => ({ ...prev, apiKeyEnv: e.target.value }))}
+                />
+                <input
+                  className="feed-input"
+                  type="number"
+                  min={15}
+                  value={feedForm.refreshIntervalSec}
+                  onChange={(e) =>
+                    setFeedForm((prev) => ({ ...prev, refreshIntervalSec: Number(e.target.value) || 60 }))
+                  }
+                />
+                <select
+                  className="feed-input"
+                  value={feedForm.priority}
+                  onChange={(e) =>
+                    setFeedForm((prev) => ({ ...prev, priority: Number(e.target.value) as 1 | 2 | 3 }))
+                  }
+                >
+                  <option value={1}>1 Breaking</option>
+                  <option value={2}>2 Important</option>
+                  <option value={3}>3 Regular</option>
+                </select>
+              </div>
+
+              <div className="feed-actions">
+                <button className="action-btn" onClick={saveFeedSource} disabled={feedSaving}>
+                  {feedSaving ? 'Saving...' : editingFeedId ? 'Update source' : 'Add source'}
+                </button>
+                {editingFeedId && (
+                  <button className="action-btn" onClick={resetFeedForm}>
+                    Cancel edit
+                  </button>
+                )}
+              </div>
+
+              <div className="feed-list">
+                {feedLoading && <div className="side-story-time">Loading sources...</div>}
+                {!feedLoading &&
+                  feedSources.map((source) => (
+                    <div className="feed-row" key={source.id}>
+                      <label className="feed-toggle-wrap">
+                        <input
+                          type="checkbox"
+                          checked={source.enabled}
+                          onChange={() => {
+                            void toggleFeedEnabled(source);
+                          }}
+                        />
+                        <span>{source.enabled ? 'On' : 'Off'}</span>
+                      </label>
+                      <div className="feed-row-main">
+                        <div className="feed-row-name">{source.name}</div>
+                        <div className="feed-row-meta">
+                          {source.type.toUpperCase()} • {source.category} • {source.refreshIntervalSec}s
+                        </div>
+                      </div>
+                      <button className="action-btn" onClick={() => startEditFeed(source)}>
+                        Edit
+                      </button>
+                      <button className="action-btn" onClick={() => void deleteFeedSource(source.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+              </div>
             </section>
 
             <section className="widget">

@@ -733,6 +733,85 @@ nav {
   margin-top: 5px;
 }
 
+.feed-error {
+  background: rgba(245, 95, 95, 0.08);
+  color: var(--negative);
+  border: 1px solid rgba(245, 95, 95, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.feed-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.feed-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 7px 9px;
+}
+
+.feed-input-full {
+  grid-column: 1 / -1;
+}
+
+.feed-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feed-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.feed-row-main {
+  min-width: 0;
+}
+
+.feed-row-name {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-row-meta {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.feed-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .unsupported {
   background: rgba(245, 95, 95, 0.08);
   color: var(--negative);
