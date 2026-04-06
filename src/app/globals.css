@@ -410,6 +410,32 @@ nav {
   overflow: hidden;
 }
 
+.card-hover-preview {
+  pointer-events: none;
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 62px;
+  background: rgba(10, 12, 15, 0.96);
+  border: 1px solid rgba(232, 184, 75, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #d7ddeb;
+  font-size: 13px;
+  line-height: 1.55;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 8;
+}
+
+.news-card:hover .card-hover-preview,
+.news-card:focus-within .card-hover-preview {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .card-actions {
   display: flex;
   align-items: center;
@@ -780,6 +806,10 @@ nav {
   }
 
   nav {
+    display: none;
+  }
+
+  .card-hover-preview {
     display: none;
   }
 }
