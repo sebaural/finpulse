@@ -1,4 +1,4 @@
-import type { MarketRow, NewsArticle, NewsCategory, SourceClass, TickerItem } from '../types';
+import type { ImpactLabel, MarketRow, NewsArticle, NewsCategory, SourceClass, TickerItem } from '../types';
 
 export interface NewsResponse {
   articles: NewsArticle[];
@@ -34,6 +34,8 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
     source: 'Reuters',
     cls: 'reuters',
     category: 'Markets',
+    importance: 2,
+    impact: 'Fed',
     title: 'FED signals slower pace of rate cuts as inflation proves sticky',
     summary: 'Federal Reserve officials signaled they are in no rush to reduce interest rates further, citing persistent inflation pressures and a resilient labor market.',
     link: 'https://reuters.com',
@@ -43,6 +45,8 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
     source: 'Bloomberg',
     cls: 'bloomberg',
     category: 'Economy',
+    importance: 2,
+    impact: 'Macro',
     title: 'US CONSUMER SPENDING RISES FOR SECOND CONSECUTIVE MONTH',
     summary: 'Consumer spending increased for the second month in a row, suggesting resilient demand despite elevated borrowing costs.',
     link: 'https://bloomberg.com',
@@ -52,6 +56,8 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
     source: 'Reuters',
     cls: 'reuters',
     category: 'Energy',
+    importance: 1,
+    impact: 'Oil',
     title: 'OPEC+ agrees to extend output cuts through mid-year',
     summary: 'The alliance reached consensus to maintain current production restrictions through June to stabilize prices.',
     link: 'https://reuters.com',
@@ -61,6 +67,8 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
     source: 'Bloomberg',
     cls: 'bloomberg',
     category: 'Tech',
+    importance: 2,
+    impact: 'Bullish',
     title: 'AI chipmaker surge pushes tech stocks to record highs',
     summary: 'Semiconductor stocks climbed as investors doubled down on AI infrastructure demand.',
     link: 'https://bloomberg.com',
@@ -70,6 +78,8 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
     source: 'Reuters',
     cls: 'reuters',
     category: 'Markets',
+    importance: 3,
+    impact: 'Macro',
     title: 'Dollar strengthens as Treasury yields climb on jobs data',
     summary: 'The dollar extended gains after payroll figures beat expectations, reinforcing higher-for-longer rate bets.',
     link: 'https://reuters.com',
@@ -78,7 +88,9 @@ export const demoSeed: Omit<NewsArticle, 'id'>[] = [
   {
     source: 'Bloomberg',
     cls: 'bloomberg',
-    category: 'Markets',
+    category: 'Forex',
+    importance: 2,
+    impact: 'Bearish',
     title: 'Japanese yen hits multi-decade low versus dollar',
     summary: 'Authorities issued verbal warnings about intervention as currency weakness deepened.',
     link: 'https://bloomberg.com',
@@ -105,6 +117,24 @@ export function detectCategory(text: string): NewsCategory {
   if (/stock|equit|share|ipo|dividend|earnings|s&p|nasdaq|dow|nyse|listed|equity/.test(t)) return 'Equities';
   if (/gdp|inflation|jobs|employment|cpi|recession|growth|consumer|fed|central bank|interest rate/.test(t)) return 'Economy';
   return 'Markets';
+}
+
+export function detectImportance(text: string): 1 | 2 | 3 {
+  const t = text.toLowerCase();
+  if (/\bbreaking\b|just in|flash:|alert:|\burgent\b|market crash|trading halt/.test(t)) return 1;
+  if (/\bfed\b|fomc|rate decision|rate hike|rate cut|powell|central bank|gdp|\bcpi\b|\bppi\b|nonfarm|payroll|\bearnings\b|\beps\b|opec|tariff|sanctions|invasion|default/.test(t)) return 2;
+  return 3;
+}
+
+export function detectImpact(text: string): ImpactLabel | null {
+  const t = text.toLowerCase();
+  if (/\bfed\b|fomc|rate decision|rate hike|rate cut|powell|monetary policy/.test(t)) return 'Fed';
+  if (/\boil\b|opec|crude|brent|wti|energy price/.test(t)) return 'Oil';
+  if (/\bearnings\b|\beps\b|revenue|quarterly|q[1-4] result|profit|guidance/.test(t)) return 'Earnings';
+  if (/\bgdp\b|inflation|\bcpi\b|\bppi\b|tariff|trade war|deficit|recession|unemployment|jobs report|nonfarm/.test(t)) return 'Macro';
+  if (/surge|rally|soar|\bjump\b|climb|record high|breakout|bullish|beat estimates/.test(t)) return 'Bullish';
+  if (/plunge|crash|slump|\bdrop\b|decline|bearish|miss estimates|contraction/.test(t)) return 'Bearish';
+  return null;
 }
 
 export function inferSourceClass(source: string): SourceClass {

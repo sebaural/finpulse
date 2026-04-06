@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
   detectCategory,
+  detectImpact,
+  detectImportance,
   fallbackNewsResponse,
   inferSourceClass,
   normalizeArticle,
@@ -160,10 +162,14 @@ function normalizeExternalArticle(input: {
     return null;
   }
 
+  const textForDetection = `${title} ${summary}`;
   return normalizeArticle({
     source,
     cls: inferSourceClass(source),
-    category: detectCategory(`${title} ${summary}`),
+    category: detectCategory(textForDetection),
+    importance: detectImportance(textForDetection),
+    impact: detectImpact(textForDetection),
+    publishedAt: input.publishedAt ?? undefined,
     title,
     summary,
     link,

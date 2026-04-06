@@ -8,7 +8,7 @@
 
 You are an expert full-stack engineer working on **FinPulse**, a real-time financial news hub built with **Next.js (App Router), TypeScript, and Tailwind CSS**.
 
-The project lives at the root of this VS Code workspace. All file paths below are relative to that root.
+The project lives at the FinPuls directory of this VS Code workspace. All file paths below are relative to that root.
 
 ### Tech Stack
 - **Framework**: Next.js 14+ (App Router, TypeScript)
@@ -161,7 +161,7 @@ Each card in the live feed must render:
 - Displays currently selected story title
 - Controls: ◀◀ Prev | ▶ Play/Pause | ▶▶ Next
 - Speed selector: 0.75× | 1× | 1.25× | 1.5× | 2×
-- Voice selector (Web Speech API voices or ElevenLabs)
+- Voice selector (Web Speech API voices)
 - Queue list: ordered list of stories to read
 - Options: Autoplay breaking news | Mute source | Unread only mode
 

@@ -35,12 +35,24 @@ function subscribeToHydration() {
   return () => {};
 }
 
+function clientRelativeTime(publishedAt: string | undefined, fallback: string): string {
+  if (!publishedAt) return fallback;
+  const diff = (Date.now() - new Date(publishedAt).getTime()) / 1000;
+  if (diff < 0 || Number.isNaN(diff)) return fallback;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 export default function Page() {
   const [allArticles, setAllArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFallbackBanner, setShowFallbackBanner] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [, setTick] = useState(0);
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
@@ -77,6 +89,42 @@ export default function Page() {
       window.clearInterval(id);
     };
   }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    try {
+      const raw = window.localStorage.getItem('finpulse:saved-article-ids');
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        setSavedIds(parsed.filter((id): id is string => typeof id === 'string'));
+      }
+    } catch {
+      // Ignore malformed localStorage data.
+    }
+  }, [hasHydrated]);
+
+  const toggleSaved = (articleId: string) => {
+    setSavedIds((prev) => {
+      const next = prev.includes(articleId)
+        ? prev.filter((id) => id !== articleId)
+        : [...prev, articleId];
+
+      try {
+        window.localStorage.setItem('finpulse:saved-article-ids', JSON.stringify(next));
+      } catch {
+        // Ignore quota/storage errors.
+      }
+
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!hasHydrated || !('speechSynthesis' in window)) return;
@@ -167,6 +215,19 @@ export default function Page() {
               {!loading &&
                 filteredArticles.map((article) => {
                   const reading = speech.currentArticleId === article.id;
+                  const saved = savedIds.includes(article.id);
+                  const priorityCls =
+                    article.importance === 1
+                      ? 'breaking'
+                      : article.importance === 2
+                        ? 'important'
+                        : 'regular';
+                  const priorityTitle =
+                    article.importance === 1
+                      ? 'Breaking'
+                      : article.importance === 2
+                        ? 'Important'
+                        : 'Regular';
                   return (
                     <article
                       className={`news-card ${article.cls} ${reading ? 'is-reading' : ''}`}
@@ -174,31 +235,57 @@ export default function Page() {
                       onClick={() => speech.readById(article.id)}
                     >
                       <div className="card-meta">
+                        <span className={`priority-dot ${priorityCls}`} title={priorityTitle} />
                         <span className={`source-tag ${article.cls}`}>{article.source}</span>
-                        <span className="card-time">{article.time}</span>
-                        <span className="card-category">{article.category}</span>
+                        <span className="card-category-badge">{article.category}</span>
+                        {article.impact && (
+                          <span className={`impact-badge ${article.impact.toLowerCase()}`}>
+                            {article.impact}
+                          </span>
+                        )}
+                        <span className="card-time">
+                          {clientRelativeTime(article.publishedAt, article.time)}
+                        </span>
                       </div>
                       <h2 className="card-title">{article.title}</h2>
                       <p className="card-summary">{article.summary}</p>
                       <div className="card-actions">
+                        <a
+                          href={article.link}
+                          className="action-btn"
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Open
+                        </a>
                         <button
-                          className={`read-btn ${reading ? 'active' : ''}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
+                          className={`action-btn play-btn ${reading ? 'active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
                             speech.readById(article.id);
                           }}
                         >
-                          Read Aloud
+                          ▶ Play
                         </button>
-                        <a
-                          href={article.link}
-                          className="card-link"
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(event) => event.stopPropagation()}
+                        <button
+                          className="action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void navigator.clipboard.writeText(`${article.title}\n${article.link}`);
+                          }}
                         >
-                          Full story {'->'}
-                        </a>
+                          Copy
+                        </button>
+                        <button
+                          className={`action-btn save-btn ${saved ? 'active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSaved(article.id);
+                          }}
+                        >
+                          {saved ? 'Saved' : 'Save'}
+                        </button>
                       </div>
                     </article>
                   );

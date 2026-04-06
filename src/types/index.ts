@@ -1,5 +1,7 @@
 export type SourceClass = 'reuters' | 'bloomberg';
 
+export type ImpactLabel = 'Bullish' | 'Bearish' | 'Macro' | 'Fed' | 'Oil' | 'Earnings';
+
 export type NewsCategory =
   | 'Markets'
   | 'Economy'
@@ -16,6 +18,9 @@ export interface NewsArticle {
   source: string;
   cls: SourceClass;
   category: NewsCategory;
+  importance: 1 | 2 | 3;
+  impact: ImpactLabel | null;
+  publishedAt?: string;
   title: string;
   summary: string;
   link: string;
