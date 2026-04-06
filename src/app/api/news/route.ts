@@ -8,8 +8,9 @@ import {
   normalizeArticle,
   timeAgo,
 } from '../../../lib/news';
+import { listFeedSources } from '../../../lib/feedsStore';
 import { newsProviderEnv } from '../../../lib/env';
-import type { NewsArticle } from '../../../types';
+import type { FeedSource, NewsArticle } from '../../../types';
 
 const PROVIDER_TIMEOUT_MS = 7000;
 const CACHE_TTL_MS = 30_000; // 30 seconds
@@ -19,24 +20,10 @@ interface CacheEntry {
   usingFallback: boolean;
   timestamp: number;
   provider: string;
+  sourcesSignature: string;
 }
 
 let newsCache: CacheEntry | null = null;
-
-const FREE_RSS_SOURCES: Array<{ url: string; source: string }> = [
-  {
-    url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
-    source: 'MarketWatch',
-  },
-  {
-    url: 'https://feeds.apnews.com/rss/APf-Business',
-    source: 'AP Business',
-  },
-  {
-    url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664',
-    source: 'CNBC',
-  },
-];
 
 interface ProviderResult {
   provider: string;
@@ -456,66 +443,117 @@ async function fetchFromFinnhub(apiKey: string): Promise<ProviderResult> {
   }
 }
 
-async function fetchProviderChain(): Promise<ProviderResult[]> {
+function providerForSource(source: FeedSource):
+  | 'newsapi'
+  | 'gnews'
+  | 'alphavantage'
+  | 'fmp'
+  | 'marketaux'
+  | 'finnhub'
+  | 'rss'
+  | 'unsupported' {
+  if (source.type === 'rss') return 'rss';
+
+  const id = source.id.toLowerCase();
+  const url = source.url.toLowerCase();
+  const envKey = (source.apiKeyEnv ?? '').toLowerCase();
+
+  if (id.includes('newsapi') || url.includes('newsapi.org') || envKey === 'newsapi_key') return 'newsapi';
+  if (id.includes('gnews') || url.includes('gnews.io') || envKey === 'gnews_api_key') return 'gnews';
+  if (id.includes('alphavantage') || url.includes('alphavantage.co') || envKey === 'alphavantage_api_key') return 'alphavantage';
+  if (id.includes('fmp') || url.includes('financialmodelingprep.com') || envKey === 'fmp_api_key') return 'fmp';
+  if (id.includes('marketaux') || url.includes('marketaux.com') || envKey === 'marketaux_key') return 'marketaux';
+  if (id.includes('finnhub') || url.includes('finnhub.io') || envKey === 'finnhub_key') return 'finnhub';
+
+  return 'unsupported';
+}
+
+function resolveApiKey(source: FeedSource): string {
+  const keyFromEnvName = source.apiKeyEnv ? (process.env[source.apiKeyEnv] ?? '').trim() : '';
+  if (keyFromEnvName) return keyFromEnvName;
+
+  const provider = providerForSource(source);
+  if (provider === 'newsapi') return newsProviderEnv.newsApiKey;
+  if (provider === 'gnews') return newsProviderEnv.gnewsApiKey;
+  if (provider === 'alphavantage') return newsProviderEnv.alphaVantageApiKey;
+  if (provider === 'fmp') return newsProviderEnv.fmpApiKey;
+  if (provider === 'marketaux') return newsProviderEnv.marketauxKey;
+  if (provider === 'finnhub') return newsProviderEnv.finnhubKey;
+
+  return '';
+}
+
+async function fetchFromConfiguredSource(source: FeedSource): Promise<ProviderResult> {
+  const provider = providerForSource(source);
+
+  if (provider === 'rss') {
+    return fetchRssSource(source.url, source.name);
+  }
+
+  const apiKey = resolveApiKey(source);
+  if (!apiKey) {
+    return {
+      provider: source.id,
+      articles: [],
+      ok: false,
+      error: source.apiKeyEnv
+        ? `Missing API key in ${source.apiKeyEnv}`
+        : `Missing API key for provider ${provider}`,
+    };
+  }
+
+  if (provider === 'newsapi') return fetchFromNewsApi(apiKey);
+  if (provider === 'gnews') return fetchFromGNews(apiKey);
+  if (provider === 'alphavantage') return fetchFromAlphaVantage(apiKey);
+  if (provider === 'fmp') return fetchFromFmp(apiKey);
+  if (provider === 'marketaux') return fetchFromMarketaux(apiKey);
+  if (provider === 'finnhub') return fetchFromFinnhub(apiKey);
+
+  return {
+    provider: source.id,
+    articles: [],
+    ok: false,
+    error: 'Unsupported source provider mapping',
+  };
+}
+
+function sourcesSignature(sources: FeedSource[]): string {
+  return sources
+    .map((s) => `${s.id}:${s.enabled}:${s.priority}:${s.url}`)
+    .sort()
+    .join('|');
+}
+
+async function getEnabledSources(): Promise<FeedSource[]> {
+  const sources = await listFeedSources();
+  return sources
+    .filter((s) => s.enabled)
+    .sort((a, b) => a.priority - b.priority);
+}
+
+async function fetchProviderChain(enabledSources: FeedSource[]): Promise<ProviderResult[]> {
   const results: ProviderResult[] = [];
 
-  const newsApiKey = newsProviderEnv.newsApiKey;
-  const gnewsKey = newsProviderEnv.gnewsApiKey;
-  const alphaVantageKey = newsProviderEnv.alphaVantageApiKey;
-  const fmpApiKey = newsProviderEnv.fmpApiKey;
-  const marketauxKey = newsProviderEnv.marketauxKey;
-  const finnhubKey = newsProviderEnv.finnhubKey;
-
-  if (newsApiKey) {
-    const result = await fetchFromNewsApi(newsApiKey);
+  for (const source of enabledSources) {
+    const result = await fetchFromConfiguredSource(source);
     results.push(result);
     if (result.articles.length >= 3) return results;
   }
-
-  if (gnewsKey) {
-    const result = await fetchFromGNews(gnewsKey);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  if (alphaVantageKey) {
-    const result = await fetchFromAlphaVantage(alphaVantageKey);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  if (fmpApiKey) {
-    const result = await fetchFromFmp(fmpApiKey);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  if (marketauxKey) {
-    const result = await fetchFromMarketaux(marketauxKey);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  if (finnhubKey) {
-    const result = await fetchFromFinnhub(finnhubKey);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  // Fall back to free RSS sources when no API keys are configured
-  const rssResults = await Promise.all(
-    FREE_RSS_SOURCES.map((s) => fetchRssSource(s.url, s.source)),
-  );
-  results.push(...rssResults);
 
   return results;
 }
 
 export async function GET() {
   const now = Date.now();
+  const enabledSources = await getEnabledSources();
+  const currentSignature = sourcesSignature(enabledSources);
 
   // Serve from cache if still fresh
-  if (newsCache && now - newsCache.timestamp < CACHE_TTL_MS) {
+  if (
+    newsCache
+    && now - newsCache.timestamp < CACHE_TTL_MS
+    && newsCache.sourcesSignature === currentSignature
+  ) {
     return NextResponse.json(
       { articles: newsCache.articles, usingFallback: newsCache.usingFallback },
       {
@@ -529,7 +567,7 @@ export async function GET() {
     );
   }
 
-  const providerResults = await fetchProviderChain();
+  const providerResults = await fetchProviderChain(enabledSources);
   const bestLive = providerResults.find((result) => result.articles.length >= 3);
 
   if (bestLive) {
@@ -538,6 +576,7 @@ export async function GET() {
       usingFallback: false,
       timestamp: now,
       provider: bestLive.provider,
+      sourcesSignature: currentSignature,
     };
 
     return NextResponse.json(

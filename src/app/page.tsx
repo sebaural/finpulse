@@ -66,6 +66,25 @@ const initialFeedFormState: FeedFormState = {
   enabled: true,
 };
 
+function feedSignature(items: FeedSource[]): string {
+  return JSON.stringify(
+    [...items]
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        url: s.url,
+        enabled: s.enabled,
+        category: s.category,
+        parser: s.parser,
+        apiKeyEnv: s.apiKeyEnv ?? '',
+        refreshIntervalSec: s.refreshIntervalSec,
+        priority: s.priority,
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+  );
+}
+
 function subscribeToHydration() {
   return () => {};
 }
@@ -92,6 +111,7 @@ export default function Page() {
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
   const [feedSources, setFeedSources] = useState<FeedSource[]>([]);
+  const [draftFeedSources, setDraftFeedSources] = useState<FeedSource[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedSaving, setFeedSaving] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
@@ -110,6 +130,10 @@ export default function Page() {
   );
 
   const speech = useSpeechReader(filteredArticles);
+  const hasPendingFeedChanges = useMemo(
+    () => feedSignature(feedSources) !== feedSignature(draftFeedSources),
+    [feedSources, draftFeedSources],
+  );
 
   const hero = allArticles[0] ?? null;
 
@@ -146,7 +170,9 @@ export default function Page() {
       }
 
       const data = (await res.json()) as FeedSourcesResponse;
-      setFeedSources(Array.isArray(data.sources) ? data.sources : []);
+      const nextSources = Array.isArray(data.sources) ? data.sources : [];
+      setFeedSources(nextSources);
+      setDraftFeedSources(nextSources);
     } catch {
       setFeedError('Unable to load feed sources');
     } finally {
@@ -175,61 +201,115 @@ export default function Page() {
   }
 
   async function saveFeedSource() {
-    setFeedSaving(true);
     setFeedError(null);
 
-    const payload = {
-      ...feedForm,
+    if (!feedForm.name.trim() || !feedForm.url.trim()) {
+      setFeedError('Name and URL are required before adding/editing a source');
+      return;
+    }
+
+    const payload: FeedSource = {
+      id: editingFeedId ?? `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: feedForm.name.trim(),
+      type: feedForm.type,
+      url: feedForm.url.trim(),
+      enabled: feedForm.enabled,
+      category: feedForm.category.trim(),
+      parser: feedForm.parser,
       apiKeyEnv: feedForm.apiKeyEnv.trim() || undefined,
+      refreshIntervalSec: feedForm.refreshIntervalSec,
+      priority: feedForm.priority,
     };
 
-    try {
-      const endpoint = editingFeedId ? `/api/feeds/${editingFeedId}` : '/api/feeds';
-      const method = editingFeedId ? 'PATCH' : 'POST';
+    setDraftFeedSources((prev) => {
+      const idx = prev.findIndex((s) => s.id === payload.id);
+      if (idx < 0) return [...prev, payload];
+      const next = [...prev];
+      next[idx] = payload;
+      return next;
+    });
 
-      const res = await fetch(endpoint, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const message = await res.text();
-        setFeedError(message || 'Failed to save source');
-        return;
-      }
-
-      await loadFeedSources();
-      resetFeedForm();
-    } catch {
-      setFeedError('Failed to save source');
-    } finally {
-      setFeedSaving(false);
-    }
+    resetFeedForm();
   }
 
   async function toggleFeedEnabled(source: FeedSource) {
-    try {
-      await fetch(`/api/feeds/${source.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !source.enabled }),
-      });
-      await loadFeedSources();
-    } catch {
-      setFeedError('Failed to update source state');
-    }
+    setDraftFeedSources((prev) =>
+      prev.map((s) => (s.id === source.id ? { ...s, enabled: !s.enabled } : s)),
+    );
   }
 
   async function deleteFeedSource(id: string) {
+    setDraftFeedSources((prev) => prev.filter((s) => s.id !== id));
+    if (editingFeedId === id) {
+      resetFeedForm();
+    }
+  }
+
+  async function applyFeedChanges() {
+    setFeedSaving(true);
+    setFeedError(null);
+
     try {
-      await fetch(`/api/feeds/${id}`, { method: 'DELETE' });
-      if (editingFeedId === id) {
-        resetFeedForm();
+      const baseMap = new Map(feedSources.map((s) => [s.id, s]));
+      const draftMap = new Map(draftFeedSources.map((s) => [s.id, s]));
+
+      // Delete removed existing sources
+      for (const source of feedSources) {
+        if (!draftMap.has(source.id)) {
+          await fetch(`/api/feeds/${source.id}`, { method: 'DELETE' });
+        }
       }
+
+      // Create or patch changed sources
+      for (const source of draftFeedSources) {
+        const isDraft = source.id.startsWith('draft-');
+
+        if (isDraft) {
+          await fetch('/api/feeds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: source.name,
+              type: source.type,
+              url: source.url,
+              enabled: source.enabled,
+              category: source.category,
+              parser: source.parser,
+              apiKeyEnv: source.apiKeyEnv,
+              refreshIntervalSec: source.refreshIntervalSec,
+              priority: source.priority,
+            }),
+          });
+          continue;
+        }
+
+        const base = baseMap.get(source.id);
+        if (!base) continue;
+        if (feedSignature([base]) === feedSignature([source])) continue;
+
+        await fetch(`/api/feeds/${source.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: source.name,
+            type: source.type,
+            url: source.url,
+            enabled: source.enabled,
+            category: source.category,
+            parser: source.parser,
+            apiKeyEnv: source.apiKeyEnv,
+            refreshIntervalSec: source.refreshIntervalSec,
+            priority: source.priority,
+          }),
+        });
+      }
+
       await loadFeedSources();
+      await refresh();
     } catch {
-      setFeedError('Failed to delete source');
+      setFeedError('Failed to apply feed changes');
+    } finally {
+      setFeedSaving(false);
     }
   }
 
@@ -639,7 +719,14 @@ export default function Page() {
 
               <div className="feed-actions">
                 <button className="action-btn" onClick={saveFeedSource} disabled={feedSaving}>
-                  {feedSaving ? 'Saving...' : editingFeedId ? 'Update source' : 'Add source'}
+                  {editingFeedId ? 'Queue update' : 'Queue add'}
+                </button>
+                <button
+                  className="action-btn play-btn"
+                  onClick={() => void applyFeedChanges()}
+                  disabled={feedSaving || !hasPendingFeedChanges}
+                >
+                  {feedSaving ? 'Applying...' : 'Apply'}
                 </button>
                 {editingFeedId && (
                   <button className="action-btn" onClick={resetFeedForm}>
@@ -648,10 +735,14 @@ export default function Page() {
                 )}
               </div>
 
+              {hasPendingFeedChanges && (
+                <div className="side-story-time">You have unapplied feed changes.</div>
+              )}
+
               <div className="feed-list">
                 {feedLoading && <div className="side-story-time">Loading sources...</div>}
                 {!feedLoading &&
-                  feedSources.map((source) => (
+                  draftFeedSources.map((source) => (
                     <div className="feed-row" key={source.id}>
                       <label className="feed-toggle-wrap">
                         <input
