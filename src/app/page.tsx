@@ -495,9 +495,6 @@ export default function Page() {
                       </div>
                       <h2 className="card-title">{article.title}</h2>
                       <p className="card-summary">{article.summary}</p>
-                      <div className="card-hover-preview" role="tooltip" aria-hidden="true">
-                        {article.summary}
-                      </div>
                       <div className="card-actions">
                         <a
                           href={article.link}
