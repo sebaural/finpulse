@@ -1,9 +1,7 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { kv } from '@vercel/kv';
 import type { FeedSource } from '../types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const FEEDS_FILE = path.join(DATA_DIR, 'feeds.json');
+const KV_KEY = 'feeds:config';
 
 const defaultSources: FeedSource[] = [
   {
@@ -65,26 +63,17 @@ const defaultSources: FeedSource[] = [
   },
 ];
 
-async function ensureFile(): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-
-  try {
-    await readFile(FEEDS_FILE, 'utf-8');
-  } catch {
-    await writeFile(FEEDS_FILE, JSON.stringify(defaultSources, null, 2), 'utf-8');
-  }
-}
-
 export async function listFeedSources(): Promise<FeedSource[]> {
-  await ensureFile();
-  const raw = await readFile(FEEDS_FILE, 'utf-8');
-  const parsed = JSON.parse(raw) as FeedSource[];
-  return Array.isArray(parsed) ? parsed : [];
+  const stored = await kv.get<FeedSource[]>(KV_KEY);
+  if (!stored) {
+    await kv.set(KV_KEY, defaultSources);
+    return defaultSources;
+  }
+  return Array.isArray(stored) ? stored : defaultSources;
 }
 
 export async function saveFeedSources(sources: FeedSource[]): Promise<void> {
-  await ensureFile();
-  await writeFile(FEEDS_FILE, JSON.stringify(sources, null, 2), 'utf-8');
+  await kv.set(KV_KEY, sources);
 }
 
 export { defaultSources };

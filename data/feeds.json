@@ -4,7 +4,7 @@
     "name": "NewsAPI Business",
     "type": "api",
     "url": "https://newsapi.org/v2/top-headlines?category=business&language=en&pageSize=20",
-    "enabled": false,
+    "enabled": true,
     "category": "Markets",
     "parser": "json",
     "apiKeyEnv": "NEWSAPI_KEY",
