@@ -33,15 +33,17 @@ interface ProviderResult {
 }
 
 function decodeHtmlEntities(input: string): string {
-  return input
+  // Unescape &amp; first so double-encoded entities (&amp;#x2019;) become &#x2019;
+  let s = input.replace(/&amp;/g, '&');
+  s = s
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&nbsp;/g, ' ');
+  return s;
 }
 
 function cleanSummary(input: string | null | undefined): string {
