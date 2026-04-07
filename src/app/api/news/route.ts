@@ -6,6 +6,7 @@ import {
   fallbackNewsResponse,
   inferSourceClass,
   normalizeArticle,
+  toId,
   timeAgo,
 } from '../../../lib/news';
 import { listFeedSources } from '../../../lib/feedsStore';
@@ -30,6 +31,42 @@ interface ProviderResult {
   articles: NewsArticle[];
   ok: boolean;
   error?: string;
+}
+
+function sanitizeArticles(articles: NewsArticle[]): NewsArticle[] {
+  // Remove obvious duplicates first so the feed does not show repeated stories.
+  const seenFingerprints = new Set<string>();
+  const deduped: NewsArticle[] = [];
+
+  for (const article of articles) {
+    const linkFingerprint = article.link.trim().toLowerCase();
+    const titleFingerprint = `${article.source.trim().toLowerCase()}|${article.title.trim().toLowerCase()}`;
+    const fingerprint = linkFingerprint || titleFingerprint;
+
+    if (seenFingerprints.has(fingerprint)) {
+      continue;
+    }
+
+    seenFingerprints.add(fingerprint);
+    deduped.push(article);
+  }
+
+  // Ensure IDs are unique for stable React keys, even when upstream stories collide.
+  const idCounts = new Map<string, number>();
+  return deduped.map((article) => {
+    const count = idCounts.get(article.id) ?? 0;
+    idCounts.set(article.id, count + 1);
+
+    if (count === 0) {
+      return article;
+    }
+
+    const stableSuffix = toId(article.link).slice(0, 24) || `dup-${count}`;
+    return {
+      ...article,
+      id: `${article.id}-${stableSuffix}-${count}`,
+    };
+  });
 }
 
 function decodeHtmlEntities(input: string): string {
@@ -585,8 +622,9 @@ export async function GET() {
   const bestLive = providerResults.find((result) => result.articles.length >= 3);
 
   if (bestLive) {
+    const sanitizedArticles = sanitizeArticles(bestLive.articles);
     newsCache = {
-      articles: bestLive.articles,
+      articles: sanitizedArticles,
       usingFallback: false,
       timestamp: now,
       provider: bestLive.provider,
@@ -595,7 +633,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        articles: bestLive.articles,
+        articles: sanitizedArticles,
         usingFallback: false,
       },
       {
@@ -611,6 +649,7 @@ export async function GET() {
   }
 
   const fallback = fallbackNewsResponse();
+  const fallbackArticles = sanitizeArticles(fallback.articles);
   const attemptedProviders = providerResults.map((result) => {
     if (!result.ok && result.error) {
       return `${result.provider}: ${result.error}`;
@@ -624,7 +663,7 @@ export async function GET() {
 
   console.warn(message);
 
-  return NextResponse.json(fallback, {
+  return NextResponse.json({ articles: fallbackArticles, usingFallback: fallback.usingFallback }, {
     status: 200,
     headers: {
       'Cache-Control': 'no-store',
