@@ -32,8 +32,20 @@ interface ProviderResult {
   error?: string;
 }
 
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
 function cleanSummary(input: string | null | undefined): string {
-  return (input ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 220);
+  return decodeHtmlEntities((input ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()).slice(0, 220);
 }
 
 function parseDateToAgo(raw: string | null | undefined): string {
@@ -140,7 +152,7 @@ function normalizeExternalArticle(input: {
   link: string;
   publishedAt?: string | null;
 }): NewsArticle | null {
-  const title = input.title.trim();
+  const title = decodeHtmlEntities(input.title.trim());
   const summary = cleanSummary(input.summary);
   const link = input.link.trim();
   const source = input.source.trim() || 'Market Wire';
