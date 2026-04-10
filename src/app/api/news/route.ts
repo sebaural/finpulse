@@ -33,10 +33,28 @@ interface ProviderResult {
   error?: string;
 }
 
+function parseApiDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  // AlphaVantage compact format: "20240410T120000"
+  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?/);
+  if (compact) {
+    const [, yr, mo, dy, hr, min, sec = '00'] = compact;
+    const d = new Date(`${yr}-${mo}-${dy}T${hr}:${min}:${sec}Z`);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  // Space-separator format: "2024-04-10 12:00:00" (FMP and others)
+  const spaceSep = raw.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+  if (spaceSep) {
+    const d = new Date(`${spaceSep[1]}T${spaceSep[2]}Z`);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function publishedAtMs(article: NewsArticle): number {
-  if (!article.publishedAt) return 0;
-  const ms = new Date(article.publishedAt).getTime();
-  return Number.isNaN(ms) ? 0 : ms;
+  const d = parseApiDate(article.publishedAt);
+  return d ? d.getTime() : 0;
 }
 
 function sortNewestFirst(articles: NewsArticle[]): NewsArticle[] {
@@ -100,10 +118,8 @@ function cleanSummary(input: string | null | undefined): string {
 }
 
 function parseDateToAgo(raw: string | null | undefined): string {
-  if (!raw) return 'Just now';
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return 'Just now';
-  return timeAgo(parsed);
+  const d = parseApiDate(raw);
+  return d ? timeAgo(d) : 'Just now';
 }
 
 interface RssItem {
@@ -219,7 +235,7 @@ function normalizeExternalArticle(input: {
     category: detectCategory(textForDetection),
     importance: detectImportance(textForDetection),
     impact: detectImpact(textForDetection),
-    publishedAt: input.publishedAt ?? undefined,
+    publishedAt: parseApiDate(input.publishedAt)?.toISOString(),
     title,
     summary,
     link,
