@@ -10,11 +10,35 @@ const KV_KEY = 'feeds:config';
 
 const defaultSources: FeedSource[] = [
   {
+    id: 'marketaux-api',
+    name: 'MARKETAUX',
+    type: 'api',
+    url: 'https://api.marketaux.com/v1/news/all?filter_entities=true&language=en&limit=20',
+    enabled: false,
+    category: 'Markets',
+    parser: 'json',
+    apiKeyEnv: 'MARKETAUX_KEY',
+    refreshIntervalSec: 60,
+    priority: 2,
+  },
+  {
+    id: 'finnhub-api',
+    name: 'FINNHUB',
+    type: 'api',
+    url: 'https://finnhub.io/api/v1/news?category=general',
+    enabled: false,
+    category: 'Markets',
+    parser: 'json',
+    apiKeyEnv: 'FINNHUB_KEY',
+    refreshIntervalSec: 60,
+    priority: 2,
+  },
+  {
     id: 'newsapi-business',
-    name: 'NewsAPI Business',
+    name: 'NEWSAPI',
     type: 'api',
     url: 'https://newsapi.org/v2/top-headlines?category=business&language=en&pageSize=20',
-    enabled: true,
+    enabled: false,
     category: 'Markets',
     parser: 'json',
     apiKeyEnv: 'NEWSAPI_KEY',
@@ -23,10 +47,10 @@ const defaultSources: FeedSource[] = [
   },
   {
     id: 'gnews-business',
-    name: 'GNews Business',
+    name: 'GNEWS',
     type: 'api',
     url: 'https://gnews.io/api/v4/top-headlines?topic=business&lang=en&max=20',
-    enabled: true,
+    enabled: false,
     category: 'Markets',
     parser: 'json',
     apiKeyEnv: 'GNEWS_API_KEY',
@@ -34,39 +58,50 @@ const defaultSources: FeedSource[] = [
     priority: 2,
   },
   {
-    id: 'marketwatch-rss',
-    name: 'MarketWatch Top Stories',
-    type: 'rss',
-    url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
-    enabled: true,
+    id: 'alphavantage-news',
+    name: 'ALPHAVANTAGE',
+    type: 'api',
+    url: 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets&sort=LATEST&limit=20',
+    enabled: false,
     category: 'Markets',
-    parser: 'custom',
+    parser: 'json',
+    apiKeyEnv: 'ALPHAVANTAGE_API_KEY',
     refreshIntervalSec: 60,
     priority: 2,
   },
   {
-    id: 'ap-business-rss',
-    name: 'AP Business',
-    type: 'rss',
-    url: 'https://feeds.apnews.com/rss/APf-Business',
-    enabled: true,
-    category: 'Economy',
-    parser: 'custom',
-    refreshIntervalSec: 60,
-    priority: 2,
-  },
-  {
-    id: 'cnbc-rss',
-    name: 'CNBC Finance',
-    type: 'rss',
-    url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664',
-    enabled: true,
+    id: 'fmp-news',
+    name: 'FMP',
+    type: 'api',
+    url: 'https://financialmodelingprep.com/stable/news/latest?limit=20',
+    enabled: false,
     category: 'Markets',
-    parser: 'custom',
+    parser: 'json',
+    apiKeyEnv: 'FMP_API_KEY',
     refreshIntervalSec: 60,
     priority: 2,
   },
 ];
+
+function normalizeSources(sources: FeedSource[]): FeedSource[] {
+  const byId = new Map(sources.map((source) => [source.id, source]));
+  return defaultSources.map((source) => {
+    const existing = byId.get(source.id);
+    if (!existing) {
+      return source;
+    }
+
+    return {
+      ...existing,
+      id: source.id,
+      name: source.name,
+      type: source.type,
+      url: source.url,
+      apiKeyEnv: source.apiKeyEnv,
+      parser: source.parser,
+    };
+  });
+}
 
 export async function listFeedSources(): Promise<FeedSource[]> {
   const stored = await kv.get<FeedSource[]>(KV_KEY);
@@ -74,7 +109,13 @@ export async function listFeedSources(): Promise<FeedSource[]> {
     await kv.set(KV_KEY, defaultSources);
     return defaultSources;
   }
-  return Array.isArray(stored) ? stored : defaultSources;
+
+  const normalized = Array.isArray(stored) ? normalizeSources(stored) : defaultSources;
+  if (JSON.stringify(normalized) !== JSON.stringify(stored)) {
+    await kv.set(KV_KEY, normalized);
+  }
+
+  return normalized;
 }
 
 export async function saveFeedSources(sources: FeedSource[]): Promise<void> {

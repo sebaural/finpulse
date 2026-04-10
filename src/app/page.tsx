@@ -238,27 +238,12 @@ export default function Page() {
     );
   }
 
-  async function deleteFeedSource(id: string) {
-    setDraftFeedSources((prev) => prev.filter((s) => s.id !== id));
-    if (editingFeedId === id) {
-      resetFeedForm();
-    }
-  }
-
   async function applyFeedChanges() {
     setFeedSaving(true);
     setFeedError(null);
 
     try {
       const baseMap = new Map(feedSources.map((s) => [s.id, s]));
-      const draftMap = new Map(draftFeedSources.map((s) => [s.id, s]));
-
-      // Delete removed existing sources
-      for (const source of feedSources) {
-        if (!draftMap.has(source.id)) {
-          await fetch(`/api/feeds/${source.id}`, { method: 'DELETE' });
-        }
-      }
 
       // Create or patch changed sources
       for (const source of draftFeedSources) {
@@ -754,9 +739,6 @@ export default function Page() {
                       </div>
                       <button className="action-btn" onClick={() => startEditFeed(source)}>
                         Edit
-                      </button>
-                      <button className="action-btn" onClick={() => void deleteFeedSource(source.id)}>
-                        Delete
                       </button>
                     </div>
                   ))}
