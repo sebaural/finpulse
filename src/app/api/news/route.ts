@@ -33,12 +33,24 @@ interface ProviderResult {
   error?: string;
 }
 
+function publishedAtMs(article: NewsArticle): number {
+  if (!article.publishedAt) return 0;
+  const ms = new Date(article.publishedAt).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+function sortNewestFirst(articles: NewsArticle[]): NewsArticle[] {
+  return [...articles].sort((a, b) => publishedAtMs(b) - publishedAtMs(a));
+}
+
 function sanitizeArticles(articles: NewsArticle[]): NewsArticle[] {
+  const sorted = sortNewestFirst(articles);
+
   // Remove obvious duplicates first so the feed does not show repeated stories.
   const seenFingerprints = new Set<string>();
   const deduped: NewsArticle[] = [];
 
-  for (const article of articles) {
+  for (const article of sorted) {
     const linkFingerprint = article.link.trim().toLowerCase();
     const titleFingerprint = `${article.source.trim().toLowerCase()}|${article.title.trim().toLowerCase()}`;
     const fingerprint = linkFingerprint || titleFingerprint;
@@ -582,16 +594,8 @@ async function getEnabledSources(): Promise<FeedSource[]> {
     .sort((a, b) => a.priority - b.priority);
 }
 
-async function fetchProviderChain(enabledSources: FeedSource[]): Promise<ProviderResult[]> {
-  const results: ProviderResult[] = [];
-
-  for (const source of enabledSources) {
-    const result = await fetchFromConfiguredSource(source);
-    results.push(result);
-    if (result.articles.length >= 3) return results;
-  }
-
-  return results;
+async function fetchAllEnabledSources(enabledSources: FeedSource[]): Promise<ProviderResult[]> {
+  return Promise.all(enabledSources.map((source) => fetchFromConfiguredSource(source)));
 }
 
 export async function GET() {
@@ -618,16 +622,19 @@ export async function GET() {
     );
   }
 
-  const providerResults = await fetchProviderChain(enabledSources);
-  const bestLive = providerResults.find((result) => result.articles.length >= 3);
+  const providerResults = await fetchAllEnabledSources(enabledSources);
+  const liveResults = providerResults.filter((result) => result.articles.length > 0);
 
-  if (bestLive) {
-    const sanitizedArticles = sanitizeArticles(bestLive.articles);
+  if (liveResults.length > 0) {
+    const mergedArticles = liveResults.flatMap((result) => result.articles);
+    const sanitizedArticles = sanitizeArticles(mergedArticles);
+    const providerName = liveResults.map((result) => result.provider).join(',');
+
     newsCache = {
       articles: sanitizedArticles,
       usingFallback: false,
       timestamp: now,
-      provider: bestLive.provider,
+      provider: providerName,
       sourcesSignature: currentSignature,
     };
 
@@ -640,7 +647,7 @@ export async function GET() {
         status: 200,
         headers: {
           'Cache-Control': 'public, max-age=30',
-          'X-News-Provider': bestLive.provider,
+          'X-News-Provider': providerName,
           'X-Provider-Status': 'live',
           'X-Cache': 'MISS',
         },
