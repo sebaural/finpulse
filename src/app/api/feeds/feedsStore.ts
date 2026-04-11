@@ -1,5 +1,5 @@
 import { createClient } from '@vercel/kv';
-import type { FeedSource } from '../types';
+import type { FeedSource } from '../../../types';
 
 const kv = createClient({
   url: process.env.FINPULSE_KV_REST_API_URL ?? process.env.KV_REST_API_URL ?? '',

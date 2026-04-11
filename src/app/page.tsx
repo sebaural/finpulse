@@ -2,9 +2,17 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../lib/news';
+import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
 import type { FeedParser, FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
+
+import { MarketTicker } from '@/components/market/MarketTicker';
+import { MarketSnapshot } from '@/components/market/MarketSnapshot';
+import { NewsCard } from '@/components/news/NewsCard';
+import { HeroCard } from '@/components/news/HeroCard';
+import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
+import { VoicePlayer } from '@/components/ui/VoicePlayer';
+import { AdminFeedSettings } from '@/components/ui/AdminFeedSettings';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -373,16 +381,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="ticker-wrap" aria-label="Market ticker">
-        <div className="ticker-inner">
-          {tickerItems.concat(tickerItems).map((item, idx) => (
-            <span className="ticker-item" key={`${item.symbol}-${idx}`}>
-              <span className="sym">{item.symbol}</span> {item.value}{' '}
-              <span className={item.direction}>{item.direction === 'pos' ? `+${item.change.replace('+', '')}` : item.change}</span>
-            </span>
-          ))}
-        </div>
-      </div>
+      <MarketTicker items={tickerItems} />
 
       <header>
         <div className="logo">
@@ -406,21 +405,7 @@ export default function Page() {
         <div className="layout">
           <div>
             {hero && (
-              <section className="hero-card">
-                <div className="hero-label">Breaking</div>
-                <div className="hero-title">{hero.title}</div>
-                <div className="hero-summary">{hero.summary}</div>
-                <div className="hero-footer">
-                  <span className={`source-tag ${hero.cls}`}>{hero.source}</span>
-                  <span className="card-time">{hero.time}</span>
-                  <button className="read-btn" onClick={() => speech.readById(hero.id)}>
-                    Read Aloud
-                  </button>
-                  <a href={hero.link} className="card-link" target="_blank" rel="noreferrer">
-                    Read full story {'->'}
-                  </a>
-                </div>
-              </section>
+              <HeroCard article={hero} onRead={speech.readById} />
             )}
 
             <div className="data-status-row" aria-live="polite">
@@ -444,327 +429,54 @@ export default function Page() {
               )}
 
               {!loading &&
-                filteredArticles.map((article) => {
-                  const reading = speech.currentArticleId === article.id;
-                  const saved = savedIds.includes(article.id);
-                  const priorityCls =
-                    article.importance === 1
-                      ? 'breaking'
-                      : article.importance === 2
-                        ? 'important'
-                        : 'regular';
-                  const priorityTitle =
-                    article.importance === 1
-                      ? 'Breaking'
-                      : article.importance === 2
-                        ? 'Important'
-                        : 'Regular';
-                  return (
-                    <article
-                      className={`news-card ${article.cls} ${reading ? 'is-reading' : ''}`}
-                      key={article.id}
-                      onClick={() => speech.readById(article.id)}
-                    >
-                      <div className="card-meta">
-                        <span className={`priority-dot ${priorityCls}`} title={priorityTitle} />
-                        <span className={`source-tag ${article.cls}`}>{article.source}</span>
-                        <span className="card-category-badge">{article.category}</span>
-                        {article.impact && (
-                          <span className={`impact-badge ${article.impact.toLowerCase()}`}>
-                            {article.impact}
-                          </span>
-                        )}
-                        <span className="card-time">
-                          {clientRelativeTime(article.publishedAt, article.time)}
-                        </span>
-                      </div>
-                      <h2 className="card-title">{article.title}</h2>
-                      <p className="card-summary">{article.summary}</p>
-                      <div className="card-actions">
-                        <a
-                          href={article.link}
-                          className="action-btn"
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Open
-                        </a>
-                        <button
-                          className={`action-btn play-btn ${reading ? 'active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            speech.readById(article.id);
-                          }}
-                        >
-                          ▶ Play
-                        </button>
-                        <button
-                          className="action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void navigator.clipboard.writeText(`${article.title}\n${article.link}`);
-                          }}
-                        >
-                          Copy
-                        </button>
-                        <button
-                          className={`action-btn save-btn ${saved ? 'active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSaved(article.id);
-                          }}
-                        >
-                          {saved ? 'Saved' : 'Save'}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
+                filteredArticles.map((article) => (
+                  <NewsCard
+                    key={article.id}
+                    article={article}
+                    isReading={speech.currentArticleId === article.id}
+                    isSaved={savedIds.includes(article.id)}
+                    onRead={speech.readById}
+                    onToggleSave={toggleSaved}
+                    relativeTime={clientRelativeTime(article.publishedAt, article.time)}
+                  />
+                ))}
             </div>
           </div>
 
           <aside className="sidebar">
-            <div className="voice-player">
-              <div className="player-label">
-                AI Voice Reader
-                <div className={`wave-container ${speech.isPlaying ? 'speaking' : ''}`} aria-hidden="true">
-                  <div className="wave-bar" />
-                  <div className="wave-bar" />
-                  <div className="wave-bar" />
-                  <div className="wave-bar" />
-                  <div className="wave-bar" />
-                </div>
-              </div>
+            <VoicePlayer
+              speech={speech}
+              filteredArticles={filteredArticles}
+              selectableVoices={selectableVoices}
+              hasHydrated={hasHydrated}
+            />
 
-              <div className="player-now-reading">
-                {filteredArticles.find((a) => a.id === speech.currentArticleId)?.title ?? 'Select a story to read aloud'}
-              </div>
+            <MarketSnapshot rows={marketRows} isLive={marketLive} />
 
-              {speech.hasResolvedSupport && !speech.isSupported && (
-                <div className="unsupported">
-                  Text-to-speech is not supported in this browser. Use a modern Chromium-based browser.
-                </div>
-              )}
-
-              <div className="player-controls">
-                <button className="ctrl-btn" onClick={speech.prev} title="Previous">
-                  Prev
-                </button>
-                <button className="ctrl-btn play-main" onClick={speech.togglePlayPause} title="Play/Pause">
-                  {speech.isPlaying ? 'Pause' : 'Play'}
-                </button>
-                <button className="ctrl-btn" onClick={speech.next} title="Next">
-                  Next
-                </button>
-                <button className="ctrl-btn" onClick={speech.stopReading} title="Stop">
-                  Stop
-                </button>
-                <select
-                  className="speed-select"
-                  value={speech.speechRate}
-                  onChange={(e) => speech.setSpeechRate(Number(e.target.value))}
-                >
-                  <option value={0.8}>0.8x</option>
-                  <option value={1}>1x</option>
-                  <option value={1.2}>1.2x</option>
-                  <option value={1.5}>1.5x</option>
-                  <option value={2}>2x</option>
-                </select>
-                <select
-                  className="speed-select voice-select"
-                  value={hasHydrated ? speech.voice?.voiceURI ?? '' : ''}
-                  onChange={(event) => {
-                    const selected = selectableVoices.find((voice) => voice.voiceURI === event.target.value) ?? null;
-                    speech.setVoice(selected);
-                  }}
-                  disabled={!hasHydrated || !speech.isSupported || selectableVoices.length === 0}
-                  suppressHydrationWarning
-                  title="Voice"
-                >
-                  {!hasHydrated ? (
-                    <option value="">Loading voices...</option>
-                  ) : selectableVoices.length === 0 ? (
-                    <option value="">No English/Russian voices</option>
-                  ) : (
-                    selectableVoices.map((voice) => (
-                      <option key={voice.voiceURI} value={voice.voiceURI}>
-                        {voice.name} ({voice.lang})
-                      </option>
-                    ))
-                  )}
-                </select>
-                <button
-                  className={`ctrl-btn ${speech.autoplay ? 'active' : ''}`}
-                  onClick={speech.toggleAutoplay}
-                  title="Auto-play all"
-                >
-                  Auto
-                </button>
-              </div>
-
-              <div className="progress-bar" aria-label="Playback progress">
-                <div className="progress-fill" style={{ width: `${speech.progressPct}%` }} />
-              </div>
-            </div>
-
-            <section className="widget">
-              <div className="widget-title">
-                Market Snapshot
-                {marketLive && <span className="market-live-dot" title="Live data" />}
-              </div>
-              {marketRows.map((row) => (
-                <div className="market-row" key={row.name}>
-                  <span className="market-name">{row.name}</span>
-                  <span className="market-val">{row.value}</span>
-                  <span className={`market-chg ${row.direction}`}>{row.change}</span>
-                </div>
-              ))}
-            </section>
-
-            <section className="widget">
-              <div className="widget-title">Admin Feed Settings</div>
-
-              {feedError && <div className="feed-error">{feedError}</div>}
-
-              <div className="feed-form-grid">
-                <input
-                  className="feed-input"
-                  placeholder="Source name"
-                  value={feedForm.name}
-                  onChange={(e) => setFeedForm((prev) => ({ ...prev, name: e.target.value }))}
-                />
-                <select
-                  className="feed-input"
-                  value={feedForm.type}
-                  onChange={(e) =>
-                    setFeedForm((prev) => ({
-                      ...prev,
-                      type: e.target.value as 'rss' | 'api',
-                      parser: e.target.value === 'rss' ? 'custom' : 'json',
-                    }))
-                  }
-                >
-                  <option value="rss">RSS</option>
-                  <option value="api">API</option>
-                </select>
-                <input
-                  className="feed-input feed-input-full"
-                  placeholder="https://..."
-                  value={feedForm.url}
-                  onChange={(e) => setFeedForm((prev) => ({ ...prev, url: e.target.value }))}
-                />
-                <input
-                  className="feed-input"
-                  placeholder="Category"
-                  value={feedForm.category}
-                  onChange={(e) => setFeedForm((prev) => ({ ...prev, category: e.target.value }))}
-                />
-                <select
-                  className="feed-input"
-                  value={feedForm.parser}
-                  onChange={(e) =>
-                    setFeedForm((prev) => ({ ...prev, parser: e.target.value as FeedParser }))
-                  }
-                >
-                  <option value="custom">custom</option>
-                  <option value="json">json</option>
-                  <option value="rss2json">rss2json</option>
-                </select>
-                <input
-                  className="feed-input"
-                  placeholder="API key env (optional)"
-                  value={feedForm.apiKeyEnv}
-                  onChange={(e) => setFeedForm((prev) => ({ ...prev, apiKeyEnv: e.target.value }))}
-                />
-                <input
-                  className="feed-input"
-                  type="number"
-                  min={15}
-                  value={feedForm.refreshIntervalSec}
-                  onChange={(e) =>
-                    setFeedForm((prev) => ({ ...prev, refreshIntervalSec: Number(e.target.value) || 60 }))
-                  }
-                />
-                <select
-                  className="feed-input"
-                  value={feedForm.priority}
-                  onChange={(e) =>
-                    setFeedForm((prev) => ({ ...prev, priority: Number(e.target.value) as 1 | 2 | 3 }))
-                  }
-                >
-                  <option value={1}>1 Breaking</option>
-                  <option value={2}>2 Important</option>
-                  <option value={3}>3 Regular</option>
-                </select>
-              </div>
-
-              <div className="feed-actions">
-                <button className="action-btn" onClick={saveFeedSource} disabled={feedSaving}>
-                  {editingFeedId ? 'Queue update' : 'Queue add'}
-                </button>
-                {editingFeedId && (
-                  <button className="action-btn" onClick={resetFeedForm}>
-                    Cancel edit
-                  </button>
-                )}
-              </div>
-
-              {hasPendingFeedChanges && (
-                <div className="side-story-time">You have unapplied feed changes.</div>
-              )}
-
-              <div className="feed-list-label">Choose Feed/s to display</div>
-
-              <div className="feed-list">
-                {feedLoading && <div className="side-story-time">Loading sources...</div>}
-                {!feedLoading &&
-                  draftFeedSources.map((source) => (
-                    <div className="feed-row" key={source.id}>
-                      <label className="feed-toggle-wrap">
-                        <input
-                          type="checkbox"
-                          checked={source.enabled}
-                          onChange={() => {
-                            void toggleFeedEnabled(source);
-                          }}
-                        />
-                        <span>{source.enabled ? 'On' : 'Off'}</span>
-                      </label>
-                      <div className="feed-row-main">
-                        <div className="feed-row-name">{source.name}</div>
-                        <div className="feed-row-meta">
-                          {source.type.toUpperCase()} • {source.category} • {source.refreshIntervalSec}s
-                        </div>
-                      </div>
-                      <button className="action-btn" onClick={() => startEditFeed(source)}>
-                        Edit
-                      </button>
-                    </div>
-                  ))}
-              </div>
-
-              <div className="feed-apply-actions">
-                <button
-                  className={`action-btn feed-apply-btn ${hasPendingFeedChanges ? 'pending' : ''}`}
-                  onClick={() => void applyFeedChanges()}
-                  disabled={feedSaving || !hasPendingFeedChanges}
-                >
-                  {feedSaving ? 'Applying...' : 'Apply'}
-                </button>
-              </div>
-            </section>
+            <AdminFeedSettings
+              feedError={feedError}
+              feedForm={feedForm}
+              setFeedForm={setFeedForm}
+              saveFeedSource={saveFeedSource}
+              feedSaving={feedSaving}
+              editingFeedId={editingFeedId}
+              resetFeedForm={resetFeedForm}
+              hasPendingFeedChanges={hasPendingFeedChanges}
+              feedLoading={feedLoading}
+              draftFeedSources={draftFeedSources}
+              toggleFeedEnabled={toggleFeedEnabled}
+              startEditFeed={startEditFeed}
+              applyFeedChanges={applyFeedChanges}
+            />
 
             <section className="widget">
               <div className="widget-title">Most Read</div>
               {allArticles.slice(0, 6).map((article) => (
-                <div className="side-story" key={article.id} onClick={() => speech.readById(article.id)}>
-                  <div className="side-story-source" style={{ color: `var(--${article.cls})` }}>
-                    {article.source}
-                  </div>
-                  <div className="side-story-title">{article.title}</div>
-                  <div className="side-story-time">{article.time}</div>
-                </div>
+                <SidebarNewsItem
+                  key={article.id}
+                  article={article}
+                  onRead={speech.readById}
+                />
               ))}
             </section>
           </aside>

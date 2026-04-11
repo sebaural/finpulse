@@ -8,8 +8,8 @@ import {
   normalizeArticle,
   toId,
   timeAgo,
-} from '../../../lib/news';
-import { listFeedSources } from '../../../lib/feedsStore';
+} from '../../../services/news';
+import { listFeedSources } from '../feeds/feedsStore';
 import { newsProviderEnv } from '../../../lib/env';
 import type { FeedSource, NewsArticle } from '../../../types';
 

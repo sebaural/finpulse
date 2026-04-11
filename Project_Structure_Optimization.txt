@@ -1,0 +1,56 @@
+Recommended Optimized Structure
+
+Introduce a components Directory (Critical)
+
+The most noticeable omission in your src/ directory is a folder for React components. Right now, it implies all UI logic is either stuffed into page.tsx and layout.tsx or hasn't been built yet.
+
+    Action: Create a src/components/ directory.
+
+    Best Practice: Subdivide it to keep it organized. Common patterns include splitting by UI elements (e.g., buttons, inputs) and feature-specific components (e.g., news cards, market tickers).
+
+        src/components/ui/ (for reusable, generic components—often where tools like shadcn/ui place things)
+
+        src/components/news/ or src/components/market/ (for domain-specific components)
+
+Here is how project should look when applying best practices:
+
+├── docs
+│   ├── finpulse-claude-prompt.md
+│   └── financial-news.html        # If just a reference mockup
+├── public
+│   ├── favicon.png
+│   ├── logo.png
+│   └── ...
+├── src
+│   ├── app
+│   │   ├── api
+│   │   │   ├── feeds/[id]/route.ts
+│   │   │   ├── feeds/route.ts
+│   │   │   ├── market/route.ts
+│   │   │   └── news/route.ts
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components
+│   │   ├── ui/                    # Reusable generic components (buttons, cards)
+│   │   ├── market/                # Market-specific UI elements
+│   │   └── news/                  # News-specific UI elements
+│   ├── data
+│   │   └── feeds.json             # Moved from root
+│   ├── hooks
+│   │   └── useSpeechReader.ts
+│   ├── lib
+│   │   ├── env.ts
+│   │   └── utils.ts               # Generic helpers
+│   ├── services                   # Data fetching/business logic
+│   │   └── news.ts                # Moved from lib
+│   ├── store                      # State management
+│   │   └── feedsStore.ts          # Moved from lib
+│   └── types
+│       ├── index.ts
+│       ├── news.ts
+│       └── market.ts
+├── eslint.config.mjs
+├── next.config.ts
+├── package.json
+└── tsconfig.json
