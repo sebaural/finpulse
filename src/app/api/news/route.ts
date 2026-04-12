@@ -117,6 +117,12 @@ function cleanSummary(input: string | null | undefined): string {
   return decodeHtmlEntities((input ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()).slice(0, 220);
 }
 
+function isCodeLike(text: string): boolean {
+  // Detect content that looks like JavaScript or code
+  return /\bvar\s+\w+\s*=|function\s*\(|\blet\s+|\bconst\s+|\/\*.*\*\/|^\/\/|;\s*$|[{}\[\]<>=&|]/.test(text) ||
+         /sockets_on_page|assigned_server|distributor_server|jshint|esversion/.test(text.toLowerCase());
+}
+
 function parseDateToAgo(raw: string | null | undefined): string {
   const d = parseApiDate(raw);
   return d ? timeAgo(d) : 'Just now';
@@ -223,6 +229,11 @@ function normalizeExternalArticle(input: {
   const summary = cleanSummary(input.summary);
   const link = input.link.trim();
   const source = input.source.trim() || 'Market Wire';
+
+  // Reject if title or summary looks like code
+  if (isCodeLike(title) || isCodeLike(summary)) {
+    return null;
+  }
 
   if (title.length <= 10 || !link) {
     return null;
