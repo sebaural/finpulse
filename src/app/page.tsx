@@ -26,16 +26,6 @@ interface FeedSourcesResponse {
   sources: FeedSource[];
 }
 
-interface FeedFormState {
-  name: string;
-  type: 'rss' | 'api';
-  url: string;
-  category: string;
-  apiKeyEnv: string;
-  priority: 1 | 2 | 3;
-  enabled: boolean;
-}
-
 type CategoryFilterKey =
   | 'all'
   | 'markets'
@@ -69,16 +59,6 @@ const priorityFilterOptions: Array<{ key: PriorityFilterKey; label: string }> = 
   { key: 'important', label: 'Important' },
   { key: 'regular', label: 'Regular' },
 ];
-
-const initialFeedFormState: FeedFormState = {
-  name: '',
-  type: 'rss',
-  url: '',
-  category: 'Markets',
-  apiKeyEnv: '',
-  priority: 2,
-  enabled: true,
-};
 
 function feedSignature(items: FeedSource[]): string {
   return JSON.stringify(
@@ -148,8 +128,6 @@ export default function Page() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedSaving, setFeedSaving] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
-  const [editingFeedId, setEditingFeedId] = useState<string | null>(null);
-  const [feedForm, setFeedForm] = useState<FeedFormState>(initialFeedFormState);
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
@@ -228,66 +206,10 @@ export default function Page() {
     }
   }
 
-  function resetFeedForm() {
-    setEditingFeedId(null);
-    setFeedForm(initialFeedFormState);
-  }
-
-  function startEditFeed(source: FeedSource) {
-    setEditingFeedId(source.id);
-    setFeedForm({
-      name: source.name,
-      type: source.type,
-      url: source.url,
-      category: source.category,
-      apiKeyEnv: source.apiKeyEnv ?? '',
-      priority: source.priority,
-      enabled: source.enabled,
-    });
-  }
-
-  async function saveFeedSource() {
-    setFeedError(null);
-
-    if (!feedForm.name.trim() || !feedForm.url.trim()) {
-      setFeedError('Name and URL are required before adding/editing a source');
-      return;
-    }
-
-    const payload: FeedSource = {
-      id: editingFeedId ?? `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: feedForm.name.trim(),
-      type: feedForm.type,
-      url: feedForm.url.trim(),
-      enabled: feedForm.enabled,
-      category: feedForm.category.trim(),
-      apiKeyEnv: feedForm.apiKeyEnv.trim() || undefined,
-      priority: feedForm.priority,
-    };
-
-    setDraftFeedSources((prev) => {
-      const idx = prev.findIndex((s) => s.id === payload.id);
-      if (idx < 0) return [...prev, payload];
-      const next = [...prev];
-      next[idx] = payload;
-      return next;
-    });
-
-    resetFeedForm();
-  }
-
   async function toggleFeedEnabled(source: FeedSource) {
     setDraftFeedSources((prev) =>
       prev.map((s) => (s.id === source.id ? { ...s, enabled: !s.enabled } : s)),
     );
-  }
-
-  async function removeFeedSource(sourceId: string) {
-    setDraftFeedSources((prev) => prev.filter((source) => source.id !== sourceId));
-
-    if (editingFeedId === sourceId) {
-      resetFeedForm();
-    }
   }
 
   async function applyFeedChanges() {
@@ -297,33 +219,8 @@ export default function Page() {
     try {
       const baseMap = new Map(feedSources.map((s) => [s.id, s]));
 
-      // Create or patch changed sources
+      // Patch changed sources.
       for (const source of draftFeedSources) {
-        const isDraft = source.id.startsWith('draft-');
-
-        if (isDraft) {
-          const res = await fetch('/api/feeds', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: source.name,
-              type: source.type,
-              url: source.url,
-              enabled: source.enabled,
-              category: source.category,
-              apiKeyEnv: source.apiKeyEnv,
-              priority: source.priority,
-            }),
-          });
-
-          if (!res.ok) {
-            const message = await readApiError(res, `Failed to add ${source.name}`);
-            throw new Error(`Failed to add ${source.name}: ${message}`);
-          }
-
-          continue;
-        }
-
         const base = baseMap.get(source.id);
         if (!base) continue;
         if (feedSignature([base]) === feedSignature([source])) continue;
@@ -345,21 +242,6 @@ export default function Page() {
         if (!res.ok) {
           const message = await readApiError(res, `Failed to update ${source.name}`);
           throw new Error(`Failed to update ${source.name}: ${message}`);
-        }
-      }
-
-      const draftIds = new Set(draftFeedSources.map((source) => source.id));
-
-      for (const source of feedSources) {
-        if (draftIds.has(source.id)) continue;
-
-        const res = await fetch(`/api/feeds/${source.id}`, {
-          method: 'DELETE',
-        });
-
-        if (!res.ok) {
-          const message = await readApiError(res, `Failed to delete ${source.name}`);
-          throw new Error(`Failed to delete ${source.name}: ${message}`);
         }
       }
 
@@ -520,18 +402,11 @@ export default function Page() {
 
             <AdminFeedSettings
               feedError={feedError}
-              feedForm={feedForm}
-              setFeedForm={setFeedForm}
-              saveFeedSource={saveFeedSource}
               feedSaving={feedSaving}
-              editingFeedId={editingFeedId}
-              resetFeedForm={resetFeedForm}
               hasPendingFeedChanges={hasPendingFeedChanges}
               feedLoading={feedLoading}
               draftFeedSources={draftFeedSources}
               toggleFeedEnabled={toggleFeedEnabled}
-              startEditFeed={startEditFeed}
-              removeFeedSource={removeFeedSource}
               applyFeedChanges={applyFeedChanges}
             />
 
