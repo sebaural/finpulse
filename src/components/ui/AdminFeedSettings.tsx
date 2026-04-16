@@ -1,13 +1,11 @@
-import { FeedParser, FeedSource } from '@/types';
+import { FeedSource } from '@/types';
 
 interface FeedFormState {
   name: string;
   type: 'rss' | 'api';
   url: string;
   category: string;
-  parser: FeedParser;
   apiKeyEnv: string;
-  refreshIntervalSec: number;
   priority: 1 | 2 | 3;
   enabled: boolean;
 }
@@ -25,6 +23,7 @@ interface AdminFeedSettingsProps {
   draftFeedSources: FeedSource[];
   toggleFeedEnabled: (source: FeedSource) => void;
   startEditFeed: (source: FeedSource) => void;
+  removeFeedSource: (sourceId: string) => void;
   applyFeedChanges: () => void;
 }
 
@@ -41,6 +40,7 @@ export function AdminFeedSettings({
   draftFeedSources,
   toggleFeedEnabled,
   startEditFeed,
+  removeFeedSource,
   applyFeedChanges,
 }: AdminFeedSettingsProps) {
   return (
@@ -63,7 +63,6 @@ export function AdminFeedSettings({
             setFeedForm((prev) => ({
               ...prev,
               type: e.target.value as 'rss' | 'api',
-              parser: e.target.value === 'rss' ? 'custom' : 'json',
             }))
           }
         >
@@ -82,31 +81,11 @@ export function AdminFeedSettings({
           value={feedForm.category}
           onChange={(e) => setFeedForm((prev) => ({ ...prev, category: e.target.value }))}
         />
-        <select
-          className="feed-input"
-          value={feedForm.parser}
-          onChange={(e) =>
-            setFeedForm((prev) => ({ ...prev, parser: e.target.value as FeedParser }))
-          }
-        >
-          <option value="custom">custom</option>
-          <option value="json">json</option>
-          <option value="rss2json">rss2json</option>
-        </select>
         <input
           className="feed-input"
           placeholder="API key env (optional)"
           value={feedForm.apiKeyEnv}
           onChange={(e) => setFeedForm((prev) => ({ ...prev, apiKeyEnv: e.target.value }))}
-        />
-        <input
-          className="feed-input"
-          type="number"
-          min={15}
-          value={feedForm.refreshIntervalSec}
-          onChange={(e) =>
-            setFeedForm((prev) => ({ ...prev, refreshIntervalSec: Number(e.target.value) || 60 }))
-          }
         />
         <select
           className="feed-input"
@@ -156,11 +135,14 @@ export function AdminFeedSettings({
               <div className="feed-row-main">
                 <div className="feed-row-name">{source.name}</div>
                 <div className="feed-row-meta">
-                  {source.type.toUpperCase()} • {source.category} • {source.refreshIntervalSec}s
+                  {source.type.toUpperCase()} • {source.category}
                 </div>
               </div>
               <button className="action-btn" onClick={() => startEditFeed(source)}>
                 Edit
+              </button>
+              <button className="action-btn" onClick={() => void removeFeedSource(source.id)}>
+                Delete
               </button>
             </div>
           ))}

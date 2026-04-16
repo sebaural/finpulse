@@ -13,11 +13,7 @@ function sanitizeUpdate(input: UpdateInput): UpdateInput {
   if (typeof input.url === 'string') out.url = input.url.trim();
   if (typeof input.enabled === 'boolean') out.enabled = input.enabled;
   if (typeof input.category === 'string') out.category = input.category.trim();
-  if (input.parser && ['rss2json', 'json', 'custom'].includes(input.parser)) out.parser = input.parser;
   if (typeof input.apiKeyEnv === 'string') out.apiKeyEnv = input.apiKeyEnv.trim() || undefined;
-  if (typeof input.refreshIntervalSec === 'number' && input.refreshIntervalSec >= 15) {
-    out.refreshIntervalSec = input.refreshIntervalSec;
-  }
   if (input.priority && [1, 2, 3].includes(input.priority)) out.priority = input.priority;
 
   return out;

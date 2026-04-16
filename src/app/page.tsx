@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
-import type { FeedParser, FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
+import type { FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
 
 import { MarketTicker } from '@/components/market/MarketTicker';
 import { MarketSnapshot } from '@/components/market/MarketSnapshot';
@@ -31,9 +31,7 @@ interface FeedFormState {
   type: 'rss' | 'api';
   url: string;
   category: string;
-  parser: FeedParser;
   apiKeyEnv: string;
-  refreshIntervalSec: number;
   priority: 1 | 2 | 3;
   enabled: boolean;
 }
@@ -77,9 +75,7 @@ const initialFeedFormState: FeedFormState = {
   type: 'rss',
   url: '',
   category: 'Markets',
-  parser: 'custom',
   apiKeyEnv: '',
-  refreshIntervalSec: 60,
   priority: 2,
   enabled: true,
 };
@@ -94,9 +90,7 @@ function feedSignature(items: FeedSource[]): string {
         url: s.url,
         enabled: s.enabled,
         category: s.category,
-        parser: s.parser,
         apiKeyEnv: s.apiKeyEnv ?? '',
-        refreshIntervalSec: s.refreshIntervalSec,
         priority: s.priority,
       }))
       .sort((a, b) => a.id.localeCompare(b.id)),
@@ -115,6 +109,26 @@ function clientRelativeTime(publishedAt: string | undefined, fallback: string): 
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = (await response.text()).trim();
+    if (!body) return fallback;
+
+    try {
+      const parsed = JSON.parse(body) as { error?: unknown };
+      if (typeof parsed.error === 'string' && parsed.error.trim()) {
+        return parsed.error.trim();
+      }
+    } catch {
+      // Fall through to raw response body.
+    }
+
+    return body;
+  } catch {
+    return fallback;
+  }
 }
 
 export default function Page() {
@@ -199,7 +213,7 @@ export default function Page() {
     try {
       const res = await fetch('/api/feeds', { cache: 'no-store' });
       if (!res.ok) {
-        setFeedError('Unable to load feed sources');
+        setFeedError(await readApiError(res, 'Unable to load feed sources'));
         return;
       }
 
@@ -226,9 +240,7 @@ export default function Page() {
       type: source.type,
       url: source.url,
       category: source.category,
-      parser: source.parser,
       apiKeyEnv: source.apiKeyEnv ?? '',
-      refreshIntervalSec: source.refreshIntervalSec,
       priority: source.priority,
       enabled: source.enabled,
     });
@@ -249,9 +261,7 @@ export default function Page() {
       url: feedForm.url.trim(),
       enabled: feedForm.enabled,
       category: feedForm.category.trim(),
-      parser: feedForm.parser,
       apiKeyEnv: feedForm.apiKeyEnv.trim() || undefined,
-      refreshIntervalSec: feedForm.refreshIntervalSec,
       priority: feedForm.priority,
     };
 
@@ -272,6 +282,14 @@ export default function Page() {
     );
   }
 
+  async function removeFeedSource(sourceId: string) {
+    setDraftFeedSources((prev) => prev.filter((source) => source.id !== sourceId));
+
+    if (editingFeedId === sourceId) {
+      resetFeedForm();
+    }
+  }
+
   async function applyFeedChanges() {
     setFeedSaving(true);
     setFeedError(null);
@@ -284,7 +302,7 @@ export default function Page() {
         const isDraft = source.id.startsWith('draft-');
 
         if (isDraft) {
-          await fetch('/api/feeds', {
+          const res = await fetch('/api/feeds', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -293,12 +311,16 @@ export default function Page() {
               url: source.url,
               enabled: source.enabled,
               category: source.category,
-              parser: source.parser,
               apiKeyEnv: source.apiKeyEnv,
-              refreshIntervalSec: source.refreshIntervalSec,
               priority: source.priority,
             }),
           });
+
+          if (!res.ok) {
+            const message = await readApiError(res, `Failed to add ${source.name}`);
+            throw new Error(`Failed to add ${source.name}: ${message}`);
+          }
+
           continue;
         }
 
@@ -306,7 +328,7 @@ export default function Page() {
         if (!base) continue;
         if (feedSignature([base]) === feedSignature([source])) continue;
 
-        await fetch(`/api/feeds/${source.id}`, {
+        const res = await fetch(`/api/feeds/${source.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -315,18 +337,38 @@ export default function Page() {
             url: source.url,
             enabled: source.enabled,
             category: source.category,
-            parser: source.parser,
             apiKeyEnv: source.apiKeyEnv,
-            refreshIntervalSec: source.refreshIntervalSec,
             priority: source.priority,
           }),
         });
+
+        if (!res.ok) {
+          const message = await readApiError(res, `Failed to update ${source.name}`);
+          throw new Error(`Failed to update ${source.name}: ${message}`);
+        }
+      }
+
+      const draftIds = new Set(draftFeedSources.map((source) => source.id));
+
+      for (const source of feedSources) {
+        if (draftIds.has(source.id)) continue;
+
+        const res = await fetch(`/api/feeds/${source.id}`, {
+          method: 'DELETE',
+        });
+
+        if (!res.ok) {
+          const message = await readApiError(res, `Failed to delete ${source.name}`);
+          throw new Error(`Failed to delete ${source.name}: ${message}`);
+        }
       }
 
       await loadFeedSources();
       await refresh();
-    } catch {
-      setFeedError('Failed to apply feed changes');
+    } catch (error) {
+      setFeedError(
+        error instanceof Error ? error.message : 'Failed to apply feed changes',
+      );
     } finally {
       setFeedSaving(false);
     }
@@ -489,6 +531,7 @@ export default function Page() {
               draftFeedSources={draftFeedSources}
               toggleFeedEnabled={toggleFeedEnabled}
               startEditFeed={startEditFeed}
+              removeFeedSource={removeFeedSource}
               applyFeedChanges={applyFeedChanges}
             />
 

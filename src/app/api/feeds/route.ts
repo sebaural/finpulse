@@ -10,9 +10,7 @@ interface CreateFeedSourceInput {
   url?: string;
   enabled?: boolean;
   category?: string;
-  parser?: 'rss2json' | 'json' | 'custom';
   apiKeyEnv?: string;
-  refreshIntervalSec?: number;
   priority?: 1 | 2 | 3;
 }
 
@@ -21,12 +19,6 @@ function validateCreateInput(input: CreateFeedSourceInput): string | null {
   if (!input.type || (input.type !== 'rss' && input.type !== 'api')) return 'type must be rss or api';
   if (!input.url?.trim()) return 'url is required';
   if (!input.category?.trim()) return 'category is required';
-  if (!input.parser || !['rss2json', 'json', 'custom'].includes(input.parser)) {
-    return 'parser must be rss2json, json, or custom';
-  }
-  if (typeof input.refreshIntervalSec !== 'number' || input.refreshIntervalSec < 15) {
-    return 'refreshIntervalSec must be a number >= 15';
-  }
   if (!input.priority || ![1, 2, 3].includes(input.priority)) {
     return 'priority must be 1, 2, or 3';
   }
@@ -61,9 +53,7 @@ export async function POST(request: Request) {
     url: body.url!.trim(),
     enabled: body.enabled ?? true,
     category: body.category!.trim(),
-    parser: body.parser!,
     apiKeyEnv: body.apiKeyEnv?.trim() || undefined,
-    refreshIntervalSec: body.refreshIntervalSec!,
     priority: body.priority!,
   };
 

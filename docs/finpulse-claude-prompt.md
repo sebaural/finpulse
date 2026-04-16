@@ -27,7 +27,7 @@ DATABASE_URL=
 NEWSAPI_KEY=
 NEXT_PUBLIC_FINNHUB_KEY=
 MARKETAUX_KEY=
-NEXT_PUBLIC_FMP_API_KEY=
+FMP_API_KEY=
 GNEWS_API_KEY=
 ELEVENLABS_API_KEY=        # optional
 OPENAI_API_KEY=            # optional
@@ -61,8 +61,6 @@ OPENAI_API_KEY=            # optional
 ```ts
 // types/feed.ts
 
-export type FeedParser = 'rss2json' | 'json' | 'custom';
-
 export interface FeedSource {
   id: string;
   name: string;
@@ -70,9 +68,7 @@ export interface FeedSource {
   url: string;
   enabled: boolean;
   category: string;
-  parser: FeedParser;
   apiKeyEnv?: string;       // e.g. "REUTERS_API_KEY"
-  refreshIntervalSec: number;
   priority: number;         // 1 = breaking, 2 = important, 3 = regular
 }
 
@@ -104,8 +100,8 @@ app/
 
 **Logic (in order):**
 1. Load all enabled `FeedSource` entries.
-2. Fetch each feed in parallel (respect `refreshIntervalSec`).
-3. Parse each response with the designated parser and normalise to `NewsItem[]`.
+2. Fetch each feed in parallel.
+3. Parse each response by source type/provider and normalise to `NewsItem[]`.
 4. Deduplicate using: title+domain hash → canonical URL comparison → fuzzy similarity.
 5. Sort by `publishedAt` descending.
 6. Cache the resulting array for 15–60 seconds (Redis or in-memory).
@@ -218,7 +214,7 @@ Each card in the live feed must render:
 Prefix requests with the phase and area, e.g.:
 
 ```
-[Phase 1 / API] Implement the /api/news route handler. Start with Reuters RSS and Seeking Alpha RSS. Use rss2json as the parser. Add in-memory caching for 30 seconds.
+[Phase 1 / API] Implement the /api/news route handler. Start with Reuters RSS and Seeking Alpha RSS. Parse by source type/provider and add in-memory caching for 30 seconds.
 ```
 
 ```

@@ -16,9 +16,7 @@ const defaultSources: FeedSource[] = [
     url: 'https://api.marketaux.com/v1/news/all?filter_entities=true&language=en&limit=20',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'MARKETAUX_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
   {
@@ -28,9 +26,7 @@ const defaultSources: FeedSource[] = [
     url: 'https://finnhub.io/api/v1/news?category=general',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'FINNHUB_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
   {
@@ -40,9 +36,7 @@ const defaultSources: FeedSource[] = [
     url: 'https://newsapi.org/v2/top-headlines?category=business&language=en&pageSize=20',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'NEWSAPI_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
   {
@@ -52,9 +46,7 @@ const defaultSources: FeedSource[] = [
     url: 'https://gnews.io/api/v4/top-headlines?topic=business&lang=en&max=20',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'GNEWS_API_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
   {
@@ -64,9 +56,7 @@ const defaultSources: FeedSource[] = [
     url: 'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets&sort=LATEST&limit=20',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'ALPHAVANTAGE_API_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
   {
@@ -76,16 +66,14 @@ const defaultSources: FeedSource[] = [
     url: 'https://financialmodelingprep.com/stable/news/latest?limit=20',
     enabled: false,
     category: 'Markets',
-    parser: 'json',
     apiKeyEnv: 'FMP_API_KEY',
-    refreshIntervalSec: 60,
     priority: 2,
   },
 ];
 
 function normalizeSources(sources: FeedSource[]): FeedSource[] {
   const byId = new Map(sources.map((source) => [source.id, source]));
-  return defaultSources.map((source) => {
+  const normalizedDefaults = defaultSources.map((source) => {
     const existing = byId.get(source.id);
     if (!existing) {
       return source;
@@ -98,9 +86,13 @@ function normalizeSources(sources: FeedSource[]): FeedSource[] {
       type: source.type,
       url: source.url,
       apiKeyEnv: source.apiKeyEnv,
-      parser: source.parser,
     };
   });
+
+  const defaultIds = new Set(defaultSources.map((source) => source.id));
+  const customSources = sources.filter((source) => !defaultIds.has(source.id));
+
+  return [...normalizedDefaults, ...customSources];
 }
 
 export async function listFeedSources(): Promise<FeedSource[]> {
