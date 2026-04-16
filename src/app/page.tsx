@@ -53,7 +53,7 @@ type CategoryFilterKey =
 type PriorityFilterKey = 'all' | 'breaking' | 'important' | 'regular';
 
 const categoryFilterOptions: Array<{ key: CategoryFilterKey; label: string }> = [
-  { key: 'all', label: 'All categories' },
+  { key: 'all', label: 'All Categories' },
   { key: 'markets', label: 'Markets' },
   { key: 'economy', label: 'Economy' },
   { key: 'equities', label: 'Equities' },
