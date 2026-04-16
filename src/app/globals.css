@@ -107,6 +107,38 @@ nav {
   gap: 8px;
 }
 
+.header-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-filter-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.header-filter-select {
+  min-width: 120px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-dm-sans), sans-serif;
+  padding: 5px 8px;
+  outline: none;
+}
+
+.header-filter-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(232, 184, 75, 0.25);
+}
+
 .nav-btn,
 .filter-tab,
 .read-btn,
@@ -884,6 +916,19 @@ nav {
     padding: 14px 20px;
   }
 
+  .header-filters {
+    gap: 8px;
+  }
+
+  .header-filter-field {
+    font-size: 11px;
+  }
+
+  .header-filter-select {
+    min-width: 108px;
+    padding: 4px 7px;
+  }
+
   .page {
     padding: 20px 16px;
   }
@@ -903,8 +948,24 @@ nav {
     height: 18px;
   }
 
-  nav {
-    display: none;
+  header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .header-filters {
+    gap: 6px;
+  }
+
+  .header-filter-field {
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  .header-filter-select {
+    min-width: 92px;
+    font-size: 11px;
+    padding: 3px 6px;
   }
 
   .card-actions {

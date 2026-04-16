@@ -11,6 +11,7 @@ import { MarketSnapshot } from '@/components/market/MarketSnapshot';
 import { NewsCard } from '@/components/news/NewsCard';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
+import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import { VoicePlayer } from '@/components/ui/VoicePlayer';
 import { AdminFeedSettings } from '@/components/ui/AdminFeedSettings';
 
@@ -37,7 +38,7 @@ interface FeedFormState {
   enabled: boolean;
 }
 
-type FilterKey =
+type CategoryFilterKey =
   | 'all'
   | 'markets'
   | 'economy'
@@ -49,7 +50,9 @@ type FilterKey =
   | 'tech'
   | 'energy';
 
-const filterTabs: Array<{ key: FilterKey; label: string }> = [
+type PriorityFilterKey = 'all' | 'breaking' | 'important' | 'regular';
+
+const categoryFilterOptions: Array<{ key: CategoryFilterKey; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'markets', label: 'Markets' },
   { key: 'economy', label: 'Economy' },
@@ -60,6 +63,13 @@ const filterTabs: Array<{ key: FilterKey; label: string }> = [
   { key: 'geopolitics', label: 'Geopolitics' },
   { key: 'tech', label: 'Tech' },
   { key: 'energy', label: 'Energy' },
+];
+
+const priorityFilterOptions: Array<{ key: PriorityFilterKey; label: string }> = [
+  { key: 'all', label: 'All Priorities' },
+  { key: 'breaking', label: 'Breaking' },
+  { key: 'important', label: 'Important' },
+  { key: 'regular', label: 'Regular' },
 ];
 
 const initialFeedFormState: FeedFormState = {
@@ -111,7 +121,8 @@ export default function Page() {
   const [allArticles, setAllArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFallbackBanner, setShowFallbackBanner] = useState(false);
-  const [filter, setFilter] = useState<FilterKey>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilterKey>('all');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterKey>('all');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [, setTick] = useState(0);
@@ -128,9 +139,24 @@ export default function Page() {
   const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
-    if (filter === 'all') return allArticles;
-    return allArticles.filter((a) => a.category.toLowerCase() === filter);
-  }, [allArticles, filter]);
+    const categoryFiltered =
+      categoryFilter === 'all'
+        ? allArticles
+        : allArticles.filter((article) => article.category.toLowerCase() === categoryFilter);
+
+    if (priorityFilter === 'all') return categoryFiltered;
+
+    const targetImportance =
+      priorityFilter === 'breaking' ? 1 : priorityFilter === 'important' ? 2 : 3;
+
+    return [...categoryFiltered].sort((a, b) => {
+      const aRank = a.importance === targetImportance ? 0 : 1;
+      const bRank = b.importance === targetImportance ? 0 : 1;
+
+      if (aRank !== bRank) return aRank - bRank;
+      return a.importance - b.importance;
+    });
+  }, [allArticles, categoryFilter, priorityFilter]);
 
   const selectableVoices = useMemo(
     () => voices.filter((voice) => voice.lang.startsWith('en') || voice.lang === 'ru'),
@@ -388,17 +414,14 @@ export default function Page() {
           <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={22} height={22} priority />
           <span>FinPulse</span>
         </div>
-        <nav>
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`nav-btn ${filter === tab.key ? 'active' : ''}`}
-              onClick={() => setFilter(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <HeaderFilters
+          categoryFilter={categoryFilter}
+          priorityFilter={priorityFilter}
+          categoryOptions={categoryFilterOptions}
+          priorityOptions={priorityFilterOptions}
+          onCategoryChange={setCategoryFilter}
+          onPriorityChange={setPriorityFilter}
+        />
       </header>
 
       <div className="page">
