@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { listFeedSources, saveFeedSources } from './feedsStore';
+import { clearNewsCache } from '../news/newsCache';
 import type { FeedSource } from '../../../types';
 
 interface CreateFeedSourceInput {
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
 
   sources.push(source);
   await saveFeedSources(sources);
+  clearNewsCache();
 
   return NextResponse.json({ source }, { status: 201 });
 }

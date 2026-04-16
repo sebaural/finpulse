@@ -10,21 +10,12 @@ import {
   timeAgo,
 } from '../../../services/news';
 import { listFeedSources } from '../feeds/feedsStore';
+import { getNewsCache, setNewsCache } from './newsCache';
 import { newsProviderEnv } from '../../../lib/env';
 import type { FeedSource, NewsArticle } from '../../../types';
 
 const PROVIDER_TIMEOUT_MS = 7000;
 const CACHE_TTL_MS = 30_000; // 30 seconds
-
-interface CacheEntry {
-  articles: NewsArticle[];
-  usingFallback: boolean;
-  timestamp: number;
-  provider: string;
-  sourcesSignature: string;
-}
-
-let newsCache: CacheEntry | null = null;
 
 interface ProviderResult {
   provider: string;
@@ -629,6 +620,7 @@ export async function GET() {
   const now = Date.now();
   const enabledSources = await getEnabledSources();
   const currentSignature = sourcesSignature(enabledSources);
+  const newsCache = getNewsCache();
 
   // Serve from cache if still fresh
   if (
@@ -657,13 +649,13 @@ export async function GET() {
     const sanitizedArticles = sanitizeArticles(mergedArticles);
     const providerName = liveResults.map((result) => result.provider).join(',');
 
-    newsCache = {
+    setNewsCache({
       articles: sanitizedArticles,
       usingFallback: false,
       timestamp: now,
       provider: providerName,
       sourcesSignature: currentSignature,
-    };
+    });
 
     return NextResponse.json(
       {

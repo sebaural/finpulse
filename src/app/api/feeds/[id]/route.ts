@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { listFeedSources, saveFeedSources } from '../feedsStore';
+import { clearNewsCache } from '../../news/newsCache';
 import type { FeedSource } from '../../../../types';
 
 type UpdateInput = Partial<Omit<FeedSource, 'id'>>;
@@ -50,6 +51,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   sources[idx] = next;
   await saveFeedSources(sources);
+  clearNewsCache();
 
   return NextResponse.json({ source: next });
 }
@@ -65,5 +67,6 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
   }
 
   await saveFeedSources(next);
+  clearNewsCache();
   return NextResponse.json({ ok: true });
 }
