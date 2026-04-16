@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, DM_Serif_Display, Playfair_Display } from 'next/font/google';
+import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 import './globals.css';
 
@@ -15,12 +15,6 @@ const dmSerif = DM_Serif_Display({
   variable: '--font-dm-serif',
 });
 
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['700', '900'],
-  variable: '--font-playfair',
-});
-
 export const metadata: Metadata = {
   title: 'FinPulse - Financial News',
   description: 'Live financial headlines with read-aloud controls and market snapshot widgets.',
@@ -34,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable} ${playfair.variable}`}>
+      <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable}`}>
         {children}
       </body>
     </html>
