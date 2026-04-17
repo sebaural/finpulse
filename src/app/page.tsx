@@ -335,7 +335,7 @@ export default function Page() {
 
       <header>
         <div className="logo">
-          <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={22} height={22} priority />
+          <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={40} height={40} priority />
           <span>FinPulse</span>
         </div>
         <HeaderFilters
