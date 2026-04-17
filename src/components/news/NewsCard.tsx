@@ -3,18 +3,14 @@ import { NewsArticle } from '@/types';
 interface ArticleCardProps {
   article: NewsArticle;
   isReading: boolean;
-  isSaved: boolean;
   onRead: (id: string) => void;
-  onToggleSave: (id: string) => void;
   relativeTime: string;
 }
 
 export function NewsCard({
   article,
   isReading,
-  isSaved,
   onRead,
-  onToggleSave,
   relativeTime,
 }: ArticleCardProps) {
   const priorityCls =
@@ -67,24 +63,7 @@ export function NewsCard({
         >
           ▶ Play
         </button>
-        <button
-          className="action-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            void navigator.clipboard.writeText(`${article.title}\n${article.link}`);
-          }}
-        >
-          Copy
-        </button>
-        <button
-          className={`action-btn save-btn ${isSaved ? 'active' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSave(article.id);
-          }}
-        >
-          {isSaved ? 'Saved' : 'Save'}
-        </button>
+
       </div>
     </article>
   );

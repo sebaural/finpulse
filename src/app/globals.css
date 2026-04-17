@@ -935,7 +935,7 @@ nav {
     margin-bottom: 0px;
     padding: 10px 0 20px;
     position: sticky;
-    top: 49px;
+    top: 48px;
   }
 
   .player-controls {
@@ -1137,11 +1137,6 @@ nav {
   background: rgba(232, 184, 75, 0.08);
 }
 
-.action-btn.save-btn.active {
-  color: var(--positive);
-  border-color: rgba(62, 207, 142, 0.4);
-  background: rgba(62, 207, 142, 0.1);
-}
 
 .action-btn:disabled {
   opacity: 0.35;

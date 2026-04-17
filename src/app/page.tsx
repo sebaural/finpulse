@@ -118,7 +118,6 @@ export default function Page() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterKey>('all');
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterKey>('all');
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
   const [, setTick] = useState(0);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
@@ -285,37 +284,6 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!hasHydrated) return;
-
-    try {
-      const raw = window.localStorage.getItem('finpulse:saved-article-ids');
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        setSavedIds(parsed.filter((id): id is string => typeof id === 'string'));
-      }
-    } catch {
-      // Ignore malformed localStorage data.
-    }
-  }, [hasHydrated]);
-
-  const toggleSaved = (articleId: string) => {
-    setSavedIds((prev) => {
-      const next = prev.includes(articleId)
-        ? prev.filter((id) => id !== articleId)
-        : [...prev, articleId];
-
-      try {
-        window.localStorage.setItem('finpulse:saved-article-ids', JSON.stringify(next));
-      } catch {
-        // Ignore quota/storage errors.
-      }
-
-      return next;
-    });
-  };
-
-  useEffect(() => {
     if (!hasHydrated || !('speechSynthesis' in window)) return;
 
     const loadVoices = () => {
@@ -389,9 +357,7 @@ export default function Page() {
                     key={article.id}
                     article={article}
                     isReading={speech.currentArticleId === article.id}
-                    isSaved={savedIds.includes(article.id)}
                     onRead={speech.readById}
-                    onToggleSave={toggleSaved}
                     relativeTime={clientRelativeTime(article.publishedAt, article.time)}
                   />
                 ))}
