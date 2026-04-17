@@ -946,8 +946,8 @@ nav {
   .player-controls .voice-select {
     flex: 1 1 100%;
     min-width: 0;
-    width: 100%;
-    max-width: 100%;
+    width: 78%;
+    max-width: 78%;
   }
 
   .voice-player {
