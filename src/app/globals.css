@@ -488,14 +488,22 @@ nav {
   gap: 22px;
 }
 
+
+.player-holder {
+  background: var(--bg);
+  padding: 30px 0;
+  position: sticky;
+  top: 57px;
+  z-index: 50;
+  align-self: flex-start;
+  margin-top: -30px;
+}
+
 .voice-player {
   background: linear-gradient(135deg, #141820, #0e1117);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 10px;
-  position: sticky;
-  top: 72px;
-  z-index: 50;
 }
 
 .player-label {
@@ -523,7 +531,8 @@ nav {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .ctrl-btn {
@@ -570,7 +579,8 @@ nav {
 }
 
 @supports (-moz-appearance: none) {
-  .voice-player {
+  .voice-player,
+  .player-holder {
     overflow: hidden;
   }
 
@@ -911,6 +921,33 @@ nav {
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .player-holder {
+    z-index: 80;
+    margin-top: 0;
+    margin-bottom: 0px;
+    padding: 10px 0 20px;
+    position: sticky;
+    top: 49px;
+  }
+
+  .player-controls {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .player-controls .voice-select {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .voice-player {

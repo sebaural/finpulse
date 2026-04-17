@@ -350,7 +350,15 @@ export default function Page() {
 
       <div className="page">
         <div className="layout">
-          <div>
+          <div className="main-content">
+            <div className="player-holder">
+            <VoicePlayer
+              speech={speech}
+              filteredArticles={filteredArticles}
+              selectableVoices={selectableVoices}
+              hasHydrated={hasHydrated}
+            />
+</div>
             {hero && (
               <HeroCard article={hero} onRead={speech.readById} />
             )}
@@ -391,13 +399,6 @@ export default function Page() {
           </div>
 
           <aside className="sidebar">
-            <VoicePlayer
-              speech={speech}
-              filteredArticles={filteredArticles}
-              selectableVoices={selectableVoices}
-              hasHydrated={hasHydrated}
-            />
-
             <MarketSnapshot rows={marketRows} isLive={marketLive} />
 
             <AdminFeedSettings
