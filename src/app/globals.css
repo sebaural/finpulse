@@ -984,6 +984,23 @@ nav {
 }
 
 @media (max-width: 600px) {
+  .ticker-wrap,
+  header,
+  .page {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  main,
+  .layout,
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
   .hero-title {
     font-size: 22px;
   }
@@ -1000,6 +1017,10 @@ nav {
   header {
     padding: 4px 12px;
     gap: 8px;
+  }
+
+  .page {
+    padding: 20px 12px;
   }
 
   .filters-holder {
