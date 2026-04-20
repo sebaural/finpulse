@@ -306,27 +306,27 @@ export default function Page() {
           <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={40} height={40} priority />
           <span>FinPulse</span>
         </div>
-        <HeaderFilters
-          categoryFilter={categoryFilter}
-          priorityFilter={priorityFilter}
-          categoryOptions={categoryFilterOptions}
-          priorityOptions={priorityFilterOptions}
-          onCategoryChange={setCategoryFilter}
-          onPriorityChange={setPriorityFilter}
-        />
       </header>
 
       <div className="page">
         <div className="layout">
           <div className="main-content">
-            <div className="player-holder">
-            <VoicePlayer
-              speech={speech}
-              filteredArticles={filteredArticles}
-              selectableVoices={selectableVoices}
-              hasHydrated={hasHydrated}
-            />
-</div>
+            <div className="controls-holder">
+              <VoicePlayer
+                speech={speech}
+                filteredArticles={filteredArticles}
+                selectableVoices={selectableVoices}
+                hasHydrated={hasHydrated}
+              />
+              <HeaderFilters
+                categoryFilter={categoryFilter}
+                priorityFilter={priorityFilter}
+                categoryOptions={categoryFilterOptions}
+                priorityOptions={priorityFilterOptions}
+                onCategoryChange={setCategoryFilter}
+                onPriorityChange={setPriorityFilter}
+              />
+            </div>
             {hero && (
               <HeroCard article={hero} onRead={speech.readById} />
             )}

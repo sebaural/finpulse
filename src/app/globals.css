@@ -110,10 +110,12 @@ nav {
   gap: 8px;
 }
 
-.header-filters {
+.filters-holder {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  justify-content: flex-end;
+  align-self: flex-end;
 }
 
 .header-filter-field {
@@ -490,14 +492,17 @@ nav {
 }
 
 
-.player-holder {
+.controls-holder {
   background: var(--bg);
-  padding: 30px 0;
+  padding: 30px 0 12px;
   position: sticky;
   top: 57px;
   z-index: 50;
   align-self: flex-start;
   margin-top: -30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .voice-player {
@@ -581,7 +586,7 @@ nav {
 
 @supports (-moz-appearance: none) {
   .voice-player,
-  .player-holder {
+  .controls-holder {
     overflow: hidden;
   }
 
@@ -930,7 +935,7 @@ nav {
     max-width: 100%;
   }
 
-  .player-holder {
+  .controls-holder {
     z-index: 80;
     margin-top: 0;
     margin-bottom: 0px;
@@ -960,7 +965,7 @@ nav {
     padding: 14px 20px;
   }
 
-  .header-filters {
+  .filters-holder {
     gap: 8px;
   }
 
@@ -997,7 +1002,7 @@ nav {
     gap: 8px;
   }
 
-  .header-filters {
+  .filters-holder {
     gap: 6px;
   }
 
