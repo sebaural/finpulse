@@ -1,0 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+
+.nav-menu { display: contents; }
+
+/* ── Desktop nav ── */
+.nav-desktop {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+}
+.nav-desktop-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #1a1410;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s, color 0.15s;
+}
+.nav-desktop-link:hover,
+.nav-desktop-link.active {
+  color: #7a3b1e;
+  border-bottom-color: #7a3b1e;
+}
+/* Dark header variant (home page) */
+nav.nav-menu[data-variant="dark"] .nav-desktop-link {
+  color: rgba(240, 234, 216, 0.7);
+}
+nav.nav-menu[data-variant="dark"] .nav-desktop-link:hover,
+nav.nav-menu[data-variant="dark"] .nav-desktop-link.active {
+  color: #f0ead8;
+  border-bottom-color: rgba(240, 234, 216, 0.6);
+}
+.nav-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7a3b1e;
+  flex-shrink: 0;
+}
+
+/* ── Hamburger button ── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+}
+.nav-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1a1410;
+  border-radius: 1px;
+  transition: transform 0.25s ease, opacity 0.25s ease, width 0.25s ease;
+  transform-origin: center;
+}
+nav.nav-menu[data-variant="dark"] .nav-bar { background: #f0ead8; }
+/* Open state animations */
+.nav-hamburger.open .nav-bar-top    { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open .nav-bar-mid    { opacity: 0; width: 0; }
+.nav-hamburger.open .nav-bar-bot    { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Backdrop ──
+   position:fixed is set via inline style on the element to guarantee it is
+   always relative to the viewport regardless of any ancestor containing-block
+   (backdrop-filter, overflow, transform on a parent element). */
+.nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 20, 16, 0.5);
+  z-index: 9998;
+  backdrop-filter: blur(2px);
+}
+.nav-backdrop.visible { display: block; }
+
+/* ── Drawer ──
+   Same note as backdrop: position:fixed guaranteed via inline style. */
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100dvh;
+  background: #f5f0e8;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 24px rgba(26, 20, 16, 0.18);
+}
+.nav-drawer.open { transform: translateX(0); }
+
+.nav-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #c8b89a;
+}
+.nav-drawer-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #7a3b1e;
+}
+.nav-drawer-close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #c8b89a;
+  cursor: pointer;
+  font-size: 16px;
+  color: #1a1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-drawer-close:hover {
+  background: #1a1410;
+  color: #f5f0e8;
+}
+
+.nav-drawer-links {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  list-style: none;
+}
+.nav-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #1a1410;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.nav-drawer-link:hover {
+  background: #ede6d4;
+}
+.nav-drawer-link.active {
+  border-left-color: #7a3b1e;
+  color: #7a3b1e;
+  background: #ede6d4;
+}
+
+.nav-drawer-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #c8b89a;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #8b7355;
+  letter-spacing: 0.08em;
+}
+
+/* ── Responsive breakpoint ── */
+@media (max-width: 767px) {
+  .nav-desktop  { display: none; }
+  .nav-hamburger { display: flex; }
+}

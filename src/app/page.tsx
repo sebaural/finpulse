@@ -14,6 +14,7 @@ import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import { VoicePlayer } from '@/components/ui/VoicePlayer';
 import { AdminFeedSettings } from '@/components/ui/AdminFeedSettings';
+import NavMenu from '@/components/NavMenu';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -306,6 +307,7 @@ export default function Page() {
           <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={40} height={40} priority />
           <span>FinPulse</span>
         </div>
+        <NavMenu />
       </header>
 
       <div className="page">

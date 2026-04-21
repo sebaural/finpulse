@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/geopolitics/generate",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

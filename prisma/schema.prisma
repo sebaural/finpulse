@@ -1,0 +1,27 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model SummaryArticle {
+  id             String   @id @default(cuid())
+  title          String   @unique
+  summary        String   @db.Text
+  keyPoints      Json
+  sourceArticles Json
+  region         String
+  tags           Json
+  date           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([date])
+  @@index([createdAt])
+  @@map("summary_articles")
+}
