@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Inconsolata:wght@200..900&display=swap');
 
 .geo-root *,
 .geo-root *::before,
@@ -9,45 +9,56 @@
 }
 
 .geo-root {
+  --bg: #0a0c0f;
+  --surface: #111418;
+  --surface2: #181c22;
+  --border: #1e2530;
+  --text: #e8eaf0;
+  --muted: #6b7385;
+  --accent: #e8b84b;
+  --accent2: #4b9fe8;
+  --positive: #3ecf8e;
+  --negative: #f55f5f;
+
   min-height: 100vh;
-  background: #f5f0e8;
-  color: #1a1410;
-  font-family: 'Source Serif 4', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Fira Sans', sans-serif;
 }
 
 /* ── Page Header ── */
 .geo-header {
   text-align: center;
-  padding: 48px 24px 32px;
-  border-bottom: 3px double #1a1410;
-  background: #f5f0e8;
+  padding: 8px 20px 12px;
+  border-bottom: 3px double var(--border);
+  background: var(--bg);
 }
 .geo-eyebrow {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 11px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #7a3b1e;
+  color: var(--accent);
   margin-bottom: 10px;
 }
 .geo-masthead {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.05;
-  color: #1a1410;
+  color: var(--text);
   letter-spacing: -0.01em;
 }
 .geo-masthead em {
   font-style: italic;
   font-weight: 700;
-  color: #7a3b1e;
+  color: var(--accent);
 }
 .geo-tagline {
-  font-family: 'Source Serif 4', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
   font-size: 15px;
-  color: #5a4a3a;
+  color: var(--muted);
   margin-top: 10px;
 }
 .geo-statusbar {
@@ -55,17 +66,17 @@
   gap: 24px;
   margin-top: 18px;
   padding: 8px 20px;
-  border: 1px solid #c8b89a;
-  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
 }
 .geo-statusbar-item {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 11px;
-  color: #5a4a3a;
+  color: var(--muted);
   letter-spacing: 0.05em;
 }
 .geo-statusbar-item strong {
-  color: #1a1410;
+  color: var(--text);
 }
 
 /* ── Layout ── */
@@ -77,66 +88,66 @@
 
 /* ── Sidebar ── */
 .geo-sidebar {
-  border-right: 1px solid #c8b89a;
+  border-right: 1px solid var(--border);
   height: calc(100vh - 200px);
   overflow-y: auto;
   position: sticky;
   top: 0;
-  background: #f0ead8;
+  background: var(--surface);
 }
 .geo-sidebar-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #c8b89a;
-  font-family: 'DM Mono', monospace;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #7a3b1e;
+  color: var(--accent);
 }
 .geo-sidebar-item {
   padding: 14px 20px;
-  border-bottom: 1px solid #e0d8c8;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.15s;
 }
 .geo-sidebar-item:hover {
-  background: #e8dfc8;
+  background: var(--surface2);
 }
 .geo-sidebar-item.active {
-  background: #1a1410;
-  border-left: 3px solid #7a3b1e;
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
   padding-left: 17px;
 }
 .geo-sidebar-date {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: #8b7355;
+  color: var(--muted);
   text-transform: uppercase;
   margin-bottom: 6px;
 }
 .geo-sidebar-item.active .geo-sidebar-date {
-  color: #c8b89a;
+  color: var(--accent);
 }
 .geo-sidebar-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 13px;
   line-height: 1.4;
-  color: #1a1410;
+  color: var(--text);
   font-weight: 600;
 }
 .geo-sidebar-item.active .geo-sidebar-title {
-  color: #f5f0e8;
+  color: var(--accent);
 }
 .geo-sidebar-region {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
-  color: #7a3b1e;
+  color: var(--muted);
   margin-top: 6px;
   letter-spacing: 0.08em;
 }
 .geo-sidebar-item.active .geo-sidebar-region {
-  color: #c8b89a;
+  color: var(--accent);
 }
 
 /* ── Main Content ── */
@@ -154,28 +165,28 @@
   flex-wrap: wrap;
 }
 .geo-region-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #7a3b1e;
-  border: 1px solid #7a3b1e;
+  color: var(--accent);
+  border: 1px solid var(--accent);
   padding: 3px 10px;
 }
 .geo-article-date {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 11px;
-  color: #8b7355;
+  color: var(--muted);
   letter-spacing: 0.05em;
 }
 
 /* Headline */
 .geo-headline {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(24px, 3vw, 40px);
   font-weight: 900;
   line-height: 1.15;
-  color: #1a1410;
+  color: var(--text);
   margin-bottom: 20px;
   letter-spacing: -0.01em;
 }
@@ -183,7 +194,7 @@
 /* Double rule */
 .geo-rule {
   border: none;
-  border-top: 3px double #1a1410;
+  border-top: 3px double var(--border);
   margin-bottom: 24px;
 }
 
@@ -193,7 +204,7 @@
   column-gap: 40px;
   font-size: 16px;
   line-height: 1.75;
-  color: #2a1f18;
+  color: var(--text);
   margin-bottom: 40px;
 }
 .geo-body p {
@@ -201,44 +212,44 @@
   break-inside: avoid;
 }
 .geo-body p:first-of-type::first-letter {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 4.5em;
   font-weight: 900;
   line-height: 0.8;
   float: left;
   margin-right: 8px;
   margin-top: 4px;
-  color: #7a3b1e;
+  color: var(--accent);
 }
 
 /* Key Takeaways */
 .geo-takeaways {
   margin-bottom: 36px;
-  border-top: 1px solid #c8b89a;
+  border-top: 1px solid var(--border);
   padding-top: 24px;
 }
 .geo-takeaways-title {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #7a3b1e;
+  color: var(--accent);
   margin-bottom: 16px;
 }
 .geo-takeaway-item {
   display: flex;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid #e0d8c8;
+  border-bottom: 1px solid var(--border);
   font-size: 15px;
   line-height: 1.55;
-  color: #2a1f18;
+  color: var(--text);
 }
 .geo-takeaway-item:last-child {
   border-bottom: none;
 }
 .geo-takeaway-arrow {
-  color: #7a3b1e;
+  color: var(--accent);
   flex-shrink: 0;
   margin-top: 2px;
   font-style: normal;
@@ -252,25 +263,25 @@
   margin-bottom: 40px;
 }
 .geo-tag {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: 1px solid #8b7355;
-  color: #5a4a3a;
+  border: 1px solid var(--border);
+  color: var(--muted);
   padding: 4px 10px;
   background: transparent;
 }
 
 /* Sources grid */
 .geo-sources-title {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #7a3b1e;
+  color: var(--accent);
   margin-bottom: 14px;
-  border-top: 1px solid #c8b89a;
+  border-top: 1px solid var(--border);
   padding-top: 24px;
 }
 .geo-sources-grid {
@@ -279,34 +290,34 @@
   gap: 12px;
 }
 .geo-source-card {
-  border: 1px solid #c8b89a;
+  border: 1px solid var(--border);
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--surface);
   transition: background 0.15s;
 }
 .geo-source-card:hover {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--surface2);
 }
 .geo-source-name {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Inconsolata', monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #7a3b1e;
+  color: var(--accent);
   margin-bottom: 6px;
 }
 .geo-source-link {
-  font-family: 'Source Serif 4', Georgia, serif;
+  font-family: 'Fira Sans', sans-serif;
   font-size: 13px;
   line-height: 1.4;
-  color: #1a1410;
+  color: var(--text);
   text-decoration: none;
-  border-bottom: 1px solid #c8b89a;
+  border-bottom: 1px solid var(--border);
   transition: border-color 0.15s, color 0.15s;
 }
 .geo-source-link:hover {
-  color: #7a3b1e;
-  border-color: #7a3b1e;
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Empty state */
@@ -324,20 +335,23 @@
   font-size: 64px;
 }
 .geo-empty-heading {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 26px;
   font-weight: 700;
-  color: #1a1410;
+  color: var(--text);
 }
 .geo-empty-text {
   font-size: 15px;
-  color: #8b7355;
+  color: var(--muted);
   max-width: 380px;
   line-height: 1.6;
 }
 
 /* Mobile */
 @media (max-width: 768px) {
+  .geo-header {
+    padding: 0px 12px 12px;
+  }
   .geo-layout {
     grid-template-columns: 1fr;
   }

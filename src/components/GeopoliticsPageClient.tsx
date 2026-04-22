@@ -33,8 +33,8 @@ export default function GeopoliticsPageClient({ articles }: Props) {
   return (
     <div className="geo-root">
         {/* ── Top nav bar ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 24px', borderBottom: '1px solid #c8b89a', background: '#f5f0e8' }}>
-          <NavMenu variant="light" />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 24px', borderBottom: '1px solid #1e2530', background: '#111418' }}>
+          <NavMenu variant="dark" />
         </div>
 
         {/* ── Page Header ── */}
