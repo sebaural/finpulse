@@ -119,7 +119,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
     voice: null,
     currentArticleId: null,
     progressPct: 0,
-    mode: 'summary',
+    mode: 'headline',
     breakingOnly: false,
     muteUntil: null,
     currentArticleTitle: null,

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
 import type { FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
@@ -150,6 +150,7 @@ export default function Page() {
   }, [allArticles, categoryFilter, priorityFilter]);
 
   const speech = useSpeechReader(filteredArticles);
+  const newsFeedRef = useRef<HTMLDivElement | null>(null);
   const hasPendingFeedChanges = useMemo(
     () => feedSignature(feedSources) !== feedSignature(draftFeedSources),
     [feedSources, draftFeedSources],
@@ -278,6 +279,38 @@ export default function Page() {
     return () => window.clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!speech.autoplay || !speech.isPlaying) return;
+
+    const feedEl = newsFeedRef.current;
+    if (!feedEl) return;
+
+    const currentCard = feedEl.querySelector<HTMLElement>('.news-card.is-reading');
+    if (!currentCard) return;
+
+    const alignReadingCard = () => {
+      const feedRect = feedEl.getBoundingClientRect();
+      const cardRect = currentCard.getBoundingClientRect();
+
+      const visibleTop = Math.max(feedRect.top, 0);
+      const visibleBottom = Math.min(feedRect.bottom, window.innerHeight);
+
+      if (visibleBottom <= visibleTop) return;
+
+      const visibleFeedCenter = visibleTop + (visibleBottom - visibleTop) / 2;
+      const cardCenter = cardRect.top + cardRect.height / 2;
+      const delta = cardCenter - visibleFeedCenter;
+
+      if (Math.abs(delta) < 2) return;
+
+      window.scrollBy({ top: delta, behavior: 'smooth' });
+    };
+
+    // Wait one frame so measurements use the updated reading-card class/layout.
+    const raf = window.requestAnimationFrame(alignReadingCard);
+    return () => window.cancelAnimationFrame(raf);
+  }, [speech.autoplay, speech.isPlaying, speech.currentArticleId]);
+
   return (
     <>
       <MarketTicker items={tickerItems} />
@@ -321,7 +354,7 @@ export default function Page() {
               )}
             </div>
 
-            <div className="news-feed">
+            <div className="news-feed" ref={newsFeedRef}>
               {loading && [1, 2, 3].map((n) => <div key={n} className="loading-card skeleton-block" />)}
 
               {!loading && filteredArticles.length === 0 && (
