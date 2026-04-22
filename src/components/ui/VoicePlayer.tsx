@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useSpeechReader } from '@/hooks/useSpeechReader';
 import type { ReadMode } from '@/hooks/useSpeechReader';
 
@@ -12,15 +11,7 @@ const MODE_LABELS: Record<ReadMode, string> = {
   full:     'Full',
 };
 
-function relativeTime(ts: number): string {
-  const s = Math.floor((Date.now() - ts) / 1000);
-  if (s < 60)   return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return `${Math.floor(s / 3600)}h ago`;
-}
-
 export function VoicePlayer({ speech }: VoicePlayerProps) {
-  const [showHistory, setShowHistory] = useState(false);
   const isClientReady = speech.hasHydrated;
 
   const statusLabel = speech.isMuted
@@ -69,8 +60,8 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
       {isClientReady && speech.currentArticleId && (
         <div className="vp-now-reading">
           <span className="vp-now-label">Now:</span>
-          <span className="vp-now-title" title={speech.history[0]?.title}>
-            {speech.history[0]?.title ?? '—'}
+          <span className="vp-now-title" title={speech.currentArticleTitle ?? undefined}>
+            {speech.currentArticleTitle ?? '—'}
           </span>
         </div>
       )}
@@ -105,7 +96,7 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
         <button className="ctrl-btn" onClick={speech.next}             title="Next">►</button>
         <button className="ctrl-btn" onClick={speech.stopReading}      title="Stop">■</button>
         <button className="ctrl-btn" onClick={speech.replayLast}       title="Replay last"
-          disabled={!isClientReady || speech.history.length === 0}>↺</button>
+          disabled={!isClientReady || !speech.lastSpokenId}>↺</button>
 
         <select
           className="speed-select"
@@ -176,30 +167,6 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
         <div className="progress-fill" style={{ width: `${speech.progressPct}%` }} />
       </div>
 
-      {/* ── History ── */}
-      {isClientReady && speech.history.length > 0 && (
-        <div className="vp-history">
-          <button
-            className="vp-history-header"
-            onClick={() => setShowHistory((v) => !v)}
-            aria-expanded={showHistory}
-          >
-            <span>Recent ({speech.history.length})</span>
-            <span>{showHistory ? '▲' : '▼'}</span>
-          </button>
-          {showHistory && (
-            <ul className="vp-history-list">
-              {speech.history.map((item) => (
-                <li key={`${item.id}-${item.readAt}`} className="vp-history-item">
-                  <div className="vp-history-source">{item.source}</div>
-                  <div className="vp-history-title">{item.title}</div>
-                  <div className="vp-history-time">{relativeTime(item.readAt)}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </div>
   );
 }

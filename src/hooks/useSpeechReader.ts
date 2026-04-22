@@ -5,13 +5,6 @@ import type { NewsArticle } from '../types';
 
 export type ReadMode = 'headline' | 'summary' | 'full';
 
-export interface HistoryItem {
-  id: string;
-  title: string;
-  source: string;
-  readAt: number;
-}
-
 // ── Text preprocessing ────────────────────────────────────────────────────────
 
 const TICKER_MAP: Record<string, string> = {
@@ -98,7 +91,7 @@ interface SpeechState {
   mode: ReadMode;
   breakingOnly: boolean;
   muteUntil: number | null;
-  history: HistoryItem[];
+  currentArticleTitle: string | null;
 }
 
 // ── Main hook ─────────────────────────────────────────────────────────────────
@@ -111,6 +104,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
   const autoplayRef      = useRef(false);
   const breakingOnlyRef  = useRef(false);
   const spokenIdsRef     = useRef<Set<string>>(new Set());
+  const lastSpokenIdRef  = useRef<string | null>(null);
 
   const hasHydrated = useSyncExternalStore(subscribeToHydration, getHydrationSnapshot, () => false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -128,7 +122,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
     mode: 'summary',
     breakingOnly: false,
     muteUntil: null,
-    history: [],
+    currentArticleTitle: null,
   });
 
   // Keep refs in sync
@@ -239,15 +233,13 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
       utterance.onstart = () => {
         spokenIdsRef.current.add(article.id);
+        lastSpokenIdRef.current = article.id;
         setState((prev) => ({
           ...prev,
           isPlaying: true,
           isPaused: false,
           currentArticleId: article.id,
-          history: [
-            { id: article.id, title: article.title, source: article.source, readAt: Date.now() },
-            ...prev.history.filter((h) => h.id !== article.id).slice(0, 9),
-          ],
+          currentArticleTitle: article.title,
         }));
       };
 
@@ -340,11 +332,14 @@ export function useSpeechReader(articles: NewsArticle[]) {
     [articles, currentIndex, readById],
   );
 
+  const lastSpokenId = lastSpokenIdRef.current;
+
   const replayLast = useCallback(() => {
-    if (!state.history.length) return;
-    const article = articlesRef.current.find((a) => a.id === state.history[0].id);
+    const id = lastSpokenIdRef.current;
+    if (!id) return;
+    const article = articlesRef.current.find((a) => a.id === id);
     if (article) speakArticle(article);
-  }, [speakArticle, state.history]);
+  }, [speakArticle]);
 
   const muteFor = useCallback(
     (minutes: number) => {
@@ -362,6 +357,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
     ...state,
     isMuted,
     hasHydrated,
+    lastSpokenId,
     selectableVoices,
     nextArticle,
     readById,
