@@ -71,7 +71,12 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
   const apiKey = process.env.NEWS_API_KEY;
   if (!apiKey) throw new Error('NEWS_API_KEY environment variable is not set');
 
-  const today = new Date().toISOString().split('T')[0];
+  // Use a 2-day lookback: NewsAPI indexes articles with a delay, so
+  // restricting to today returns 0 results. Sort by publishedAt (freshest
+  // first) since same-day articles have no popularity signal yet.
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
   const query = encodeURIComponent(
     'geopolitics OR "international relations" OR "foreign policy" OR diplomacy',
   );
@@ -80,8 +85,8 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
     `https://newsapi.org/v2/everything` +
     `?q=${query}` +
     `&language=en` +
-    `&sortBy=popularity` +
-    `&from=${today}` +
+    `&sortBy=publishedAt` +
+    `&from=${twoDaysAgo}` +
     `&pageSize=5` +
     `&apiKey=${apiKey}`;
 
@@ -234,6 +239,14 @@ export async function getSummaryArticleByDate(date: string): Promise<SummaryArti
 
 export async function runDailyGeopoliticsPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopGeopoliticsArticles();
+
+  if (articles.length === 0) {
+    throw new Error(
+      'No articles returned from NewsAPI. The API key may be invalid, ' +
+      'the plan may not support the requested date range, or the query returned no results.',
+    );
+  }
+
   const generated = await generateSummaryArticle(articles);
   const saved = await saveSummaryArticle(generated);
   return saved;

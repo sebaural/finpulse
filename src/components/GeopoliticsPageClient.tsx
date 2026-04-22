@@ -39,13 +39,9 @@ export default function GeopoliticsPageClient({ articles }: Props) {
 
         {/* ── Page Header ── */}
         <header className="geo-header">
-          <p className="geo-eyebrow">Intelligence Briefing</p>
           <h1 className="geo-masthead">
             Geopolitics <em>of the Day</em>
           </h1>
-          <p className="geo-tagline">
-            AI-synthesized analysis of today&apos;s most consequential global developments
-          </p>
           <div className="geo-statusbar">
             <span className="geo-statusbar-item">
               <strong>Updated</strong> daily at 08:00 UTC
