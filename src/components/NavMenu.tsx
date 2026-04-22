@@ -137,9 +137,6 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
               ))}
             </ul>
 
-            <div className="nav-drawer-footer">
-              AI-powered geopolitical intelligence
-            </div>
           </div>
         </>,
         document.body,
