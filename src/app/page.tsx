@@ -1,7 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
 import type { FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
@@ -12,9 +13,13 @@ import { NewsCard } from '@/components/news/NewsCard';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
-import { VoicePlayer } from '@/components/ui/VoicePlayer';
 import { AdminFeedSettings } from '@/components/ui/AdminFeedSettings';
 import NavMenu from '@/components/NavMenu';
+
+const VoicePlayer = dynamic<{ speech: ReturnType<typeof useSpeechReader> }>(
+  () => import('@/components/ui/VoicePlayer').then((mod) => mod.VoicePlayer),
+  { ssr: false },
+);
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -78,10 +83,6 @@ function feedSignature(items: FeedSource[]): string {
   );
 }
 
-function subscribeToHydration() {
-  return () => {};
-}
-
 function clientRelativeTime(publishedAt: string | undefined, fallback: string): string {
   if (!publishedAt) return fallback;
   const diff = (Date.now() - new Date(publishedAt).getTime()) / 1000;
@@ -118,7 +119,6 @@ export default function Page() {
   const [showFallbackBanner, setShowFallbackBanner] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilterKey>('all');
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterKey>('all');
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [, setTick] = useState(0);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
@@ -128,7 +128,6 @@ export default function Page() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedSaving, setFeedSaving] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
-  const hasHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   const filteredArticles = useMemo(() => {
     const categoryFiltered =
@@ -149,11 +148,6 @@ export default function Page() {
       return a.importance - b.importance;
     });
   }, [allArticles, categoryFilter, priorityFilter]);
-
-  const selectableVoices = useMemo(
-    () => voices.filter((voice) => voice.lang.startsWith('en') || voice.lang === 'ru'),
-    [voices],
-  );
 
   const speech = useSpeechReader(filteredArticles);
   const hasPendingFeedChanges = useMemo(
@@ -284,20 +278,6 @@ export default function Page() {
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    if (!hasHydrated || !('speechSynthesis' in window)) return;
-
-    const loadVoices = () => {
-      setVoices(window.speechSynthesis.getVoices());
-    };
-
-    loadVoices();
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
-    return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
-    };
-  }, [hasHydrated]);
-
   return (
     <>
       <MarketTicker items={tickerItems} />
@@ -314,12 +294,7 @@ export default function Page() {
         <div className="layout">
           <div className="main-content">
             <div className="controls-holder">
-              <VoicePlayer
-                speech={speech}
-                filteredArticles={filteredArticles}
-                selectableVoices={selectableVoices}
-                hasHydrated={hasHydrated}
-              />
+              <VoicePlayer speech={speech} />
               <HeaderFilters
                 categoryFilter={categoryFilter}
                 priorityFilter={priorityFilter}

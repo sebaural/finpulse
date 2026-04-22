@@ -1,103 +1,206 @@
+import { useState } from 'react';
 import { useSpeechReader } from '@/hooks/useSpeechReader';
-import { NewsArticle } from '@/types';
+import type { ReadMode } from '@/hooks/useSpeechReader';
 
 interface VoicePlayerProps {
   speech: ReturnType<typeof useSpeechReader>;
-  filteredArticles: NewsArticle[];
-  selectableVoices: SpeechSynthesisVoice[];
-  hasHydrated: boolean;
 }
 
-export function VoicePlayer({
-  speech,
-  filteredArticles,
-  selectableVoices,
-  hasHydrated,
-}: VoicePlayerProps) {
-  const currentArticle = filteredArticles.find((a) => a.id === speech.currentArticleId);
+const MODE_LABELS: Record<ReadMode, string> = {
+  headline: 'Headline',
+  summary:  'Summary',
+  full:     'Full',
+};
+
+function relativeTime(ts: number): string {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60)   return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  return `${Math.floor(s / 3600)}h ago`;
+}
+
+export function VoicePlayer({ speech }: VoicePlayerProps) {
+  const [showHistory, setShowHistory] = useState(false);
+  const isClientReady = speech.hasHydrated;
+
+  const statusLabel = speech.isMuted
+    ? 'MUTED'
+    : speech.isPlaying
+    ? 'LIVE'
+    : speech.isPaused
+    ? 'PAUSED'
+    : 'READY';
+
+  const statusClass = speech.isMuted
+    ? 'muted'
+    : speech.isPlaying
+    ? 'live'
+    : speech.isPaused
+    ? 'paused'
+    : 'off';
+
+  const muteRemaining = isClientReady && speech.muteUntil
+    ? Math.max(0, Math.ceil((speech.muteUntil - Date.now()) / 60000))
+    : 0;
 
   return (
     <div className="voice-player">
+      {/* ── Label + status ── */}
       <div className="player-label">
-        AI Voice Reader
+        <span>AI Voice Reader</span>
+        <span className={`vp-status-badge ${statusClass}`}>
+          {statusLabel}{speech.isMuted && muteRemaining > 0 ? ` ${muteRemaining}m` : ''}
+        </span>
         <div className={`wave-container ${speech.isPlaying ? 'speaking' : ''}`} aria-hidden="true">
-          <div className="wave-bar" />
-          <div className="wave-bar" />
-          <div className="wave-bar" />
-          <div className="wave-bar" />
+          <div className="wave-bar" /><div className="wave-bar" />
+          <div className="wave-bar" /><div className="wave-bar" />
           <div className="wave-bar" />
         </div>
       </div>
 
-      <div className="player-now-reading">
-        {currentArticle?.title ?? 'Select a story to read aloud'}
-      </div>
-
+      {/* ── Unsupported warning ── */}
       {speech.hasResolvedSupport && !speech.isSupported && (
         <div className="unsupported">
-          Text-to-speech is not supported in this browser. Use a modern Chromium-based browser.
+          Text-to-speech is not supported in this browser.
         </div>
       )}
 
+      {/* ── Now reading / up next ── */}
+      {isClientReady && speech.currentArticleId && (
+        <div className="vp-now-reading">
+          <span className="vp-now-label">Now:</span>
+          <span className="vp-now-title" title={speech.history[0]?.title}>
+            {speech.history[0]?.title ?? '—'}
+          </span>
+        </div>
+      )}
+      {isClientReady && speech.nextArticle && (
+        <div className="vp-next">
+          <span className="vp-now-label">Next:</span>
+          <span className="vp-next-title" title={speech.nextArticle.title}>
+            {speech.nextArticle.title}
+          </span>
+        </div>
+      )}
+
+      {/* ── Mode tabs ── */}
+      <div className="vp-mode-tabs" role="group" aria-label="Reading mode">
+        {(['headline', 'summary', 'full'] as ReadMode[]).map((m) => (
+          <button
+            key={m}
+            className={`vp-mode-tab${speech.mode === m ? ' active' : ''}`}
+            onClick={() => speech.setMode(m)}
+          >
+            {MODE_LABELS[m]}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Transport controls ── */}
       <div className="player-controls">
-        <button className="ctrl-btn" onClick={speech.prev} title="Previous">
-          Prev
+        <button className="ctrl-btn" onClick={speech.prev}             title="Previous">◄</button>
+        <button className="ctrl-btn play-main" onClick={speech.togglePlayPause} title="Play / Pause">
+          {speech.isPlaying ? '❙❙' : '▶'}
         </button>
-        <button className="ctrl-btn play-main" onClick={speech.togglePlayPause} title="Play/Pause">
-          {speech.isPlaying ? 'Pause' : 'Play'}
-        </button>
-        <button className="ctrl-btn" onClick={speech.next} title="Next">
-          Next
-        </button>
-        <button className="ctrl-btn" onClick={speech.stopReading} title="Stop">
-          Stop
-        </button>
+        <button className="ctrl-btn" onClick={speech.next}             title="Next">►</button>
+        <button className="ctrl-btn" onClick={speech.stopReading}      title="Stop">■</button>
+        <button className="ctrl-btn" onClick={speech.replayLast}       title="Replay last"
+          disabled={!isClientReady || speech.history.length === 0}>↺</button>
+
         <select
           className="speed-select"
           value={speech.speechRate}
           onChange={(e) => speech.setSpeechRate(Number(e.target.value))}
+          aria-label="Speed"
         >
-          <option value={0.8}>0.8x</option>
-          <option value={1}>1x</option>
-          <option value={1.2}>1.2x</option>
-          <option value={1.5}>1.5x</option>
-          <option value={2}>2x</option>
+          {[0.8, 1, 1.2, 1.5, 2].map((r) => (
+            <option key={r} value={r}>{r}x</option>
+          ))}
         </select>
+
         <select
           className="speed-select voice-select"
-          value={hasHydrated ? speech.voice?.voiceURI ?? '' : ''}
-          onChange={(event) => {
-            const selected = selectableVoices.find((voice) => voice.voiceURI === event.target.value) ?? null;
-            speech.setVoice(selected);
+          value={speech.hasHydrated ? speech.voice?.voiceURI ?? '' : ''}
+          onChange={(e) => {
+            const v = speech.selectableVoices.find((x) => x.voiceURI === e.target.value) ?? null;
+            speech.setVoice(v);
           }}
-          disabled={!hasHydrated || !speech.isSupported || selectableVoices.length === 0}
+          disabled={!speech.hasHydrated || !speech.isSupported || speech.selectableVoices.length === 0}
           suppressHydrationWarning
-          title="Voice"
+          aria-label="Voice"
         >
-          {!hasHydrated ? (
-            <option value="">Loading voices...</option>
-          ) : selectableVoices.length === 0 ? (
-            <option value="">No English/Russian voices</option>
+          {!speech.hasHydrated ? (
+            <option value="">Loading voices…</option>
+          ) : speech.selectableVoices.length === 0 ? (
+            <option value="">No voices available</option>
           ) : (
-            selectableVoices.map((voice) => (
-              <option key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name} ({voice.lang})
-              </option>
+            speech.selectableVoices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
             ))
           )}
         </select>
+      </div>
+
+      {/* ── Toggle row ── */}
+      <div className="vp-toggle-row">
         <button
-          className={`ctrl-btn ${speech.autoplay ? 'active' : ''}`}
+          className={`ctrl-btn${speech.autoplay ? ' active' : ''}`}
           onClick={speech.toggleAutoplay}
-          title="Auto-play all"
+          title="Auto-advance queue"
         >
           Auto
         </button>
+        <button
+          className={`ctrl-btn vp-breaking-btn${speech.breakingOnly ? ' active' : ''}`}
+          onClick={speech.toggleBreakingOnly}
+          title="Breaking news only"
+        >
+          ⚡ Breaking
+        </button>
+
+        {speech.isMuted ? (
+          <button className="ctrl-btn vp-mute-clear" onClick={speech.clearMute} title="Clear mute">
+            Unmute
+          </button>
+        ) : (
+          <>
+            <button className="ctrl-btn vp-mute-btn" onClick={() => speech.muteFor(5)}  title="Mute 5 min">5m</button>
+            <button className="ctrl-btn vp-mute-btn" onClick={() => speech.muteFor(15)} title="Mute 15 min">15m</button>
+            <button className="ctrl-btn vp-mute-btn" onClick={() => speech.muteFor(60)} title="Mute 60 min">60m</button>
+          </>
+        )}
       </div>
 
+      {/* ── Progress bar ── */}
       <div className="progress-bar" aria-label="Playback progress">
         <div className="progress-fill" style={{ width: `${speech.progressPct}%` }} />
       </div>
+
+      {/* ── History ── */}
+      {isClientReady && speech.history.length > 0 && (
+        <div className="vp-history">
+          <button
+            className="vp-history-header"
+            onClick={() => setShowHistory((v) => !v)}
+            aria-expanded={showHistory}
+          >
+            <span>Recent ({speech.history.length})</span>
+            <span>{showHistory ? '▲' : '▼'}</span>
+          </button>
+          {showHistory && (
+            <ul className="vp-history-list">
+              {speech.history.map((item) => (
+                <li key={`${item.id}-${item.readAt}`} className="vp-history-item">
+                  <div className="vp-history-source">{item.source}</div>
+                  <div className="vp-history-title">{item.title}</div>
+                  <div className="vp-history-time">{relativeTime(item.readAt)}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
