@@ -151,6 +151,7 @@ export default function Page() {
 
   const speech = useSpeechReader(filteredArticles);
   const newsFeedRef = useRef<HTMLDivElement | null>(null);
+  const controlsHolderRef = useRef<HTMLDivElement | null>(null);
   const hasPendingFeedChanges = useMemo(
     () => feedSignature(feedSources) !== feedSignature(draftFeedSources),
     [feedSources, draftFeedSources],
@@ -283,17 +284,44 @@ export default function Page() {
     if (!speech.autoplay || !speech.isPlaying) return;
 
     const feedEl = newsFeedRef.current;
+    const controlsEl = controlsHolderRef.current;
     if (!feedEl) return;
 
-    const currentCard = feedEl.querySelector<HTMLElement>('.news-card.is-reading');
-    if (!currentCard) return;
-
     const alignReadingCard = () => {
+      const currentCard = feedEl.querySelector<HTMLElement>('.news-card.is-reading');
+      if (!currentCard) return;
+
       const feedRect = feedEl.getBoundingClientRect();
       const cardRect = currentCard.getBoundingClientRect();
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
 
-      const visibleTop = Math.max(feedRect.top, 0);
-      const visibleBottom = Math.min(feedRect.bottom, window.innerHeight);
+      // On mobile, sticky header/player cover part of the viewport.
+      // Use the first actually visible y-position as the top bound.
+      let occludedTop = 0;
+
+      const headerEl = document.querySelector<HTMLElement>('header');
+      if (headerEl) {
+        const headerRect = headerEl.getBoundingClientRect();
+        if (headerRect.bottom > 0) {
+          occludedTop = Math.max(occludedTop, headerRect.bottom);
+        }
+      }
+
+      if (controlsEl) {
+        const controlsRect = controlsEl.getBoundingClientRect();
+        const controlsStyle = window.getComputedStyle(controlsEl);
+        const stickyTop = Number.parseFloat(controlsStyle.top || '0') || 0;
+        const isSticky = controlsStyle.position === 'sticky';
+        const isPinned = isSticky && controlsRect.top <= stickyTop + 1;
+
+        if (isPinned && controlsRect.bottom > 0) {
+          occludedTop = Math.max(occludedTop, controlsRect.bottom);
+        }
+      }
+
+      const mobileTopGap = window.matchMedia('(max-width: 960px)').matches ? 12 : 0;
+      const visibleTop = Math.max(feedRect.top, occludedTop + mobileTopGap);
+      const visibleBottom = Math.min(feedRect.bottom, viewportHeight);
 
       if (visibleBottom <= visibleTop) return;
 
@@ -303,12 +331,23 @@ export default function Page() {
 
       if (Math.abs(delta) < 2) return;
 
-      window.scrollBy({ top: delta, behavior: 'smooth' });
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({
+        top: window.scrollY + delta,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
     };
 
-    // Wait one frame so measurements use the updated reading-card class/layout.
-    const raf = window.requestAnimationFrame(alignReadingCard);
-    return () => window.cancelAnimationFrame(raf);
+    // Mobile layout/sticky positioning can settle a bit later than one frame.
+    const raf1 = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(alignReadingCard);
+    });
+    const timer = window.setTimeout(alignReadingCard, 80);
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.clearTimeout(timer);
+    };
   }, [speech.autoplay, speech.isPlaying, speech.currentArticleId]);
 
   return (
@@ -326,7 +365,7 @@ export default function Page() {
       <div className="page">
         <div className="layout">
           <div className="main-content">
-            <div className="controls-holder">
+            <div className="controls-holder" ref={controlsHolderRef}>
               <VoicePlayer speech={speech} />
               <HeaderFilters
                 categoryFilter={categoryFilter}
