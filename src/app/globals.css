@@ -150,7 +150,6 @@ nav {
 .filter-tab,
 .read-btn,
 .ctrl-btn,
-.speed-select,
 .inline-retry {
   font-family: var(--font-dm-sans), sans-serif;
 }
@@ -541,6 +540,7 @@ nav {
   gap: 10px;
   flex-wrap: nowrap;
   overflow: hidden;
+  margin: 6px 0 0;
 }
 
 .ctrl-btn {
@@ -548,7 +548,7 @@ nav {
   align-items: center;
   justify-content: center;
   min-width: 38px;
-  height: 28px;
+  height: 20px;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: var(--surface2);
@@ -590,14 +590,6 @@ nav {
   .voice-player,
   .controls-holder {
     overflow: hidden;
-  }
-
-  .player-controls .voice-select {
-    flex: 1 1 100%;
-    min-width: 0;
-    width: 100%;
-    max-width: 100%;
-    text-overflow: ellipsis;
   }
 }
 
@@ -951,13 +943,6 @@ nav {
     overflow: visible;
   }
 
-  .player-controls .voice-select {
-    flex: 1 1 100%;
-    min-width: 0;
-    width: 78%;
-    max-width: 78%;
-  }
-
   .voice-player {
     position: relative;
     top: 0;
@@ -1250,19 +1235,6 @@ nav {
   color: #0a0c0f;
 }
 
-/* ── Toggle row ── */
-.vp-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-.vp-breaking-btn.active {
-  color: var(--negative);
-  border-color: rgba(245,95,95,0.5);
-  background: rgba(245,95,95,0.08);
-}
 .vp-mute-btn {
   font-size: 11px;
   padding: 0 8px;

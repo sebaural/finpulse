@@ -58,6 +58,44 @@ function hasSpeechSupport(win: Window): boolean {
   return 'speechSynthesis' in win && typeof SpeechSynthesisUtterance !== 'undefined';
 }
 
+function pickPreferredVoice(all: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const byVoiceUri = all.find((v) => v.voiceURI === 'en-US-NYC');
+  if (byVoiceUri) return byVoiceUri;
+
+  const normalized = all.map((voice) => ({
+    voice,
+    name: voice.name.toLowerCase(),
+    uri: voice.voiceURI.toLowerCase(),
+    lang: voice.lang.toLowerCase(),
+  }));
+
+  const exactRequested = normalized.find(({ name, uri, lang }) =>
+    (name.includes('english') || lang === 'en-us') &&
+    (name.includes('america') || name.includes('american') || uri.includes('en-us')) &&
+    (name.includes('new york city') || name.includes('nyc') || uri.includes('nyc')) &&
+    (name.includes('female4') || uri.includes('female4')),
+  );
+  if (exactRequested) return exactRequested.voice;
+
+  const enUsNycFemale = normalized.find(({ name, uri, lang }) =>
+    (lang === 'en-us' || uri.includes('en-us')) &&
+    (name.includes('new york city') || name.includes('nyc') || uri.includes('nyc')) &&
+    (name.includes('female') || uri.includes('female')),
+  );
+  if (enUsNycFemale) return enUsNycFemale.voice;
+
+  const enUsFemale = normalized.find(({ name, uri, lang }) =>
+    (lang === 'en-us' || uri.includes('en-us')) &&
+    (name.includes('female') || uri.includes('female')),
+  );
+  if (enUsFemale) return enUsFemale.voice;
+
+  const anyEnUs = all.find((v) => v.lang === 'en-US');
+  if (anyEnUs) return anyEnUs;
+
+  return all.find((v) => v.lang.startsWith('en')) ?? null;
+}
+
 const hydrationListeners = new Set<() => void>();
 let hasHydratedSnapshot = false;
 
@@ -84,13 +122,10 @@ interface SpeechState {
   isPlaying: boolean;
   isPaused: boolean;
   autoplay: boolean;
-  speechRate: number;
   voice: SpeechSynthesisVoice | null;
   currentArticleId: string | null;
   progressPct: number;
   mode: ReadMode;
-  breakingOnly: boolean;
-  muteUntil: number | null;
   currentArticleTitle: string | null;
 }
 
@@ -102,12 +137,9 @@ export function useSpeechReader(articles: NewsArticle[]) {
   const readByIdRef      = useRef<(id: string) => void>(() => {});
   const articlesRef      = useRef(articles);
   const autoplayRef      = useRef(false);
-  const breakingOnlyRef  = useRef(false);
   const spokenIdsRef     = useRef<Set<string>>(new Set());
-  const lastSpokenIdRef  = useRef<string | null>(null);
 
   const hasHydrated = useSyncExternalStore(subscribeToHydration, getHydrationSnapshot, () => false);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const [state, setState] = useState<SpeechState>({
     hasResolvedSupport: false,
@@ -115,38 +147,27 @@ export function useSpeechReader(articles: NewsArticle[]) {
     isPlaying: false,
     isPaused: false,
     autoplay: false,
-    speechRate: 1,
     voice: null,
     currentArticleId: null,
     progressPct: 0,
     mode: 'headline',
-    breakingOnly: false,
-    muteUntil: null,
     currentArticleTitle: null,
   });
 
   // Keep refs in sync
   useEffect(() => { articlesRef.current = articles; }, [articles]);
   useEffect(() => { autoplayRef.current = state.autoplay; }, [state.autoplay]);
-  useEffect(() => { breakingOnlyRef.current = state.breakingOnly; }, [state.breakingOnly]);
   useEffect(() => { markHydrated(); }, []);
-
-  const isMuted = state.muteUntil !== null && Date.now() < state.muteUntil;
-
-  const selectableVoices = useMemo(
-    () => voices.filter((v) => v.lang.startsWith('en') || v.lang === 'ru'),
-    [voices],
-  );
 
   const currentIndex = useMemo(
     () => articles.findIndex((a) => a.id === state.currentArticleId),
     [articles, state.currentArticleId],
   );
 
-  const queuedArticles = useMemo(() => {
-    const pool = state.breakingOnly ? articles.filter((a) => a.importance === 1) : articles;
-    return [...pool].sort((a, b) => a.importance - b.importance);
-  }, [articles, state.breakingOnly]);
+  const queuedArticles = useMemo(
+    () => [...articles].sort((a, b) => a.importance - b.importance),
+    [articles],
+  );
 
   const nextArticle = useMemo(() => {
     if (!state.autoplay || !state.currentArticleId) return null;
@@ -164,10 +185,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
     const assignVoice = () => {
       const all = window.speechSynthesis.getVoices();
-      setVoices(all);
-      const preferred =
-        all.find((v) => v.name === 'Google UK English Female') ??
-        all.find((v) => v.lang.startsWith('en')) ?? null;
+      const preferred = pickPreferredVoice(all);
       setState((prev) => {
         if (prev.voice?.voiceURI === preferred?.voiceURI) return prev;
         return { ...prev, voice: preferred };
@@ -208,7 +226,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
   const speakArticle = useCallback(
     (article: NewsArticle) => {
       if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
-      if (state.muteUntil !== null && Date.now() < state.muteUntil) return;
 
       clearProgressTimer();
       try { window.speechSynthesis.cancel(); }
@@ -226,14 +243,13 @@ export function useSpeechReader(articles: NewsArticle[]) {
         return;
       }
 
-      utterance.rate  = state.speechRate;
+      utterance.rate  = 1;
       utterance.pitch = 1;
       utterance.lang  = 'en-US';
       if (state.voice) utterance.voice = state.voice;
 
       utterance.onstart = () => {
         spokenIdsRef.current.add(article.id);
-        lastSpokenIdRef.current = article.id;
         setState((prev) => ({
           ...prev,
           isPlaying: true,
@@ -249,10 +265,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
         window.setTimeout(() => setState((prev) => ({ ...prev, progressPct: 0 })), 500);
 
         if (autoplayRef.current) {
-          const pool = breakingOnlyRef.current
-            ? articlesRef.current.filter((a) => a.importance === 1)
-            : articlesRef.current;
-          const sorted = [...pool].sort((a, b) => a.importance - b.importance);
+          const sorted = [...articlesRef.current].sort((a, b) => a.importance - b.importance);
           const idx = sorted.findIndex((a) => a.id === article.id);
           const next = sorted.length > 0 ? sorted[(idx + 1) % sorted.length] : null;
           if (next && next.id !== article.id) {
@@ -281,7 +294,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
         setState((prev) => ({ ...prev, hasResolvedSupport: true, isSupported: false, isPlaying: false }));
       }
     },
-    [clearProgressTimer, state.mode, state.muteUntil, state.speechRate, state.voice],
+    [clearProgressTimer, state.mode, state.voice],
   );
 
   // ── Public actions ────────────────────────────────────────────────────────
@@ -332,49 +345,17 @@ export function useSpeechReader(articles: NewsArticle[]) {
     [articles, currentIndex, readById],
   );
 
-  const lastSpokenId = lastSpokenIdRef.current;
-
-  const replayLast = useCallback(() => {
-    const id = lastSpokenIdRef.current;
-    if (!id) return;
-    const article = articlesRef.current.find((a) => a.id === id);
-    if (article) speakArticle(article);
-  }, [speakArticle]);
-
-  const muteFor = useCallback(
-    (minutes: number) => {
-      stopReading();
-      setState((prev) => ({ ...prev, muteUntil: Date.now() + minutes * 60 * 1000 }));
-    },
-    [stopReading],
-  );
-
-  const clearMute = useCallback(() => {
-    setState((prev) => ({ ...prev, muteUntil: null }));
-  }, []);
-
   return {
     ...state,
-    isMuted,
     hasHydrated,
-    lastSpokenId,
-    selectableVoices,
     nextArticle,
     readById,
-    replayLast,
     togglePlayPause,
     stopReading,
     next: () => jumpRelative(1),
     prev: () => jumpRelative(-1),
-    muteFor,
-    clearMute,
     setMode:             (mode: ReadMode) =>
                            setState((prev) => ({ ...prev, mode })),
-    setVoice:            (voice: SpeechSynthesisVoice | null) =>
-                           setState((prev) => ({ ...prev, voice })),
-    setSpeechRate:       (rate: number) =>
-                           setState((prev) => ({ ...prev, speechRate: rate })),
     toggleAutoplay:      () => setState((prev) => ({ ...prev, autoplay: !prev.autoplay })),
-    toggleBreakingOnly:  () => setState((prev) => ({ ...prev, breakingOnly: !prev.breakingOnly })),
   };
 }

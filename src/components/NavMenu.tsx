@@ -1,7 +1,7 @@
 // src/components/NavMenu.tsx
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -20,28 +20,36 @@ function isActive(href: string, pathname: string): boolean {
   return pathname.startsWith(href);
 }
 
+function subscribeNoop() {
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [openPath, setOpenPath] = useState<string | null>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
+  const open = openPath === pathname;
+  const closeMenu = () => setOpenPath(null);
+  const toggleMenu = () => setOpenPath((current) => (current === pathname ? null : pathname));
 
   // Hide the link for the current exact home route
   const visibleLinks = NAV_LINKS.filter(
     ({ href }) => !(href === '/' && pathname === '/'),
   );
 
-  // Close on route change
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   // Close on Escape
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') setOpenPath(null);
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -51,7 +59,7 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (open && drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpenPath(null);
       }
     }
     document.addEventListener('pointerdown', onPointerDown);
@@ -79,7 +87,7 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
         {/* Hamburger (mobile) */}
         <button
           className={`nav-hamburger${open ? ' open' : ''}`}
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleMenu}
           aria-label={open ? 'Close navigation' : 'Open navigation'}
           aria-expanded={open}
         >
@@ -99,7 +107,7 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
           <div
             className={`nav-backdrop${open ? ' visible' : ''}`}
             aria-hidden="true"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
           />
 
@@ -115,7 +123,7 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
               <span className="nav-drawer-label">Navigation</span>
               <button
                 className="nav-drawer-close"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
                 aria-label="Close navigation"
               >
                 ✕
@@ -128,7 +136,7 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
                   <Link
                     href={href}
                     className={`nav-drawer-link${isActive(href, pathname) ? ' active' : ''}`}
-                    onClick={() => setOpen(false)}
+                    onClick={closeMenu}
                   >
                     {href === '/geopolitics' && <span className="nav-dot" aria-hidden="true" />}
                     {label}
