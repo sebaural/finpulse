@@ -1,4 +1,9 @@
 // src/app/api/geopolitics/generate/route.ts
+//
+// Called by:
+//   • Vercel Cron (GET, daily at 08:00 UTC) — authenticated via CRON_SECRET
+//   • Manual POST (e.g. curl) — same CRON_SECRET auth
+//   • Local dev GET (no secret required when NODE_ENV=development)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runDailyGeopoliticsPipeline } from '@/lib/geopolitics-service';
@@ -8,15 +13,24 @@ async function runPipeline() {
   return NextResponse.json({ success: true, article });
 }
 
-export async function POST(req: NextRequest) {
+function isAuthorized(req: NextRequest): boolean {
+  // In local dev the secret is optional so the endpoint is easy to test.
+  if (process.env.NODE_ENV === 'development') return true;
+
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return false; // secret not configured → deny
+
+  const authHeader = req.headers.get('authorization') ?? '';
+  return authHeader === `Bearer ${cronSecret}`;
+}
+
+// Vercel Cron always uses GET.
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const authHeader = req.headers.get('authorization') ?? '';
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     return await runPipeline();
   } catch (err) {
     const details = err instanceof Error ? err.message : String(err);
@@ -24,12 +38,13 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
-  try {
-    if (process.env.NODE_ENV !== 'development') {
-      return NextResponse.json({ error: 'Not allowed in production' }, { status: 403 });
-    }
+// Keep POST for manual triggers (curl, Postman, etc.).
+export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
+  try {
     return await runPipeline();
   } catch (err) {
     const details = err instanceof Error ? err.message : String(err);
