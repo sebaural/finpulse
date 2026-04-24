@@ -16,7 +16,7 @@ const dmSerif = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'FinPulse - Financial News',
+  title: 'MacroStance - Financial News',
   description: 'Live financial headlines with read-aloud controls and market snapshot widgets.',
   icons: {
     icon: '/favicon.png',

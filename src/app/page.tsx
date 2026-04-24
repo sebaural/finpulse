@@ -356,8 +356,8 @@ export default function Page() {
 
       <header>
         <div className="logo">
-          <Image src="/logo.png" alt="FinPulse mark" className="logo-mark" width={40} height={40} priority />
-          <span>FinPulse</span>
+          <Image src="/logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+          <span>MacroStance</span>
         </div>
         <NavMenu />
       </header>

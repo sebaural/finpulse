@@ -171,7 +171,7 @@ async function fetchRssSource(url: string, sourceName: string): Promise<Provider
       method: 'GET',
       signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FinPulse/1.0)',
+        'User-Agent': 'Mozilla/5.0 (compatible; MacroStance/1.0)',
         Accept: 'application/rss+xml, application/xml, text/xml, */*',
       },
       cache: 'no-store',

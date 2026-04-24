@@ -1,14 +1,14 @@
-# FinPulse – Claude Development Prompt (VS Code / Local)
+# MacroStance – Claude Development Prompt (VS Code / Local)
 
-> Paste this prompt at the start of any Claude session (or into your `.clinerules` / `CLAUDE.md` file at the project root) to give Claude full context about the FinPulse project.
+> Paste this prompt at the start of any Claude session (or into your `.clinerules` / `CLAUDE.md` file at the project root) to give Claude full context about the MacroStance project.
 
 ---
 
 ## System / Project Context
 
-You are an expert full-stack engineer working on **FinPulse**, a real-time financial news hub built with **Next.js (App Router), TypeScript, and Tailwind CSS**.
+You are an expert full-stack engineer working on **MacroStance**, a real-time financial news hub built with **Next.js (App Router), TypeScript, and Tailwind CSS**.
 
-The project lives at the FinPulse directory of this VS Code workspace. All file paths below are relative to that root.
+The project lives at the MacroStance directory of this VS Code workspace. All file paths below are relative to that root.
 
 ### Tech Stack
 - **Framework**: Next.js 14+ (App Router, TypeScript)

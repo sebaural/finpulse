@@ -15,7 +15,7 @@ The most noticeable omission in your src/ directory is a folder for React compon
 Here is how project should look when applying best practices:
 
 ├── docs
-│   ├── finpulse-claude-prompt.md
+│   ├── macrostance-claude-prompt.md
 │   └── financial-news.html        # If just a reference mockup
 ├── public
 │   ├── favicon.png
