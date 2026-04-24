@@ -2,8 +2,8 @@ import { createClient } from '@vercel/kv';
 import type { FeedSource } from '../../../types';
 
 const kv = createClient({
-  url: process.env.MACROSTANCE_KV_REST_API_URL ?? process.env.KV_REST_API_URL ?? '',
-  token: process.env.MACROSTANCE_KV_REST_API_TOKEN ?? process.env.KV_REST_API_TOKEN ?? '',
+  url: process.env.FINPULSE_KV_REST_API_URL ?? process.env.KV_REST_API_URL ?? '',
+  token: process.env.FINPULSE_KV_REST_API_TOKEN ?? process.env.KV_REST_API_TOKEN ?? '',
 });
 
 const KV_KEY = 'feeds:config';
