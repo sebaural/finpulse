@@ -1,0 +1,488 @@
+/*
+ * VoicePlayer.module.css
+ *
+ * Self-contained styles for the VoicePlayer module.
+ *
+ * External dependencies (defined by the host application):
+ *   CSS variables: --bg, --surface, --surface2, --border, --text, --muted,
+ *                  --accent, --positive, --negative
+ *   Fonts: 'Cormorant Garamond' (serif), var(--font-dm-sans) (used by mode tabs)
+ *
+ * All class names are camelCase for CSS Modules.
+ */
+
+/* ── Player shell ─────────────────────────────────────────────────────────── */
+
+.voicePlayer {
+  background: linear-gradient(135deg, #141820, #0e1117);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+@supports (-moz-appearance: none) {
+  .voicePlayer {
+    overflow: hidden;
+  }
+}
+
+/* ── Header row: label + badge + wave + settings gear ── */
+
+.playerLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Status badge ── */
+
+.vpStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.live   { color: var(--positive); border-color: rgba(62, 207, 142, 0.35); background: rgba(62, 207, 142, 0.08); }
+.paused { color: var(--accent);   border-color: rgba(232, 184, 75, 0.35); background: rgba(232, 184, 75, 0.08); }
+.off    { color: var(--muted);    border-color: var(--border); }
+
+/* ── Wave animation ── */
+
+.waveContainer {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  margin-left: 8px;
+}
+
+.waveBar {
+  width: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: wave 1s ease-in-out infinite;
+  opacity: 0;
+}
+
+.speaking .waveBar { opacity: 1; }
+
+.waveBar:nth-child(1) { animation-delay: 0s;    height: 8px;  }
+.waveBar:nth-child(2) { animation-delay: 0.1s;  height: 14px; }
+.waveBar:nth-child(3) { animation-delay: 0.2s;  height: 20px; }
+.waveBar:nth-child(4) { animation-delay: 0.15s; height: 14px; }
+.waveBar:nth-child(5) { animation-delay: 0.05s; height: 8px;  }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.5); }
+  50%       { transform: scaleY(1.3); }
+}
+
+/* ── Settings gear button ── */
+
+.vpSettingsBtn {
+  margin-left: auto;
+  font-size: 14px;
+  min-width: 28px;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+/* ── Unsupported warning ── */
+
+.unsupported {
+  background: rgba(245, 95, 95, 0.08);
+  color: var(--negative);
+  border: 1px solid rgba(245, 95, 95, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+/* ── Now reading / up next ── */
+
+.vpNowReading,
+.vpNext {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 6px;
+  min-height: 18px;
+}
+.vpNowLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.vpNowTitle {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vpNextTitle {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Mode tabs ── */
+
+.vpModeTabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.vpModeTab {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.vpModeTab:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.2); }
+.vpModeTab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c0f;
+}
+
+/* ── Transport controls ── */
+
+.playerControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  margin: 6px 0 0;
+}
+
+.ctrlBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0 10px;
+}
+
+.playMain {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c0f;
+}
+
+.ctrlBtn:hover,
+.ctrlBtn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ctrlBtn.playMain:hover {
+  color: #0a0c0f;
+  background: #f5ca6a;
+}
+
+/* ── Progress bar ── */
+
+.progressBar {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #f5ca6a);
+  border-radius: 2px;
+  width: 0;
+  transition: width 0.3s;
+}
+
+/* ── Utility ── */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Voice Settings Modal                                                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.vsmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.vsmPanel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 520px;
+  max-width: 95vw;
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── Header ── */
+
+.vsmHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.vsmTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.vsmClose {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.vsmClose:hover { color: var(--negative); }
+
+/* ── Sections ── */
+
+.vsmSection {
+  margin-bottom: 18px;
+}
+.vsmSection:last-child { margin-bottom: 0; }
+
+.vsmSectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+/* ── Rule rows ── */
+
+.vsmRuleGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.vsmRuleRow {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vsmRuleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vsmRuleLabel {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.vsmRuleSub {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* ── Toggle switch ── */
+
+.vsmToggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 28px;
+  height: 15px;
+}
+
+.vsmToggleTrack {
+  display: block;
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.vsmToggleTrack.on { background: var(--accent); }
+
+.vsmToggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: left 0.2s, background 0.2s;
+}
+.vsmToggleThumb.on {
+  left: 15px;
+  background: #0a0c0f;
+}
+
+/* ── Policy / profile buttons ── */
+
+.vsmBtnRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vsmPolicyBtn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.vsmPolicyBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.vsmPolicyBtn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c0f;
+  font-weight: 700;
+}
+
+/* ── Selects grid ── */
+
+.vsmSelectsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.vsmSelectGroup {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsmSelectLabel {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vsmSelect {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 6px;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.vsmSelect:hover,
+.vsmSelect:focus { border-color: var(--accent); }
+
+/* ── Profile hint ── */
+
+.vsmProfileHint {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 560px) {
+  .vsmRuleGrid    { grid-template-columns: 1fr; }
+  .vsmSelectsGrid { grid-template-columns: 1fr; }
+  .vsmPanel       { padding: 14px; }
+}

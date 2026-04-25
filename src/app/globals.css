@@ -1247,4 +1247,270 @@ nav {
   background: rgba(62,207,142,0.1);
 }
 
+/* ── VoicePlayer new controls ───────────────────────────────────────────── */
+
+.player-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vp-settings-btn {
+  margin-left: auto;
+  font-size: 14px;
+  min-width: 28px;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+/* ── sr-only utility ─────────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Voice Settings Modal ─────────────────────────────────────────────────── */
+
+.vsm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.vsm-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 520px;
+  max-width: 95vw;
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── Header ── */
+
+.vsm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.vsm-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.vsm-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.vsm-close:hover { color: var(--negative); }
+
+/* ── Sections ── */
+
+.vsm-section {
+  margin-bottom: 18px;
+}
+.vsm-section:last-child { margin-bottom: 0; }
+
+.vsm-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+/* ── Rule rows ── */
+
+.vsm-rule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.vsm-rule-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vsm-rule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vsm-rule-label {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.vsm-rule-sub {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* ── Toggle ── */
+
+.vsm-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 28px;
+  height: 15px;
+}
+
+.vsm-toggle-track {
+  display: block;
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.vsm-toggle-track.on { background: var(--accent); }
+
+.vsm-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: left 0.2s, background 0.2s;
+}
+.vsm-toggle-thumb.on {
+  left: 15px;
+  background: #0a0c0f;
+}
+
+/* ── Policy / profile buttons ── */
+
+.vsm-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vsm-policy-btn {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.vsm-policy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.vsm-policy-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0c0f;
+  font-weight: 700;
+}
+
+/* ── Selects grid ── */
+
+.vsm-selects-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.vsm-select-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsm-select-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vsm-select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 6px;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.vsm-select:hover,
+.vsm-select:focus { border-color: var(--accent); }
+
+/* ── Profile hint ── */
+
+.vsm-profile-hint {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 560px) {
+  .vsm-rule-grid    { grid-template-columns: 1fr; }
+  .vsm-selects-grid { grid-template-columns: 1fr; }
+  .vsm-panel        { padding: 14px; }
+}
 

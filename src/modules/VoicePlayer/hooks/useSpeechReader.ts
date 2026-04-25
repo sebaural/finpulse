@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import type { NewsArticle } from '../types';
-import { playBeep, unlockAudio } from '../lib/audioUtils';
-import type { InterruptPolicy, SpeechRules, TraderProfile, VoiceSettings } from '../types/speech';
+import type { InterruptPolicy, NewsArticle, ReadMode, SpeechRules, TraderProfile, VoiceSettings } from '../types';
+import { playBeep, unlockAudio } from '../utils/audioUtils';
 
-// ── Public types ──────────────────────────────────────────────────────────────
+// ── Re-export types consumed by sibling components ────────────────────────────
 
-export type ReadMode = 'headline' | 'summary' | 'full';
-export type { InterruptPolicy, SpeechRules, TraderProfile, VoiceSettings };
+export type { InterruptPolicy, NewsArticle, ReadMode, SpeechRules, TraderProfile, VoiceSettings };
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
@@ -64,11 +62,11 @@ function normalizeText(text: string): string {
 }
 
 function buildSpeechText(article: NewsArticle, mode: ReadMode): string {
-  const title = normalizeText(article.title);
+  const title   = normalizeText(article.title);
   const summary = normalizeText(article.summary);
   const breaking = article.importance === 1 ? 'Breaking. ' : '';
   if (mode === 'headline') return `${breaking}${title}`;
-  if (mode === 'summary') return `${breaking}${title}. ${summary}`;
+  if (mode === 'summary')  return `${breaking}${title}. ${summary}`;
   return `${breaking}${article.source} reports: ${title}. ${summary}`;
 }
 
@@ -78,7 +76,7 @@ function hasSpeechSupport(win: Window): boolean {
   return 'speechSynthesis' in win && typeof SpeechSynthesisUtterance !== 'undefined';
 }
 
-/** Returns the top en-US voice and top en-GB voice available in the browser */
+/** Returns the top en-US and top en-GB voices available in the browser */
 function loadPreferredVoices(): SpeechSynthesisVoice[] {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
   const all = window.speechSynthesis.getVoices();
@@ -106,6 +104,8 @@ function loadPreferredVoices(): SpeechSynthesisVoice[] {
   return [usTop, gbTop].filter((v): v is SpeechSynthesisVoice => v !== null);
 }
 
+// ── Hydration store ───────────────────────────────────────────────────────────
+
 const hydrationListeners = new Set<() => void>();
 let hasHydratedSnapshot = false;
 
@@ -114,25 +114,19 @@ function subscribeToHydration(listener: () => void) {
   return () => hydrationListeners.delete(listener);
 }
 
-function getHydrationSnapshot() {
-  return hasHydratedSnapshot;
-}
+function getHydrationSnapshot() { return hasHydratedSnapshot; }
 
 function markHydrated() {
   if (hasHydratedSnapshot) return;
   hasHydratedSnapshot = true;
-  hydrationListeners.forEach((listener) => listener());
+  hydrationListeners.forEach(l => l());
 }
-
-// ── Hook state ────────────────────────────────────────────────────────────────
 
 // ── Hook state interface ──────────────────────────────────────────────────────
 
 interface SpeechState {
-  // TTS support
   hasResolvedSupport:  boolean;
   isSupported:         boolean;
-  // Playback
   isPlaying:           boolean;
   isPaused:            boolean;
   autoplay:            boolean;
@@ -141,13 +135,10 @@ interface SpeechState {
   currentArticleTitle: string | null;
   progressPct:         number;
   mode:                ReadMode;
-  // Voice settings
   voiceSettings:       VoiceSettings;
   voices:              SpeechSynthesisVoice[];
-  // Intelligence
   interruptPolicy:     InterruptPolicy;
   rules:               SpeechRules;
-  // Modal
   isSettingsOpen:      boolean;
 }
 
@@ -221,7 +212,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
   }, []);
 
   const currentIndex = useMemo(
-    () => articles.findIndex((a) => a.id === state.currentArticleId),
+    () => articles.findIndex(a => a.id === state.currentArticleId),
     [articles, state.currentArticleId],
   );
 
@@ -263,7 +254,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
     window.speechSynthesis.addEventListener('voiceschanged', updateVoices);
 
-    // Unlock Web Audio API on first user gesture
     const unlock = () => unlockAudio();
     window.addEventListener('pointerdown', unlock, { passive: true, once: true });
     window.addEventListener('keydown',     unlock, { passive: true, once: true });
@@ -309,7 +299,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
       const text = buildSpeechText(article, modeRef.current);
       const vs   = voiceSettingsRef.current;
 
-      // Alert beep before breaking headlines
       if (article.importance === 1 && rulesRef.current.tone) {
         playBeep(1200, 0.08, 0.25);
         window.setTimeout(() => playBeep(900, 0.08, 0.2), 100);
@@ -327,7 +316,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
       utterance.volume = vs.volume;
       utterance.lang   = 'en-US';
 
-      // Re-query the live voices list to avoid stale object references
       const allVoices = window.speechSynthesis.getVoices();
       const voice     = allVoices.find(v => v.name === vs.selectedVoiceName) ?? null;
       if (voice) utterance.voice = voice;
@@ -353,7 +341,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
         if (!autoplayRef.current) return;
 
-        // Build next-up queue inline so we always read from current refs
         const r      = rulesRef.current;
         const sorted = [...articlesRef.current]
           .filter(a => {
@@ -417,14 +404,14 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
   useEffect(() => { readByIdRef.current = readById; }, [readById]);
 
-  // ── P1 interrupt when new articles arrive (polling update) ────────────────
+  // ── P1 interrupt when new articles arrive ─────────────────────────────────
 
   useEffect(() => {
     const isInitialLoad = seenIdsRef.current.size === 0;
     const newArticles   = articles.filter(a => !seenIdsRef.current.has(a.id));
     articles.forEach(a => seenIdsRef.current.add(a.id));
 
-    if (isInitialLoad) return;                       // skip on mount — no interrupt on first load
+    if (isInitialLoad) return;
     if (!autoplayRef.current) return;
     if (newArticles.length === 0) return;
     if (!rulesRef.current.interrupt) return;
