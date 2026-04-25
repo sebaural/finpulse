@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
-import type { FeedSource, MarketRow, NewsArticle, TickerItem } from '../types';
+import type { MarketRow, NewsArticle, TickerItem } from '../types';
 
 import { MarketTicker } from '@/components/market/MarketTicker';
 import { MarketSnapshot } from '@/components/market/MarketSnapshot';
@@ -13,7 +13,6 @@ import { NewsCard } from '@/components/news/NewsCard';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
-import { AdminFeedSettings } from '@/components/ui/AdminFeedSettings';
 import NavMenu from '@/components/NavMenu';
 
 const VoicePlayer = dynamic<{ speech: ReturnType<typeof useSpeechReader> }>(
@@ -26,10 +25,6 @@ interface MarketResponse {
   marketRows: MarketRow[];
   cachedAt: string;
   live: boolean;
-}
-
-interface FeedSourcesResponse {
-  sources: FeedSource[];
 }
 
 type CategoryFilterKey =
@@ -66,23 +61,6 @@ const priorityFilterOptions: Array<{ key: PriorityFilterKey; label: string }> = 
   { key: 'regular', label: 'Regular' },
 ];
 
-function feedSignature(items: FeedSource[]): string {
-  return JSON.stringify(
-    [...items]
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        type: s.type,
-        url: s.url,
-        enabled: s.enabled,
-        category: s.category,
-        apiKeyEnv: s.apiKeyEnv ?? '',
-        priority: s.priority,
-      }))
-      .sort((a, b) => a.id.localeCompare(b.id)),
-  );
-}
-
 function clientRelativeTime(publishedAt: string | undefined, fallback: string): string {
   if (!publishedAt) return fallback;
   const diff = (Date.now() - new Date(publishedAt).getTime()) / 1000;
@@ -91,26 +69,6 @@ function clientRelativeTime(publishedAt: string | undefined, fallback: string): 
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
-}
-
-async function readApiError(response: Response, fallback: string): Promise<string> {
-  try {
-    const body = (await response.text()).trim();
-    if (!body) return fallback;
-
-    try {
-      const parsed = JSON.parse(body) as { error?: unknown };
-      if (typeof parsed.error === 'string' && parsed.error.trim()) {
-        return parsed.error.trim();
-      }
-    } catch {
-      // Fall through to raw response body.
-    }
-
-    return body;
-  } catch {
-    return fallback;
-  }
 }
 
 export default function Page() {
@@ -123,11 +81,6 @@ export default function Page() {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
-  const [feedSources, setFeedSources] = useState<FeedSource[]>([]);
-  const [draftFeedSources, setDraftFeedSources] = useState<FeedSource[]>([]);
-  const [feedLoading, setFeedLoading] = useState(false);
-  const [feedSaving, setFeedSaving] = useState(false);
-  const [feedError, setFeedError] = useState<string | null>(null);
 
   const filteredArticles = useMemo(() => {
     const categoryFiltered =
@@ -152,10 +105,6 @@ export default function Page() {
   const speech = useSpeechReader(filteredArticles);
   const newsFeedRef = useRef<HTMLDivElement | null>(null);
   const controlsHolderRef = useRef<HTMLDivElement | null>(null);
-  const hasPendingFeedChanges = useMemo(
-    () => feedSignature(feedSources) !== feedSignature(draftFeedSources),
-    [feedSources, draftFeedSources],
-  );
 
   const hero = allArticles[0] ?? null;
 
@@ -180,77 +129,7 @@ export default function Page() {
     }
   }
 
-  async function loadFeedSources() {
-    setFeedLoading(true);
-    setFeedError(null);
 
-    try {
-      const res = await fetch('/api/feeds', { cache: 'no-store' });
-      if (!res.ok) {
-        setFeedError(await readApiError(res, 'Unable to load feed sources'));
-        return;
-      }
-
-      const data = (await res.json()) as FeedSourcesResponse;
-      const nextSources = Array.isArray(data.sources) ? data.sources : [];
-      setFeedSources(nextSources);
-      setDraftFeedSources(nextSources);
-    } catch {
-      setFeedError('Unable to load feed sources');
-    } finally {
-      setFeedLoading(false);
-    }
-  }
-
-  async function toggleFeedEnabled(source: FeedSource) {
-    setDraftFeedSources((prev) =>
-      prev.map((s) => (s.id === source.id ? { ...s, enabled: !s.enabled } : s)),
-    );
-  }
-
-  async function applyFeedChanges() {
-    setFeedSaving(true);
-    setFeedError(null);
-
-    try {
-      const baseMap = new Map(feedSources.map((s) => [s.id, s]));
-
-      // Patch changed sources.
-      for (const source of draftFeedSources) {
-        const base = baseMap.get(source.id);
-        if (!base) continue;
-        if (feedSignature([base]) === feedSignature([source])) continue;
-
-        const res = await fetch(`/api/feeds/${source.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: source.name,
-            type: source.type,
-            url: source.url,
-            enabled: source.enabled,
-            category: source.category,
-            apiKeyEnv: source.apiKeyEnv,
-            priority: source.priority,
-          }),
-        });
-
-        if (!res.ok) {
-          const message = await readApiError(res, `Failed to update ${source.name}`);
-          throw new Error(`Failed to update ${source.name}: ${message}`);
-        }
-      }
-
-      await loadFeedSources();
-      await refresh();
-    } catch (error) {
-      setFeedError(
-        error instanceof Error ? error.message : 'Failed to apply feed changes',
-      );
-    } finally {
-      setFeedSaving(false);
-    }
-  }
 
   useEffect(() => {
     const kickoff = window.setTimeout(() => {
@@ -271,9 +150,7 @@ export default function Page() {
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    void loadFeedSources();
-  }, []);
+
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
@@ -415,16 +292,6 @@ export default function Page() {
 
           <aside className="sidebar">
             <MarketSnapshot rows={marketRows} isLive={marketLive} />
-
-            <AdminFeedSettings
-              feedError={feedError}
-              feedSaving={feedSaving}
-              hasPendingFeedChanges={hasPendingFeedChanges}
-              feedLoading={feedLoading}
-              draftFeedSources={draftFeedSources}
-              toggleFeedEnabled={toggleFeedEnabled}
-              applyFeedChanges={applyFeedChanges}
-            />
 
             <section className="widget">
               <div className="widget-title">Most Read</div>
