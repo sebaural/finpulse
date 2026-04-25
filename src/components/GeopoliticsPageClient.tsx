@@ -1,7 +1,7 @@
 // src/components/GeopoliticsPageClient.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { SummaryArticle } from '@/types/geopolitics';
@@ -31,6 +31,48 @@ function formatFullDate(dateStr: string): string {
 
 export default function GeopoliticsPageClient({ articles }: Props) {
   const [selected, setSelected] = useState<SummaryArticle | null>(articles[0] ?? null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    const syncViewportState = (matches: boolean) => {
+      setIsMobileViewport(matches);
+
+      if (!matches) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    syncViewportState(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      syncViewportState(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  const handleSidebarToggle = () => {
+    if (!isMobileViewport) {
+      return;
+    }
+
+    setIsMobileSidebarOpen((current) => !current);
+  };
+
+  const handleArticleSelect = (article: SummaryArticle) => {
+    setSelected(article);
+
+    if (isMobileViewport) {
+      setIsMobileSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="geo-root">
@@ -62,18 +104,32 @@ export default function GeopoliticsPageClient({ articles }: Props) {
         <div className="geo-layout">
           {/* Sidebar */}
           <aside className="geo-sidebar">
-            <div className="geo-sidebar-header">Archive</div>
+            <button
+              type="button"
+              className={`geo-sidebar-header${isMobileSidebarOpen ? ' is-open' : ''}`}
+              onClick={handleSidebarToggle}
+              aria-expanded={isMobileViewport ? isMobileSidebarOpen : true}
+              aria-controls="geo-sidebar-items"
+            >
+              <span>Archive</span>
+              <span className="geo-sidebar-arrow" aria-hidden="true">▾</span>
+            </button>
+            <div
+              id="geo-sidebar-items"
+              className={`geo-sidebar-items${isMobileSidebarOpen ? ' is-open' : ''}`}
+            >
             {articles.map((a) => (
               <div
                 key={a.id}
                 className={`geo-sidebar-item${selected?.id === a.id ? ' active' : ''}`}
-                onClick={() => setSelected(a)}
+                onClick={() => handleArticleSelect(a)}
               >
                 <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
                 <div className="geo-sidebar-title">{a.title}</div>
                 <div className="geo-sidebar-region">{a.region}</div>
               </div>
             ))}
+            </div>
           </aside>
 
           {/* Main */}
