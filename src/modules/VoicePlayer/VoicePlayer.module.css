@@ -149,8 +149,7 @@
 .vpModeTabs {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
-  margin-bottom: 2px;
+  flex: 0.5;
 }
 
 .vpModeTab {
@@ -180,8 +179,7 @@
   align-items: center;
   gap: 10px;
   flex-wrap: nowrap;
-  overflow: hidden;
-  margin: 6px 0 0;
+  flex-shrink: 0;
 }
 
 .ctrlBtn {
@@ -199,6 +197,11 @@
   padding: 0 10px;
 }
 
+.ctrlBtn[title="Voice settings"] {
+  font-size: 20px;
+  margin-top: -12px;
+}
+
 .playMain {
   background: var(--accent);
   border-color: var(--accent);
@@ -214,6 +217,17 @@
 .ctrlBtn.playMain:hover {
   color: #0a0c0f;
   background: #f5ca6a;
+}
+
+/* ── Controls wrapper (mode tabs + transport controls) ── */
+
+.controlsWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
 /* ── Progress bar ── */

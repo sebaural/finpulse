@@ -81,20 +81,11 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
           </div>
         )}
 
-        {/* ── Mode tabs ── */}
-        <div className={styles.vpModeTabs} role="group" aria-label="Reading mode">
-          {(['headline', 'summary'] as ReadMode[]).map(m => (
-            <button
-              key={m}
-              className={`${styles.vpModeTab}${speech.mode === m ? ` ${styles.active}` : ''}`}
-              onClick={() => speech.setMode(m)}
-            >
-              {MODE_LABELS[m]}
-            </button>
-          ))}
-        </div>
+        {/* ── Controls wrapper (mode tabs + transport controls) ── */}
+        <div className={styles.controlsWrapper}>
 
-        {/* ── Transport controls ── */}
+
+{/* ── Transport controls ── */}
         <div className={styles.playerControls}>
           <button className={styles.ctrlBtn} onClick={speech.prev}            title="Previous">◄</button>
           <button className={`${styles.ctrlBtn} ${styles.playMain}`}          onClick={speech.togglePlayPause} title="Play / Pause">
@@ -109,6 +100,21 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
           >
             Auto
           </button>
+        </div>
+
+        {/* ── Mode tabs ── */}
+        <div className={styles.vpModeTabs} role="group" aria-label="Reading mode">
+          {(['headline', 'summary'] as ReadMode[]).map(m => (
+            <button
+              key={m}
+              className={`${styles.vpModeTab}${speech.mode === m ? ` ${styles.active}` : ''}`}
+              onClick={() => speech.setMode(m)}
+            >
+              {MODE_LABELS[m]}
+            </button>
+          ))}
+        </div>
+
         </div>
 
         {/* ── Progress bar ── */}
