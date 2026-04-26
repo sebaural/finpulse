@@ -93,13 +93,6 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
           </button>
           <button className={styles.ctrlBtn} onClick={speech.next}            title="Next">►</button>
           <button className={styles.ctrlBtn} onClick={speech.stopReading}     title="Stop">■</button>
-          <button
-            className={`${styles.ctrlBtn}${speech.autoplay ? ` ${styles.active}` : ''}`}
-            onClick={speech.toggleAutoplay}
-            title="Auto-advance queue"
-          >
-            Auto
-          </button>
         </div>
 
         {/* ── Mode tabs ── */}

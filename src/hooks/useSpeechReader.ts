@@ -448,29 +448,41 @@ export function useSpeechReader(articles: NewsArticle[]) {
   const togglePlayPause = useCallback(() => {
     if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
     if (state.isPlaying) {
+      autoplayRef.current  = false;
+      isPlayingRef.current = false;
       try { window.speechSynthesis.pause(); } catch { return; }
-      setState(prev => ({ ...prev, isPlaying: false, isPaused: true }));
+      setState(prev => ({ ...prev, isPlaying: false, isPaused: true, autoplay: false }));
       return;
     }
     if (state.isPaused) {
       try { window.speechSynthesis.resume(); } catch { return; }
-      setState(prev => ({ ...prev, isPlaying: true, isPaused: false }));
+      autoplayRef.current = true;
+      setState(prev => ({ ...prev, isPlaying: true, isPaused: false, autoplay: true }));
       return;
     }
-    if (state.currentArticleId) { readById(state.currentArticleId); return; }
+    if (state.currentArticleId) {
+      autoplayRef.current = true;
+      readById(state.currentArticleId);
+      return;
+    }
     const first = queuedArticles[0];
-    if (first) readById(first.id);
+    if (first) {
+      autoplayRef.current = true;
+      readById(first.id);
+    }
   }, [queuedArticles, readById, state.currentArticleId, state.isPaused, state.isPlaying]);
 
   const stopReading = useCallback(() => {
     if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
+    autoplayRef.current  = false;
+    isPlayingRef.current = false;
     clearProgressTimer();
     if (gapTimerRef.current !== null) {
       window.clearTimeout(gapTimerRef.current);
       gapTimerRef.current = null;
     }
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
-    setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 0 }));
+    setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 0, autoplay: false }));
   }, [clearProgressTimer]);
 
   const replayLast = useCallback(() => {
@@ -519,13 +531,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
     setState(prev => ({ ...prev, mode }));
   }, []);
 
-  const toggleAutoplay = useCallback(() => {
-    setState(prev => {
-      const next = !prev.autoplay;
-      autoplayRef.current = next;
-      return { ...prev, autoplay: next };
-    });
-  }, []);
+
 
   // ── Trader profiles ───────────────────────────────────────────────────────
 
@@ -579,7 +585,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
     replayLast,
     next:           () => jumpRelative(1),
     prev:           () => jumpRelative(-1),
-    toggleAutoplay,
     // Settings
     setMode,
     setVoiceSettings,
