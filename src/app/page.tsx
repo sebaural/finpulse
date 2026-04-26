@@ -16,7 +16,7 @@ import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import NavMenu from '@/components/NavMenu';
 
 const VoicePlayer = dynamic<{ speech: ReturnType<typeof useSpeechReader> }>(
-  () => import('@/components/ui/VoicePlayer').then((mod) => mod.VoicePlayer),
+  () => import('@/modules/VoicePlayer').then((mod) => mod.VoicePlayer),
   { ssr: false },
 );
 

@@ -33,7 +33,7 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
 
         {/* ── Label + status + wave + settings gear ── */}
         <div className={styles.playerLabel}>
-          <span>AI Voice Reader</span>
+          <span>Voice Reader</span>
           <span className={`${styles.vpStatusBadge} ${statusMod}`}>
             {statusLabel}
           </span>
