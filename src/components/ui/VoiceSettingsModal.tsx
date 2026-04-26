@@ -93,7 +93,6 @@ const RATE_OPTIONS = [
 const MODE_OPTIONS: { value: ReadMode; label: string }[] = [
   { value: 'headline', label: 'Headline only'       },
   { value: 'summary',  label: 'Headline + context'  },
-  { value: 'full',     label: 'Full read'           },
 ];
 
 const GAP_OPTIONS = [

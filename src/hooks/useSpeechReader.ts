@@ -5,7 +5,7 @@ import type { InterruptPolicy, SpeechRules, TraderProfile, VoiceSettings } from 
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
-export type ReadMode = 'headline' | 'summary' | 'full';
+export type ReadMode = 'headline' | 'summary';
 export type { InterruptPolicy, SpeechRules, TraderProfile, VoiceSettings };
 
 // ── Defaults ──────────────────────────────────────────────────────────────────

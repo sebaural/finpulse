@@ -9,7 +9,6 @@ interface VoicePlayerProps {
 const MODE_LABELS: Record<ReadMode, string> = {
   headline: 'Headline',
   summary:  'Summary',
-  full:     'Full',
 };
 
 export function VoicePlayer({ speech }: VoicePlayerProps) {
@@ -79,7 +78,7 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
 
         {/* ── Mode tabs ── */}
         <div className="vp-mode-tabs" role="group" aria-label="Reading mode">
-          {(['headline', 'summary', 'full'] as ReadMode[]).map((m) => (
+          {(['headline', 'summary'] as ReadMode[]).map((m) => (
             <button
               key={m}
               className={`vp-mode-tab${speech.mode === m ? ' active' : ''}`}
@@ -98,13 +97,6 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
           </button>
           <button className="ctrl-btn" onClick={speech.next}             title="Next">►</button>
           <button className="ctrl-btn" onClick={speech.stopReading}      title="Stop">■</button>
-          <button
-            className="ctrl-btn"
-            onClick={speech.replayLast}
-            title="Replay last article"
-          >
-            ↩
-          </button>
           <button
             className={`ctrl-btn${speech.autoplay ? ' active' : ''}`}
             onClick={speech.toggleAutoplay}

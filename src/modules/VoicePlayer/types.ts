@@ -17,7 +17,7 @@ export type InterruptPolicy = 'always' | 'critical' | 'never';
 
 export type TraderProfile = 'scalper' | 'daytrader' | 'swing' | 'macro';
 
-export type ReadMode = 'headline' | 'summary' | 'full';
+export type ReadMode = 'headline' | 'summary';
 
 export interface VoiceSettings {
   /** Speech rate: 0.85 – 1.25 */
