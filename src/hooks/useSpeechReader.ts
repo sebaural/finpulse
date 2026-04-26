@@ -546,7 +546,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
       scalper:   { rate: 1.1,  mode: 'headline', rules: { skipLow: true,  interrupt: true  }, interruptPolicy: 'always'   },
       daytrader: { rate: 0.92, mode: 'summary',  rules: { skipLow: true,  interrupt: true  }, interruptPolicy: 'critical' },
       swing:     { rate: 0.85, mode: 'summary',  rules: { skipLow: true,  interrupt: false }, interruptPolicy: 'critical' },
-      macro:     { rate: 0.85, mode: 'full',     rules: { skipLow: false, interrupt: false }, interruptPolicy: 'never'    },
+      macro:     { rate: 0.85, mode: 'summary',  rules: { skipLow: false, interrupt: false }, interruptPolicy: 'never'    },
     };
     const p = presets[profile];
     modeRef.current            = p.mode;
