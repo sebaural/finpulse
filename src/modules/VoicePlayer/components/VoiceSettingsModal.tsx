@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../VoicePlayer.module.css';
 import type { InterruptPolicy, ReadMode, SpeechRules, TraderProfile, VoiceSettings } from '../types';
 
@@ -139,7 +140,7 @@ export const VoiceSettingsModal = memo(function VoiceSettingsModal({
 }: VoiceSettingsModalProps) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className={styles.vsmOverlay}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -272,6 +273,7 @@ export const VoiceSettingsModal = memo(function VoiceSettingsModal({
         </section>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 });
