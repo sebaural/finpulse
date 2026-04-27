@@ -84,6 +84,15 @@ header {
   backdrop-filter: blur(12px);
 }
 
+.header-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .logo {
   display: inline-flex;
   align-items: center;
@@ -973,6 +982,7 @@ nav {
 @media (max-width: 600px) {
   .ticker-wrap,
   header,
+  .header-inner,
   .page {
     width: 100%;
     max-width: 100vw;

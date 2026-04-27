@@ -232,11 +232,13 @@ export default function Page() {
       <MarketTicker items={tickerItems} />
 
       <header>
-        <div className="logo">
-          <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
-          <span>MacroStance</span>
+        <div className="header-inner">
+          <div className="logo">
+            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <span>MacroStance</span>
+          </div>
+          <NavMenu />
         </div>
-        <NavMenu />
       </header>
 
       <div className="page">
