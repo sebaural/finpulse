@@ -34,7 +34,7 @@
   transition: border-color 0.15s, color 0.15s;
 }
 
-.nav-desktop li:first-child { margin-right: 14px; }
+.nav-desktop li:not(:last-child) { margin-right: 14px; }
 
 .nav-desktop-link:hover,
 .nav-desktop-link.active {
