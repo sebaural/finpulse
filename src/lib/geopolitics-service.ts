@@ -2,10 +2,11 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from './db';
+import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
 
 // ---------------------------------------------------------------------------
-// NewsAPI response shape (strict — no `any`)
+// NewsAPI response shape
 // ---------------------------------------------------------------------------
 
 interface NewsApiArticle {
@@ -19,6 +20,21 @@ interface NewsApiArticle {
 interface NewsApiResponse {
   status: string;
   articles: NewsApiArticle[];
+}
+
+// ---------------------------------------------------------------------------
+// Finnhub general-news response shape
+// ---------------------------------------------------------------------------
+
+interface FinnhubNewsArticle {
+  category: string;
+  datetime: number; // Unix timestamp (seconds)
+  headline: string;
+  id: number;
+  related: string;
+  source: string;
+  summary: string;
+  url: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,41 +80,31 @@ function mapDbToSummary(row: {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Fetch top geopolitics articles from NewsAPI
+// 1. Fetch top geopolitics articles — NewsAPI + Finnhub in parallel
 // ---------------------------------------------------------------------------
 
-export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
-  const apiKey = process.env.NEWS_API_KEY;
-  if (!apiKey) throw new Error('NEWS_API_KEY environment variable is not set');
-
-  // Use a 2-day lookback: NewsAPI indexes articles with a delay, so
-  // restricting to today returns 0 results. Sort by publishedAt (freshest
-  // first) since same-day articles have no popularity signal yet.
+async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0];
   const query = encodeURIComponent(
     'geopolitics OR "international relations" OR "foreign policy" OR diplomacy',
   );
-
   const url =
     `https://newsapi.org/v2/everything` +
     `?q=${query}` +
     `&language=en` +
     `&sortBy=publishedAt` +
     `&from=${twoDaysAgo}` +
-    `&pageSize=5` +
+    `&pageSize=20` +
     `&apiKey=${apiKey}`;
 
   const res = await fetch(url, { next: { revalidate: 0 } });
-
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`NewsAPI error ${res.status}: ${body}`);
   }
-
   const data = (await res.json()) as NewsApiResponse;
-
   return data.articles.map((a) => ({
     title: a.title ?? 'Untitled',
     url: a.url ?? '',
@@ -106,6 +112,83 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
     publishedAt: a.publishedAt ?? new Date().toISOString(),
     description: a.description ?? undefined,
   }));
+}
+
+async function fetchFromFinnhub(apiKey: string): Promise<SourceArticle[]> {
+  // Finnhub "general" news endpoint — returns latest 100 headlines across all categories.
+  // We pass the category filter "general" which covers geopolitics, world news, etc.
+  const url =
+    `https://finnhub.io/api/v1/news` +
+    `?category=general` +
+    `&token=${apiKey}`;
+
+  const res = await fetch(url, { next: { revalidate: 0 } });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Finnhub error ${res.status}: ${body}`);
+  }
+  const data = (await res.json()) as FinnhubNewsArticle[];
+  return data.map((a) => ({
+    title: a.headline || 'Untitled',
+    url: a.url || '',
+    source: a.source || 'Finnhub',
+    publishedAt: new Date(a.datetime * 1000).toISOString(),
+    description: a.summary || undefined,
+  }));
+}
+
+export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
+  const newsApiKey = process.env.NEWS_API_KEY;
+  const finnhubKey = process.env.FINNHUB_KEY;
+
+  if (!newsApiKey) throw new Error('NEWS_API_KEY environment variable is not set');
+  if (!finnhubKey) throw new Error('FINNHUB_KEY environment variable is not set');
+
+  // Fetch both sources in parallel; let either fail independently.
+  const [newsApiResult, finnhubResult] = await Promise.allSettled([
+    fetchFromNewsApi(newsApiKey),
+    fetchFromFinnhub(finnhubKey),
+  ]);
+
+  const newsApiArticles = newsApiResult.status === 'fulfilled' ? newsApiResult.value : [];
+  const finnhubArticles = finnhubResult.status === 'fulfilled' ? finnhubResult.value : [];
+
+  if (newsApiResult.status === 'rejected') {
+    console.error('[geo-pipeline] NewsAPI fetch failed:', newsApiResult.reason);
+  }
+  if (finnhubResult.status === 'rejected') {
+    console.error('[geo-pipeline] Finnhub fetch failed:', finnhubResult.reason);
+  }
+
+  // Merge and deduplicate by URL.
+  const seenUrls = new Set<string>();
+  const combined: SourceArticle[] = [];
+  for (const article of [...newsApiArticles, ...finnhubArticles]) {
+    const key = article.url.trim().toLowerCase();
+    if (key && seenUrls.has(key)) continue;
+    if (key) seenUrls.add(key);
+    combined.push(article);
+  }
+
+  // Sort newest-first then filter for "important" articles (importance === 2
+  // = class="priority-dot important" in the news card UI).
+  const sorted = [...combined].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+
+  const importantArticles = sorted.filter(
+    (a) => detectImportance(`${a.title} ${a.description ?? ''}`) === 2,
+  );
+
+  if (importantArticles.length === 0) {
+    throw new Error(
+      'No "important" (priority-dot important) geopolitics articles found across ' +
+      'NewsAPI and Finnhub in the last 2 days. Pipeline aborted — will retry on next cron run.',
+    );
+  }
+
+  // Return up to 5 most-recent important articles.
+  return importantArticles.slice(0, 5);
 }
 
 // ---------------------------------------------------------------------------
