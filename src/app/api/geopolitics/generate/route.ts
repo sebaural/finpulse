@@ -1,7 +1,7 @@
 // src/app/api/geopolitics/generate/route.ts
 //
 // Called by:
-//   • Vercel Cron (GET, daily at 08:00 UTC) — authenticated via CRON_SECRET
+//   • Vercel Cron (GET, daily at 15:00 UTC) — authenticated via CRON_SECRET
 //   • Manual POST (e.g. curl) — same CRON_SECRET auth
 //   • Local dev GET (no secret required when NODE_ENV=development)
 
