@@ -126,7 +126,7 @@ export default function GeopoliticsPageClient({ articles }: Props) {
                     onClick={() => handleArticleSelect(a)}
                   >
                     <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
-                    <div className="geo-sidebar-title">{a.title}</div>
+                    <h3 className="geo-sidebar-title">{a.title}</h3>
                     <div className="geo-sidebar-region">{a.region}</div>
                   </div>
                 ))}
