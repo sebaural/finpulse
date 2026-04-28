@@ -400,7 +400,9 @@
     opacity: 1;
     visibility: visible;
     position: relative;
-    overflow-y: auto;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
