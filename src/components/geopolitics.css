@@ -389,32 +389,38 @@
     display: inline-block;
   }
   .geo-sidebar-items {
+    /* Animation container only — never changes overflow so iOS keeps scroll context */
     max-height: 0;
     opacity: 0;
     visibility: hidden;
     overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.25s ease, visibility 0.25s ease;
+    transition: max-height 0.35s ease, opacity 0.25s ease, visibility 0.25s ease;
   }
   .geo-sidebar-items.is-open {
-    max-height: 80vh;
+    max-height: 60vh;
     opacity: 1;
     visibility: visible;
-    position: relative;
+  }
+  /* Dedicated scroll container — always overflow: scroll so iOS/Android never
+     need to re-evaluate whether the element is a scroll container */
+  .geo-sidebar-items-inner {
+    max-height: 60vh;
     overflow-x: hidden;
     overflow-y: scroll;
-    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-y: contain;
+    position: relative;
   }
-  .geo-sidebar-items.is-open::after {
+  .geo-sidebar-items-inner::after {
     content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
+    position: sticky;
     bottom: 0;
-    height: 18px;
+    display: block;
+    height: 20px;
+    margin-top: -20px;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(11, 14, 20, 0), var(--surface));
+    background: linear-gradient(to bottom, rgba(17, 20, 24, 0), var(--surface));
   }
   .geo-sidebar-header.is-open .geo-sidebar-arrow {
     transform: rotate(180deg);

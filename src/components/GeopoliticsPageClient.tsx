@@ -118,17 +118,19 @@ export default function GeopoliticsPageClient({ articles }: Props) {
               id="geo-sidebar-items"
               className={`geo-sidebar-items${isMobileSidebarOpen ? ' is-open' : ''}`}
             >
-            {articles.map((a) => (
-              <div
-                key={a.id}
-                className={`geo-sidebar-item${selected?.id === a.id ? ' active' : ''}`}
-                onClick={() => handleArticleSelect(a)}
-              >
-                <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
-                <div className="geo-sidebar-title">{a.title}</div>
-                <div className="geo-sidebar-region">{a.region}</div>
+              <div className="geo-sidebar-items-inner">
+                {articles.map((a) => (
+                  <div
+                    key={a.id}
+                    className={`geo-sidebar-item${selected?.id === a.id ? ' active' : ''}`}
+                    onClick={() => handleArticleSelect(a)}
+                  >
+                    <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
+                    <div className="geo-sidebar-title">{a.title}</div>
+                    <div className="geo-sidebar-region">{a.region}</div>
+                  </div>
+                ))}
               </div>
-            ))}
             </div>
           </aside>
 
