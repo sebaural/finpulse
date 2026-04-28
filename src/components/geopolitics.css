@@ -377,7 +377,7 @@
   .geo-sidebar {
     height: auto;
     position: static;
-    overflow: hidden;
+    overflow: visible;
     border-bottom: 1px solid var(--border);
     border-right: 0;
   }
