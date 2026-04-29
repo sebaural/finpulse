@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
+import Footer from '@/components/Footer';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable}`}>
         {children}
+        <Footer />
       </body>
     </html>
   );

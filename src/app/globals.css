@@ -38,6 +38,15 @@ body {
   overflow-x: clip;
 }
 
+.footer-nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.footer-nav-link:hover {
+  color: var(--accent);
+}
+
 .ticker-wrap {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
