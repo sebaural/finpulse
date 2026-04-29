@@ -262,6 +262,10 @@
   line-height: 1.55;
   color: var(--text);
 }
+.geo-takeaway-item h3 {
+  font-size: 16px;
+  font-weight: 400;
+}
 .geo-takeaway-item:last-child {
   border-bottom: none;
 }

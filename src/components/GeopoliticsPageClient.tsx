@@ -166,7 +166,7 @@ export default function GeopoliticsPageClient({ articles }: Props) {
                   {selected.keyPoints.map((point, i) => (
                     <div key={i} className="geo-takeaway-item">
                       <span className="geo-takeaway-arrow" aria-hidden="true">▸</span>
-                      <span>{point}</span>
+                      <h3>{point}</h3>
                     </div>
                   ))}
                 </section>

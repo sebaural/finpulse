@@ -433,8 +433,8 @@ nav {
 .card-title {
   font-family: 'Gideon Roman', serif;
   font-weight: 700;
-  font-size: 20px;
-  line-height: 1.38;
+  font-size: 18px;
+  line-height: 1.2;
   color: var(--text);
   margin-bottom: 8px;
   display: -webkit-box;
