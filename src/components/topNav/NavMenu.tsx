@@ -1,4 +1,4 @@
-// src/components/NavMenu.tsx
+// src/components/topNav/NavMenu.tsx
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';

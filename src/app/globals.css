@@ -1046,6 +1046,10 @@ nav {
     padding: 3px 6px;
   }
 
+  .footer-nav {
+    flex-wrap: wrap;
+  }
+
   .card-actions {
     justify-content: space-between;
   }

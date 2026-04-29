@@ -2,7 +2,7 @@
 
 import type { Metadata } from 'next';
 import { getSummaryArticles } from '@/lib/geopolitics-service';
-import GeopoliticsPageClient from '@/components/GeopoliticsPageClient';
+import GeopoliticsPageClient from '@/components/geopolitics/GeopoliticsPageClient';
 
 export const metadata: Metadata = {
   title: 'Geopolitics of the Day',

@@ -25,7 +25,7 @@ export default function Footer() {
       gap: '0.75rem',
     }}>
       <span>&copy; {new Date().getFullYear()} MacroStance. All rights reserved.</span>
-      <nav style={{ display: 'flex', gap: '1.25rem' }}>
+      <nav style={{ display: 'flex', gap: '1.25rem' }} className="footer-nav">
         {NAV_LINKS.map(({ label, href }) => (
           <Link key={label} href={href} className="footer-nav-link">
             {label}

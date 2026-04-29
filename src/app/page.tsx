@@ -13,7 +13,7 @@ import { NewsCard } from '@/components/news/NewsCard';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
-import NavMenu from '@/components/NavMenu';
+import NavMenu from '@/components/topNav/NavMenu';
 
 const VoicePlayer = dynamic<{ speech: ReturnType<typeof useSpeechReader> }>(
   () => import('@/modules/VoicePlayer').then((mod) => mod.VoicePlayer),

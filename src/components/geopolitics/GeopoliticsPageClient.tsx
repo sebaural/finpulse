@@ -1,11 +1,11 @@
-// src/components/GeopoliticsPageClient.tsx
+// src/components/geopolitics/GeopoliticsPageClient.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { SummaryArticle } from '@/types/geopolitics';
-import NavMenu from '@/components/NavMenu';
+import NavMenu from '@/components/topNav/NavMenu';
 import './geopolitics.css';
 
 interface Props {
