@@ -6,7 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { SummaryArticle } from '@/types/geopolitics';
 import NavMenu from '@/components/topNav/NavMenu';
-import './geopolitics.css';
 
 interface Props {
   articles: SummaryArticle[];
