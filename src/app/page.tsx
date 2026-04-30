@@ -102,7 +102,8 @@ export default function Page() {
     });
   }, [allArticles, categoryFilter, priorityFilter]);
 
-  const speech = useSpeechReader(filteredArticles);
+  const filterKey = `${categoryFilter}:${priorityFilter}`;
+  const speech = useSpeechReader(filteredArticles, filterKey);
   const newsFeedRef = useRef<HTMLDivElement | null>(null);
   const controlsHolderRef = useRef<HTMLDivElement | null>(null);
 

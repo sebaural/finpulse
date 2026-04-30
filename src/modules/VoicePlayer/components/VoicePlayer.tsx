@@ -81,6 +81,13 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
           </div>
         )}
 
+        {/* ── Filter-mismatch notice ── */}
+        {isClientReady && speech.statusMessage && (
+          <div className={styles.vpStatusMsg} role="status" aria-live="polite">
+            {speech.statusMessage}
+          </div>
+        )}
+
         {/* ── Controls wrapper (mode tabs + transport controls) ── */}
         <div className={styles.controlsWrapper}>
 

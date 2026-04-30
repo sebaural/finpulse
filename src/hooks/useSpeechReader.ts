@@ -149,11 +149,13 @@ interface SpeechState {
   rules:               SpeechRules;
   // Modal
   isSettingsOpen:      boolean;
+  // Transient UI feedback
+  statusMessage:       string | null;
 }
 
 // ── Main hook ─────────────────────────────────────────────────────────────────
 
-export function useSpeechReader(articles: NewsArticle[]) {
+export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
   // ── Refs (mutable state that does not drive renders) ──────────────────────
   const utteranceRef       = useRef<SpeechSynthesisUtterance | null>(null);
   const progressTimerRef   = useRef<number | null>(null);
@@ -162,13 +164,14 @@ export function useSpeechReader(articles: NewsArticle[]) {
   const articlesRef        = useRef(articles);
   const autoplayRef        = useRef(false);
   const spokenIdsRef       = useRef<Set<string>>(new Set());
-  const seenIdsRef         = useRef<Set<string>>(new Set());
   const lastSpokenRef      = useRef<NewsArticle | null>(null);
   const voiceSettingsRef   = useRef<VoiceSettings>(DEFAULT_VOICE_SETTINGS);
   const rulesRef           = useRef<SpeechRules>(DEFAULT_RULES);
   const interruptPolicyRef = useRef<InterruptPolicy>('critical');
   const isPlayingRef       = useRef(false);
+  const isPausedRef        = useRef(false);
   const modeRef            = useRef<ReadMode>('headline');
+  const filterKeyRef       = useRef<string | undefined>(undefined);
 
   const hasHydrated = useSyncExternalStore(subscribeToHydration, getHydrationSnapshot, () => false);
 
@@ -188,6 +191,7 @@ export function useSpeechReader(articles: NewsArticle[]) {
     interruptPolicy:     'critical',
     rules:               DEFAULT_RULES,
     isSettingsOpen:      false,
+    statusMessage:       null,
   });
 
   // ── Keep refs in sync with state ──────────────────────────────────────────
@@ -197,8 +201,62 @@ export function useSpeechReader(articles: NewsArticle[]) {
   useEffect(() => { rulesRef.current           = state.rules; },            [state.rules]);
   useEffect(() => { interruptPolicyRef.current = state.interruptPolicy; },  [state.interruptPolicy]);
   useEffect(() => { isPlayingRef.current       = state.isPlaying; },        [state.isPlaying]);
+  useEffect(() => { isPausedRef.current        = state.isPaused; },         [state.isPaused]);
   useEffect(() => { modeRef.current            = state.mode; },             [state.mode]);
   useEffect(() => { markHydrated(); }, []);
+
+  // ── React to filter changes during active playback ────────────────────────
+  useEffect(() => {
+    const prevKey = filterKeyRef.current;
+    filterKeyRef.current = filterKey;
+
+    // Skip initial mount and no-op changes.
+    if (prevKey === undefined || prevKey === filterKey) return;
+    // Only act when the player is engaged (playing or paused).
+    if (!isPlayingRef.current && !isPausedRef.current) return;
+
+    // Cancel any pending gap-advance timer first.
+    if (gapTimerRef.current !== null) {
+      window.clearTimeout(gapTimerRef.current);
+      gapTimerRef.current = null;
+    }
+
+    // articlesRef.current is already updated by the [articles] effect above
+    // (effects run in declaration order within the same flush).
+    const first = articlesRef.current[0];
+
+    if (isPlayingRef.current) {
+      // Actively playing: set autoplay=false BEFORE cancel so the stale onend
+      // callback sees the flag and skips advancing the old queue.
+      autoplayRef.current  = false;
+      isPlayingRef.current = false;
+      try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+
+      if (!first) {
+        if (progressTimerRef.current !== null) {
+          window.clearInterval(progressTimerRef.current);
+          progressTimerRef.current = null;
+        }
+        setState(prev => ({
+          ...prev,
+          isPlaying: false, isPaused: false, progressPct: 0,
+          statusMessage: 'No articles match the current filters.',
+        }));
+        window.setTimeout(() => setState(prev => ({ ...prev, statusMessage: null })), 3000);
+        return;
+      }
+
+      // Re-enable autoplay and start from the new first article.
+      window.setTimeout(() => {
+        autoplayRef.current = true;
+        readByIdRef.current(first.id);
+      }, 150);
+    } else {
+      // Paused: stop cleanly so the next ▶ press starts fresh from the new list.
+      try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+      setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 0, autoplay: false }));
+    }
+  }, [filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Voice loading ─────────────────────────────────────────────────────────
 
@@ -226,15 +284,9 @@ export function useSpeechReader(articles: NewsArticle[]) {
   );
 
   const queuedArticles = useMemo(() => {
-    const r = state.rules;
-    return [...articles]
-      .filter(a => {
-        if (r.skipLow && a.importance === 3) return false;
-        if (r.dedup   && spokenIdsRef.current.has(a.id)) return false;
-        return true;
-      })
-      .sort((a, b) => a.importance - b.importance);
-  }, [articles, state.rules]);
+    if (!state.rules.dedup) return articles;
+    return articles.filter(a => !spokenIdsRef.current.has(a.id));
+  }, [articles, state.rules.dedup]);
 
   const nextArticle = useMemo(() => {
     if (!state.autoplay || !state.currentArticleId) return null;
@@ -353,18 +405,14 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
         if (!autoplayRef.current) return;
 
-        // Build next-up queue inline so we always read from current refs
-        const r      = rulesRef.current;
-        const sorted = [...articlesRef.current]
-          .filter(a => {
-            if (r.skipLow && a.importance === 3) return false;
-            if (r.dedup   && spokenIdsRef.current.has(a.id)) return false;
-            return true;
-          })
-          .sort((a, b) => a.importance - b.importance);
+        // Build next-up queue from feed order. Filtering by importance is the
+        // responsibility of filteredArticles in the host — not the queue rules.
+        const queue = rulesRef.current.dedup
+          ? articlesRef.current.filter(a => !spokenIdsRef.current.has(a.id))
+          : articlesRef.current;
 
-        const idx  = sorted.findIndex(a => a.id === article.id);
-        const next = sorted.length > 0 ? sorted[(idx + 1) % sorted.length] : null;
+        const idx  = queue.findIndex(a => a.id === article.id);
+        const next = queue.length > 0 ? queue[(idx + 1) % queue.length] : null;
 
         if (next && next.id !== article.id) {
           const gapMs = voiceSettingsRef.current.gap * 1000;
@@ -417,34 +465,6 @@ export function useSpeechReader(articles: NewsArticle[]) {
 
   useEffect(() => { readByIdRef.current = readById; }, [readById]);
 
-  // ── P1 interrupt when new articles arrive (polling update) ────────────────
-
-  useEffect(() => {
-    const isInitialLoad = seenIdsRef.current.size === 0;
-    const newArticles   = articles.filter(a => !seenIdsRef.current.has(a.id));
-    articles.forEach(a => seenIdsRef.current.add(a.id));
-
-    if (isInitialLoad) return;                       // skip on mount — no interrupt on first load
-    if (!autoplayRef.current) return;
-    if (newArticles.length === 0) return;
-    if (!rulesRef.current.interrupt) return;
-
-    const newP1 = newArticles.filter(a => a.importance === 1);
-    if (newP1.length === 0) return;
-
-    const policy    = interruptPolicyRef.current;
-    if (policy === 'never') return;
-
-    const p1Article = newP1[0]!;
-    if (isPlayingRef.current && (policy === 'always' || policy === 'critical')) {
-      try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
-      isPlayingRef.current = false;
-      window.setTimeout(() => readByIdRef.current(p1Article.id), 200);
-    } else if (!isPlayingRef.current) {
-      readByIdRef.current(p1Article.id);
-    }
-  }, [articles]);
-
   const togglePlayPause = useCallback(() => {
     if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
     if (state.isPlaying) {
@@ -487,13 +507,19 @@ export function useSpeechReader(articles: NewsArticle[]) {
       readById(state.currentArticleId);
       return;
     }
-    const first = queuedArticles[0];
-    if (first) {
-      autoplayRef.current = true;
-      setState(prev => ({ ...prev, autoplay: true }));
-      readById(first.id);
+    // Use the pre-filtered, pre-sorted list from the host (articlesRef.current) so
+    // the active UI filters determine which article plays first — not the queue's
+    // importance re-sort, which would ignore the priority-filter ordering.
+    const first = articlesRef.current[0];
+    if (!first) {
+      setState(prev => ({ ...prev, statusMessage: 'No articles match the current filters.' }));
+      window.setTimeout(() => setState(prev => ({ ...prev, statusMessage: null })), 3000);
+      return;
     }
-  }, [queuedArticles, readById, state.currentArticleId, state.isPaused, state.isPlaying]);
+    autoplayRef.current = true;
+    setState(prev => ({ ...prev, autoplay: true }));
+    readById(first.id);
+  }, [readById, state.currentArticleId, state.isPaused, state.isPlaying]);
 
   const stopReading = useCallback(() => {
     if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
