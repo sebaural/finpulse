@@ -456,6 +456,27 @@ export function useSpeechReader(articles: NewsArticle[]) {
     }
     if (state.isPaused) {
       try { window.speechSynthesis.resume(); } catch { return; }
+      // iOS Safari: pause() silently ends the utterance; resume() does nothing.
+      // speaking is false → restart immediately.
+      if (!window.speechSynthesis.speaking && state.currentArticleId) {
+        autoplayRef.current = true;
+        setState(prev => ({ ...prev, autoplay: true, isPaused: false }));
+        readById(state.currentArticleId);
+        return;
+      }
+      // Android Chrome: speaking gets stuck as true even when the utterance was
+      // silently killed (screen lock / background). resume() does nothing and
+      // onstart never fires. Detect by checking isPlayingRef after 250 ms —
+      // on desktop onstart fires within one frame so this is a no-op there.
+      if (state.currentArticleId) {
+        const articleId = state.currentArticleId;
+        window.setTimeout(() => {
+          if (!isPlayingRef.current && autoplayRef.current) {
+            try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+            readByIdRef.current(articleId);
+          }
+        }, 250);
+      }
       autoplayRef.current = true;
       setState(prev => ({ ...prev, isPlaying: true, isPaused: false, autoplay: true }));
       return;
