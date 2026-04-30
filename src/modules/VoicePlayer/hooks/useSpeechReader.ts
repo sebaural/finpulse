@@ -451,12 +451,14 @@ export function useSpeechReader(articles: NewsArticle[]) {
     }
     if (state.currentArticleId) {
       autoplayRef.current = true;
+      setState(prev => ({ ...prev, autoplay: true }));
       readById(state.currentArticleId);
       return;
     }
     const first = queuedArticles[0];
     if (first) {
       autoplayRef.current = true;
+      setState(prev => ({ ...prev, autoplay: true }));
       readById(first.id);
     }
   }, [queuedArticles, readById, state.currentArticleId, state.isPaused, state.isPlaying]);
