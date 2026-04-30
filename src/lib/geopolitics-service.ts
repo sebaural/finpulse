@@ -217,24 +217,46 @@ export async function generateSummaryArticle(
   const prompt =
     `You are analyzing today's top geopolitical news. Here are ${articles.length} articles:\n\n` +
     `${articlesText}\n\n` +
-    `Based on these articles, produce a comprehensive geopolitical intelligence briefing.\n` +
+    `Based on these articles, produce a comprehensive geopolitical intelligence report.\n` +
     `Respond with PURE JSON only — no markdown fences, no explanation text, just the JSON object.\n\n` +
+    `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
+    `- Minimum 800 words. Use the word count to explore nuanced causal relationships,\n` +
+    `  second-order effects, and strategic paradoxes. No filler — every sentence must add depth.\n` +
+    `- Structure the content using these EXACT section headers (bold markdown):\n` +
+    `  **INTRODUCTION** — Establish the current high-stakes environment. Identify the immediate\n` +
+    `    catalyst or "Redline" that has brought this situation to a head.\n` +
+    `  **HISTORICAL CONTEXT** — Detail the long-term trends, past conflicts, broken treaties, or\n` +
+    `    structural forces that led to this moment. Go back 10–20 years where relevant.\n` +
+    `  **PRIMARY STAKEHOLDERS** — Analyze each key actor's motivations, internal pressures,\n` +
+    `    domestic political constraints, and Grand Strategy. Apply Realism, Liberalism, or\n` +
+    `    Constructivism frameworks to explain state behavior.\n` +
+    `  **ECONOMIC IMPLICATIONS** — Evaluate concrete impacts on global supply chains, energy\n` +
+    `    markets, currency stability, trade blocs, or financial systems. Reference specific\n` +
+    `    economic figures, indices, or market sectors where possible.\n` +
+    `  **FUTURE PROJECTIONS** — Provide three scenarios:\n` +
+    `    - BEST CASE: [scenario + logic-based justification]\n` +
+    `    - BASE CASE: [scenario + logic-based justification]\n` +
+    `    - WORST CASE: [scenario + logic-based justification]\n` +
+    `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
     `Required JSON shape:\n` +
     `{\n` +
-    `  "title": "unique compelling headline specific to today's events",\n` +
-    `  "summary": "3-4 paragraph analytical narrative synthesizing all articles",\n` +
-    `  "keyPoints": ["5-7 concise bullet points"],\n` +
+    `  "title": "engaging, professional headline capturing the gravity of today's events",\n` +
+    `  "summary": "<full structured report — min 800 words — following the sections above>",\n` +
+    `  "keyPoints": ["5-7 concise intelligence takeaways from the report"],\n` +
     `  "region": "primary world region (Middle East / Europe / Asia-Pacific / Global / etc.)",\n` +
     `  "tags": ["4-6 country names, topics, or organizations"]\n` +
     `}`;
 
   const response = await client.messages.create({
     model: 'claude-opus-4-5',
-    max_tokens: 1500,
+    max_tokens: 4000,
     system:
-      'You are a senior geopolitical analyst with 25 years of experience. ' +
-      'You synthesize news from multiple sources into clear, accurate intelligence briefings. ' +
-      'You always respond with valid JSON only — never markdown, never code fences.',
+      'You are a Senior Geopolitical Analyst and Lead Content Strategist with 25 years of ' +
+      'experience producing intelligence briefings for heads of state, institutional investors, ' +
+      'and strategic risk committees. You synthesize conflicting information sources into ' +
+      'authoritative, nuanced reports that expose structural forces others miss. ' +
+      'You apply IR frameworks (Realism, Liberalism, Constructivism) rigorously. ' +
+      'You always respond with valid JSON only — never markdown fences, never code fences.',
     messages: [{ role: 'user', content: prompt }],
   });
 
