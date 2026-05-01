@@ -162,6 +162,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
   const isPausedRef        = useRef(false);
   const modeRef            = useRef<ReadMode>('headline');
   const filterKeyRef       = useRef<string | undefined>(undefined);
+  const restartTimerRef    = useRef<number | null>(null);
 
   const hasHydrated = useSyncExternalStore(subscribeToHydration, getHydrationSnapshot, () => false);
 
@@ -205,10 +206,14 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     // Only act when the player is engaged (playing or paused).
     if (!isPlayingRef.current && !isPausedRef.current) return;
 
-    // Cancel any pending gap-advance timer first.
+    // Cancel any pending gap-advance timer and any pending restart timer.
     if (gapTimerRef.current !== null) {
       window.clearTimeout(gapTimerRef.current);
       gapTimerRef.current = null;
+    }
+    if (restartTimerRef.current !== null) {
+      window.clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
     }
 
     // articlesRef.current is already updated by the [articles] effect above
@@ -220,6 +225,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       // callback sees the flag and skips advancing the old queue.
       autoplayRef.current  = false;
       isPlayingRef.current = false;
+      try { window.speechSynthesis.resume(); } catch { /* ignore */ }
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
 
       if (!first) {
@@ -227,24 +233,45 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
           window.clearInterval(progressTimerRef.current);
           progressTimerRef.current = null;
         }
+        // Reset currentArticleId so the next ▶ press plays from the new list
+        // instead of silently failing to find the stale article ID.
         setState(prev => ({
           ...prev,
           isPlaying: false, isPaused: false, progressPct: 0,
+          currentArticleId: null, currentArticleTitle: null,
           statusMessage: 'No articles match the current filters.',
         }));
         window.setTimeout(() => setState(prev => ({ ...prev, statusMessage: null })), 3000);
         return;
       }
 
+      // Clear the "already heard" set so the new filter gets a full fresh queue.
+      spokenIdsRef.current.clear();
+
       // Re-enable autoplay and start from the new first article.
-      window.setTimeout(() => {
+      // Pre-set currentArticleId to first.id so ▶ always has a valid target
+      // even if onstart never fires (e.g. Chrome post-cancel freeze).
+      restartTimerRef.current = window.setTimeout(() => {
+        restartTimerRef.current = null;
         autoplayRef.current = true;
+        setState(prev => ({
+          ...prev,
+          autoplay:            true,
+          currentArticleId:    first.id,
+          currentArticleTitle: first.title,
+        }));
         readByIdRef.current(first.id);
       }, 150);
     } else {
       // Paused: stop cleanly so the next ▶ press starts fresh from the new list.
+      try { window.speechSynthesis.resume(); } catch { /* ignore */ }
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
-      setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 0, autoplay: false }));
+      setState(prev => ({
+        ...prev,
+        isPlaying: false, isPaused: false, progressPct: 0,
+        autoplay: false,
+        currentArticleId: null, currentArticleTitle: null,
+      }));
     }
   }, [filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -314,8 +341,9 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       window.speechSynthesis.removeEventListener('voiceschanged', updateVoices);
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown',     unlock);
-      if (progressTimerRef.current !== null) window.clearInterval(progressTimerRef.current);
-      if (gapTimerRef.current      !== null) window.clearTimeout(gapTimerRef.current);
+      if (progressTimerRef.current  !== null) window.clearInterval(progressTimerRef.current);
+      if (gapTimerRef.current       !== null) window.clearTimeout(gapTimerRef.current);
+      if (restartTimerRef.current   !== null) window.clearTimeout(restartTimerRef.current);
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     };
   }, [updateVoices]);
@@ -341,6 +369,9 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
         gapTimerRef.current = null;
       }
 
+      // resume() before cancel() is the standard Chrome workaround for the
+      // "rapid cancel freezes the speech engine" bug.
+      try { window.speechSynthesis.resume(); } catch { /* ignore */ }
       try { window.speechSynthesis.cancel(); }
       catch {
         setState(prev => ({ ...prev, hasResolvedSupport: true, isSupported: false }));
