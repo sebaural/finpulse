@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MarketRow } from '@/types';
 
 interface SearchResult {
@@ -115,6 +116,46 @@ interface MarketSnapshotProps {
   loadingNames?: Set<string>;
   onAdd?: (symbol: string, label: string) => void;
   onRemove?: (name: string) => void;
+}
+
+interface MarketSnapshotModalProps extends MarketSnapshotProps {
+  onClose: () => void;
+}
+
+export function MarketSnapshotModal({ onClose, ...props }: MarketSnapshotModalProps) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  return createPortal(
+    <div
+      className="msm-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="msm-panel" role="dialog" aria-modal="true" aria-label="Market Snapshot">
+        <div className="msm-header">
+          <span className="msm-title">
+            Market Snapshot
+            {props.isLive && <span className="market-live-dot" title="Live data" />}
+          </span>
+          <button className="msm-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="msm-body">
+          <MarketSnapshot {...props} />
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 export function MarketSnapshot({ rows, isLive, loadingNames, onAdd, onRemove }: MarketSnapshotProps) {

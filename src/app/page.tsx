@@ -18,7 +18,7 @@ import { useSpeechReader } from '../hooks/useSpeechReader';
 import type { MarketRow, NewsArticle, TickerItem } from '../types';
 
 import { MarketTicker } from '@/components/market/MarketTicker';
-import { MarketSnapshot } from '@/components/market/MarketSnapshot';
+import { MarketSnapshot, MarketSnapshotModal } from '@/components/market/MarketSnapshot';
 import { NewsCard } from '@/components/news/NewsCard';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
@@ -92,6 +92,7 @@ export default function Page() {
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
   const [loadingMarketNames, setLoadingMarketNames] = useState<Set<string>>(new Set());
+  const [showMarketModal, setShowMarketModal] = useState(false);
 
   const filteredArticles = useMemo(() => {
     const categoryFiltered =
@@ -304,14 +305,29 @@ export default function Page() {
           <div className="main-content">
             <div className="controls-holder" ref={controlsHolderRef}>
               <VoicePlayer speech={speech} />
-              <HeaderFilters
-                categoryFilter={categoryFilter}
-                priorityFilter={priorityFilter}
-                categoryOptions={categoryFilterOptions}
-                priorityOptions={priorityFilterOptions}
-                onCategoryChange={setCategoryFilter}
-                onPriorityChange={setPriorityFilter}
-              />
+              <div className="controls-filters-row">
+                <button
+                  className="ms-snapshot-btn"
+                  onClick={() => setShowMarketModal(true)}
+                  aria-haspopup="dialog"
+                  aria-label="Open market snapshot"
+                >
+                  <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor" aria-hidden="true">
+                    <rect x="0" y="6" width="3" height="5" rx="0.5" />
+                    <rect x="5" y="3" width="3" height="8" rx="0.5" />
+                    <rect x="10" y="0" width="3" height="11" rx="0.5" />
+                  </svg>
+                  Market Snapshot
+                </button>
+                <HeaderFilters
+                  categoryFilter={categoryFilter}
+                  priorityFilter={priorityFilter}
+                  categoryOptions={categoryFilterOptions}
+                  priorityOptions={priorityFilterOptions}
+                  onCategoryChange={setCategoryFilter}
+                  onPriorityChange={setPriorityFilter}
+                />
+              </div>
             </div>
             {hero && (
               <HeroCard article={hero} onRead={speech.readById} />
@@ -372,6 +388,16 @@ export default function Page() {
           </aside>
         </div>
       </div>
+      {showMarketModal && (
+        <MarketSnapshotModal
+          rows={marketRows}
+          isLive={marketLive}
+          loadingNames={loadingMarketNames}
+          onAdd={handleAddSymbol}
+          onRemove={handleRemoveSymbol}
+          onClose={() => setShowMarketModal(false)}
+        />
+      )}
     </>
   );
 }

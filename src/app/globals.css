@@ -1452,6 +1452,127 @@ nav {
   border: 0;
 }
 
+/* ── Controls filters row ────────────────────────────────────────────────── */
+
+.controls-filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Mobile Market Snapshot button ───────────────────────────────────────── */
+
+.ms-snapshot-btn {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  background: #2a5b0e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-weight: 500;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ms-snapshot-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Desktop: sticky sidebar market widget ───────────────────────────────── */
+
+@media (min-width: 961px) {
+  .sidebar .widget.market-snapshot {
+    position: sticky;
+    top: 72px;
+  }
+}
+
+/* ── Mobile: show button, hide sidebar widget ────────────────────────────── */
+
+@media (max-width: 960px) {
+
+.controls-filters-row {
+  justify-content: space-between;
+}
+
+  .ms-snapshot-btn {
+    display: inline-flex;
+  }
+  .sidebar .widget.market-snapshot {
+    display: none;
+  }
+}
+
+/* ── Market Snapshot Modal ───────────────────────────────────────────────── */
+
+.msm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 16px 16px;
+  overflow-y: auto;
+}
+
+.msm-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+}
+
+.msm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.msm-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msm-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.msm-close:hover { color: var(--negative); }
+
+.msm-body .widget.market-snapshot {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 10px 18px 14px;
+}
+.msm-body .widget-title {
+  display: none;
+}
+
 /* ── Voice Settings Modal ─────────────────────────────────────────────────── */
 
 .vsm-overlay {
