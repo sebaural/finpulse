@@ -121,7 +121,7 @@ export function MarketSnapshot({ rows, isLive, loadingNames, onAdd, onRemove }: 
   const trackedSymbols = new Set(rows.map((r) => r.name));
 
   return (
-    <section className="widget">
+    <section className="widget market-snapshot" aria-label="Market snapshot">
       <div className="widget-title">
         Market Snapshot
         {isLive && <span className="market-live-dot" title="Live data" />}
