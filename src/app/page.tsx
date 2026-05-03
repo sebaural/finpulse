@@ -81,6 +81,7 @@ export default function Page() {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
+  const [loadingMarketNames, setLoadingMarketNames] = useState<Set<string>>(new Set());
 
   const filteredArticles = useMemo(() => {
     const categoryFiltered =
@@ -130,6 +131,34 @@ export default function Page() {
     }
   }
 
+  async function handleAddSymbol(symbol: string, label: string) {
+    if (marketRows.some((r) => r.name === label)) return;
+    setMarketRows((prev) => [...prev, { name: label, value: '–', change: '–', direction: 'pos' }]);
+    setTickerItems((prev) => [...prev, { symbol: label, value: '–', change: '–', direction: 'pos' }]);
+    setLoadingMarketNames((prev) => new Set(prev).add(label));
+    try {
+      const res = await fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}&label=${encodeURIComponent(label)}`);
+      if (res.ok) {
+        const data = (await res.json()) as { row: MarketRow; ticker: TickerItem };
+        setMarketRows((prev) => prev.map((r) => r.name === label ? data.row : r));
+        setTickerItems((prev) => prev.map((t) => t.symbol === label ? data.ticker : t));
+      } else {
+        setMarketRows((prev) => prev.filter((r) => r.name !== label));
+        setTickerItems((prev) => prev.filter((t) => t.symbol !== label));
+      }
+    } catch {
+      setMarketRows((prev) => prev.filter((r) => r.name !== label));
+      setTickerItems((prev) => prev.filter((t) => t.symbol !== label));
+    } finally {
+      setLoadingMarketNames((prev) => { const s = new Set(prev); s.delete(label); return s; });
+    }
+  }
+
+  function handleRemoveSymbol(name: string) {
+    setMarketRows((prev) => prev.filter((r) => r.name !== name));
+    setTickerItems((prev) => prev.filter((t) => t.symbol !== name));
+  }
+
 
 
   useEffect(() => {
@@ -147,7 +176,7 @@ export default function Page() {
 
   useEffect(() => {
     void refreshMarket();
-    const id = window.setInterval(() => { void refreshMarket(); }, 60_000);
+    const id = window.setInterval(() => { void refreshMarket(); }, 15_000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -294,7 +323,13 @@ export default function Page() {
           </div>
 
           <aside className="sidebar">
-            <MarketSnapshot rows={marketRows} isLive={marketLive} />
+            <MarketSnapshot
+                rows={marketRows}
+                isLive={marketLive}
+                loadingNames={loadingMarketNames}
+                onAdd={handleAddSymbol}
+                onRemove={handleRemoveSymbol}
+              />
 
             <section className="widget">
               <div className="widget-title">Most Read</div>
