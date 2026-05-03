@@ -3,6 +3,16 @@
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
+const CUSTOM_SYMBOLS_KEY = 'finpuls-custom-symbols';
+
+function loadStoredSymbols(): Array<{ symbol: string; label: string }> {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_SYMBOLS_KEY) ?? '[]'); } catch { return []; }
+}
+
+function saveStoredSymbols(list: Array<{ symbol: string; label: string }>) {
+  try { localStorage.setItem(CUSTOM_SYMBOLS_KEY, JSON.stringify(list)); } catch {}
+}
 import { loadNewsArticles, tickerItems as staticTickerItems, marketRows as staticMarketRows } from '../services/news';
 import { useSpeechReader } from '../hooks/useSpeechReader';
 import type { MarketRow, NewsArticle, TickerItem } from '../types';
@@ -123,18 +133,19 @@ export default function Page() {
       const res = await fetch('/api/market', { cache: 'no-store' });
       if (!res.ok) return;
       const data = (await res.json()) as MarketResponse;
-      setTickerItems(data.tickerItems);
-      setMarketRows(data.marketRows);
+      // Preserve any user-added symbols that are persisted in localStorage.
+      const storedLabels = new Set(loadStoredSymbols().map((s) => s.label));
+      setMarketRows((prev) => [...data.marketRows, ...prev.filter((r) => storedLabels.has(r.name))]);
+      setTickerItems((prev) => [...data.tickerItems, ...prev.filter((t) => storedLabels.has(t.symbol))]);
       setMarketLive(data.live);
     } catch {
       // Keep showing last state on error.
     }
   }
 
-  async function handleAddSymbol(symbol: string, label: string) {
-    if (marketRows.some((r) => r.name === label)) return;
-    setMarketRows((prev) => [...prev, { name: label, value: '–', change: '–', direction: 'pos' }]);
-    setTickerItems((prev) => [...prev, { symbol: label, value: '–', change: '–', direction: 'pos' }]);
+  async function fetchAndInsertSymbol(symbol: string, label: string) {
+    setMarketRows((prev) => prev.some((r) => r.name === label) ? prev : [...prev, { name: label, value: '–', change: '–', direction: 'pos' }]);
+    setTickerItems((prev) => prev.some((t) => t.symbol === label) ? prev : [...prev, { symbol: label, value: '–', change: '–', direction: 'pos' }]);
     setLoadingMarketNames((prev) => new Set(prev).add(label));
     try {
       const res = await fetch(`/api/market/quote?symbol=${encodeURIComponent(symbol)}&label=${encodeURIComponent(label)}`);
@@ -154,9 +165,25 @@ export default function Page() {
     }
   }
 
+  async function handleAddSymbol(symbol: string, label: string) {
+    if (marketRows.some((r) => r.name === label)) return;
+    const stored = loadStoredSymbols();
+    if (!stored.some((s) => s.label === label)) saveStoredSymbols([...stored, { symbol, label }]);
+    await fetchAndInsertSymbol(symbol, label);
+  }
+
   function handleRemoveSymbol(name: string) {
     setMarketRows((prev) => prev.filter((r) => r.name !== name));
     setTickerItems((prev) => prev.filter((t) => t.symbol !== name));
+    const stored = loadStoredSymbols();
+    const updated = stored.filter((s) => s.label !== name);
+    if (updated.length !== stored.length) saveStoredSymbols(updated);
+  }
+
+  async function restoreUserSymbols() {
+    const stored = loadStoredSymbols();
+    if (stored.length === 0) return;
+    await Promise.allSettled(stored.map(({ symbol, label }) => fetchAndInsertSymbol(symbol, label)));
   }
 
 
@@ -176,6 +203,7 @@ export default function Page() {
 
   useEffect(() => {
     void refreshMarket();
+    void restoreUserSymbols();
     const id = window.setInterval(() => { void refreshMarket(); }, 15_000);
     return () => window.clearInterval(id);
   }, []);
