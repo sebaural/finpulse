@@ -1529,7 +1529,7 @@ nav {
   border-radius: 12px;
   width: 100%;
   max-width: 420px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .msm-header {
@@ -1538,6 +1538,14 @@ nav {
   justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .msm-overlay {
+    padding-top: 20px;
+  }
 }
 
 .msm-title {
