@@ -1560,7 +1560,7 @@ nav {
 
 .msm-close {
   background: transparent;
-  border: 1.5px solid #ffffff;
+  border: 1px solid #aaa;
   color: var(--muted);
   font-size: 18px;
   line-height: 1;
