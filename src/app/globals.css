@@ -1560,14 +1560,14 @@ nav {
 
 .msm-close {
   background: transparent;
-  border: none;
+  border: 1.5px solid #ffffff;
   color: var(--muted);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 .msm-close:hover { color: var(--negative); }
 
