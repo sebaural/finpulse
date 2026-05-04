@@ -90,9 +90,9 @@ export default function GeopoliticsPageClient({ articles }: Props) {
             Geopolitics <em>of the Day</em>
           </h1>
           <div className="geo-statusbar">
-            <span className="geo-statusbar-item">
+            {/* <span className="geo-statusbar-item">
               <strong>Updated</strong> daily at 15:00 UTC
-            </span>
+            </span> */}
             <span className="geo-statusbar-item">
               <strong>{articles.length}</strong> briefings archived
             </span>
