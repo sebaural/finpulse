@@ -1,0 +1,164 @@
+/* ── Disclaimer Page ─────────────────────────────────────────────────────── */
+
+.disclaimer-page {
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
+/* Hero callout — "breaking news" terminal style */
+.disclaimer-hero {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--positive);
+  border-radius: 12px;
+  margin-bottom: 48px;
+  overflow: hidden;
+  position: relative;
+}
+
+.disclaimer-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle at 80% 10%,
+    rgba(62, 207, 142, 0.06),
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.disclaimer-hero-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 30px 36px;
+}
+
+.disclaimer-hero-icon {
+  font-size: 30px;
+  flex-shrink: 0;
+  color: var(--positive);
+  filter: drop-shadow(0 0 8px rgba(62, 207, 142, 0.4));
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.disclaimer-hero-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* Header */
+.disclaimer-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(232, 184, 75, 0.3);
+  border-radius: 4px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+
+.disclaimer-header {
+  margin-bottom: 36px;
+}
+
+.disclaimer-h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.disclaimer-intro {
+  font-size: 15.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 600px;
+}
+
+/* Cards grid */
+.disclaimer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.disclaimer-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.2s;
+}
+
+.disclaimer-card:hover {
+  border-color: rgba(232, 184, 75, 0.3);
+}
+
+.disclaimer-card h2 {
+  font-size: 17px;
+  color: var(--text);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.disclaimer-card p {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+/* Last card spans full width when it falls on an odd row */
+.disclaimer-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .disclaimer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disclaimer-card:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  .disclaimer-hero-text {
+    font-size: 18px;
+  }
+
+  .disclaimer-h1 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .disclaimer-hero-inner {
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .disclaimer-hero-text {
+    font-size: 16px;
+  }
+
+  .disclaimer-h1 {
+    font-size: 26px;
+  }
+}

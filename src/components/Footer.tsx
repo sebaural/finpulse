@@ -2,8 +2,7 @@ import Link from 'next/link';
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
-  { label: 'Geopolitics', href: '/geopolitics' },
-  { label: 'About Us', href: '/about' },
+{ label: 'About Us', href: '/about' },
   { label: 'Privacy Policy', href: '/privacy' },
   { label: 'Terms of Use', href: '/terms' },
   { label: 'Contact Us', href: '/contact' },
