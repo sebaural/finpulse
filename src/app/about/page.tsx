@@ -24,7 +24,6 @@ const STATS = [
 const PRINCIPLES = [
   'Editorial neutrality — no views, no positions',
   'Real-time aggregation across global newswire',
-  'AI-assisted curation with editorial oversight',
   'Clean signal — no noise, no clickbait',
 ];
 
