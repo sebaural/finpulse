@@ -488,6 +488,94 @@ async function fetchFromMarketaux(apiKey: string): Promise<ProviderResult> {
   }
 }
 
+async function fetchFromCnbc(apiKey: string): Promise<ProviderResult> {
+  interface CnbcAsset {
+    headline?: string;
+    url?: string;
+    description?: string;
+    datePublished?: string;
+  }
+
+  interface CnbcResponse {
+    data?: {
+      mostPopularEntries?: {
+        assets?: CnbcAsset[];
+      };
+    };
+  }
+
+  try {
+    const data = await fetchJson<CnbcResponse>(
+      'https://cnbc.p.rapidapi.com/news/v2/list-trending?tag=Articles&count=30',
+      {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': 'cnbc.p.rapidapi.com',
+      },
+    );
+
+    const assets = data?.data?.mostPopularEntries?.assets ?? [];
+
+    const articles = assets
+      .map((item) =>
+        normalizeExternalArticle({
+          source: 'CNBC',
+          title: item.headline ?? '',
+          summary: item.description ?? '',
+          link: item.url ?? '',
+          publishedAt: item.datePublished ?? null,
+        }),
+      )
+      .filter((item): item is NewsArticle => Boolean(item));
+
+    return { provider: 'cnbc', articles, ok: true };
+  } catch (error) {
+    return {
+      provider: 'cnbc',
+      articles: [],
+      ok: false,
+      error: error instanceof Error ? error.message : 'Unknown CNBC error',
+    };
+  }
+}
+
+async function fetchFromTiingo(apiKey: string): Promise<ProviderResult> {
+  interface TiingoArticle {
+    title?: string;
+    url?: string;
+    description?: string;
+    publishedDate?: string;
+    source?: string;
+  }
+
+  try {
+    const data = await fetchJson<TiingoArticle[]>(
+      'https://api.tiingo.com/tiingo/news',
+      { Authorization: `Token ${apiKey}` },
+    );
+
+    const articles = (data ?? [])
+      .map((item) =>
+        normalizeExternalArticle({
+          source: item.source ?? 'Tiingo',
+          title: item.title ?? '',
+          summary: item.description ?? '',
+          link: item.url ?? '',
+          publishedAt: item.publishedDate ?? null,
+        }),
+      )
+      .filter((item): item is NewsArticle => Boolean(item));
+
+    return { provider: 'tiingo', articles, ok: true };
+  } catch (error) {
+    return {
+      provider: 'tiingo',
+      articles: [],
+      ok: false,
+      error: error instanceof Error ? error.message : 'Unknown Tiingo error',
+    };
+  }
+}
+
 async function fetchFromFinnhub(apiKey: string): Promise<ProviderResult> {
   interface FinnhubArticle {
     headline?: string;
@@ -641,7 +729,22 @@ export async function GET() {
     );
   }
 
-  const providerResults = await fetchAllEnabledSources(enabledSources);
+  const [sourceResults, cnbcResult, tiingoResult] = await Promise.all([
+    fetchAllEnabledSources(enabledSources),
+    newsProviderEnv.rapidApiKey
+      ? fetchFromCnbc(newsProviderEnv.rapidApiKey)
+      : Promise.resolve<ProviderResult | null>(null),
+    newsProviderEnv.tiingoApiKey
+      ? fetchFromTiingo(newsProviderEnv.tiingoApiKey)
+      : Promise.resolve<ProviderResult | null>(null),
+  ]);
+
+  const providerResults: ProviderResult[] = [
+    ...sourceResults,
+    ...(cnbcResult ? [cnbcResult] : []),
+    ...(tiingoResult ? [tiingoResult] : []),
+  ];
+
   const liveResults = providerResults.filter((result) => result.articles.length > 0);
 
   if (liveResults.length > 0) {

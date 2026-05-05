@@ -5,6 +5,8 @@ interface NewsProviderEnv {
   fmpApiKey: string;
   marketauxKey: string;
   finnhubKey: string;
+  rapidApiKey: string;
+  tiingoApiKey: string;
 }
 
 function readKey(
@@ -14,7 +16,9 @@ function readKey(
     | 'ALPHAVANTAGE_API_KEY'
     | 'FMP_API_KEY'
     | 'MARKETAUX_KEY'
-    | 'FINNHUB_KEY',
+    | 'FINNHUB_KEY'
+    | 'X_RAPIDAPI_KEY'
+    | 'TIINGO_API_KEY',
 ): string {
   return (process.env[name] ?? '').trim();
 }
@@ -27,6 +31,8 @@ function getNewsProviderEnv(): NewsProviderEnv {
     fmpApiKey: readKey('FMP_API_KEY'),
     marketauxKey: readKey('MARKETAUX_KEY'),
     finnhubKey: readKey('FINNHUB_KEY'),
+    rapidApiKey: readKey('X_RAPIDAPI_KEY'),
+    tiingoApiKey: readKey('TIINGO_API_KEY'),
   };
 
   const missing = Object.entries(env)
