@@ -79,14 +79,6 @@ export default function AboutPage() {
 
           <h2>Our Approach</h2>
           <p>
-            Every headline on MacroStance is processed through an AI-assisted
-            aggregation pipeline that scores articles for relevance, recency,
-            and market impact — then surfaced for review against editorial
-            guidelines. The result is a feed that reads like a human curated
-            it, at a speed no human team could match. Stories are refreshed
-            continuously throughout the trading day.
-          </p>
-          <p>
             We work only with reputable source outlets and apply strict
             filtering to remove duplicates, low-quality rewrites, and
             promotional content before anything reaches your feed.
