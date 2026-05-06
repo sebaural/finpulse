@@ -110,8 +110,7 @@ export default function Page() {
       const bRank = b.importance === targetImportance ? 0 : 1;
 
       if (aRank !== bRank) return aRank - bRank;
-      if (a.importance !== b.importance) return a.importance - b.importance;
-      // Within the same importance rank, preserve newest-first order.
+      // Within each rank group, preserve newest-first order.
       const aMs = a.publishedAt ? new Date(a.publishedAt).getTime() : Date.now();
       const bMs = b.publishedAt ? new Date(b.publishedAt).getTime() : Date.now();
       return bMs - aMs;
@@ -334,7 +333,7 @@ export default function Page() {
               </div>
             </div>
             {hero && (
-              <HeroCard article={hero} onRead={speech.readById} />
+              <HeroCard article={hero} onRead={speech.readById} relativeTime={clientRelativeTime(hero.publishedAt, hero.time)} />
             )}
 
             <div className="data-status-row" aria-live="polite">

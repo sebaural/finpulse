@@ -24,22 +24,31 @@ interface ProviderResult {
   error?: string;
 }
 
-function parseApiDate(raw: string | null | undefined): Date | null {
-  if (!raw) return null;
+function parseApiDate(raw: string | number | null | undefined): Date | null {
+  if (raw == null || raw === '') return null;
+  // Numeric Unix timestamp — either a JS number or a string of 10-13 digits.
+  // Some providers (e.g. CNBC) return seconds as a number; others stringify it.
+  if (typeof raw === 'number' || /^\d{10,13}$/.test(String(raw))) {
+    const n = Number(raw);
+    const ms = n > 9_999_999_999 ? n : n * 1000;
+    const d = new Date(ms);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const str = String(raw);
   // AlphaVantage compact format: "20240410T120000"
-  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?/);
+  const compact = str.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?/);
   if (compact) {
     const [, yr, mo, dy, hr, min, sec = '00'] = compact;
     const d = new Date(`${yr}-${mo}-${dy}T${hr}:${min}:${sec}Z`);
     if (!Number.isNaN(d.getTime())) return d;
   }
   // Space-separator format: "2024-04-10 12:00:00" (FMP and others)
-  const spaceSep = raw.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+  const spaceSep = str.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
   if (spaceSep) {
     const d = new Date(`${spaceSep[1]}T${spaceSep[2]}Z`);
     if (!Number.isNaN(d.getTime())) return d;
   }
-  const d = new Date(raw);
+  const d = new Date(str);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -495,7 +504,8 @@ async function fetchFromCnbc(apiKey: string): Promise<ProviderResult> {
     headline?: string;
     url?: string;
     description?: string;
-    datePublished?: string;
+    dateFirstPublished?: string;
+    dateLastPublished?: string;
   }
 
   interface CnbcResponse {
@@ -524,7 +534,7 @@ async function fetchFromCnbc(apiKey: string): Promise<ProviderResult> {
           title: item.headline ?? '',
           summary: item.description ?? '',
           link: item.url ?? '',
-          publishedAt: item.datePublished ?? null,
+          publishedAt: item.dateFirstPublished ?? null,
         }),
       )
       .filter((item): item is NewsArticle => Boolean(item));
