@@ -45,7 +45,9 @@ function parseApiDate(raw: string | null | undefined): Date | null {
 
 function publishedAtMs(article: NewsArticle): number {
   const d = parseApiDate(article.publishedAt);
-  return d ? d.getTime() : 0;
+  // Fall back to current time so articles with an unparseable/missing publishedAt
+  // (which display as "Just now") sort to the top rather than the bottom.
+  return d ? d.getTime() : Date.now();
 }
 
 function sortNewestFirst(articles: NewsArticle[]): NewsArticle[] {

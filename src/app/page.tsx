@@ -110,7 +110,11 @@ export default function Page() {
       const bRank = b.importance === targetImportance ? 0 : 1;
 
       if (aRank !== bRank) return aRank - bRank;
-      return a.importance - b.importance;
+      if (a.importance !== b.importance) return a.importance - b.importance;
+      // Within the same importance rank, preserve newest-first order.
+      const aMs = a.publishedAt ? new Date(a.publishedAt).getTime() : Date.now();
+      const bMs = b.publishedAt ? new Date(b.publishedAt).getTime() : Date.now();
+      return bMs - aMs;
     });
   }, [allArticles, categoryFilter, priorityFilter]);
 
