@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import SiteHeader from '@/components/SiteHeader';
+import { buildMetadata } from '@/lib/seo';
 import './disclaimer.css';
 
-export const metadata: Metadata = {
-  title: 'Disclaimer — MacroStance',
+export const metadata: Metadata = buildMetadata({
+  title: 'Disclaimer — Informational Use Only | MacroStance',
   description:
-    'MacroStance Disclaimer — all content is provided for informational purposes only and does not constitute financial, investment, legal, or tax advice.',
-};
+    'All MacroStance content is informational only and is not financial, investment, legal, or tax advice. Read the full disclaimer covering accuracy, market data delays, and external links.',
+  path: '/disclaimer',
+});
 
 const CARDS = [
   {

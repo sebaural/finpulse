@@ -123,6 +123,43 @@
   line-height: 1.75;
 }
 
+.disclaimer-card p + p,
+.disclaimer-card p + ul,
+.disclaimer-card ul + p {
+  margin-top: 12px;
+}
+
+.disclaimer-card ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.disclaimer-card li {
+  margin-bottom: 8px;
+}
+
+.disclaimer-card li:last-child {
+  margin-bottom: 0;
+}
+
+.disclaimer-card strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.disclaimer-card a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 184, 75, 0.3);
+}
+
+.disclaimer-card a:hover {
+  border-bottom-color: var(--accent);
+}
+
 /* Last card spans full width when it falls on an odd row */
 .disclaimer-card:last-child:nth-child(odd) {
   grid-column: 1 / -1;
