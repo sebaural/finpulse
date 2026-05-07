@@ -34,26 +34,26 @@ const PRINCIPLES = [
   'Clean signal — no noise, no clickbait',
 ];
 
-const TEAM = [
-  {
-    name: '[Editorial Lead]',
-    title: 'Head of Editorial',
-    credential:
-      '[Placeholder bio: 10+ years covering global markets at a major financial publication; CFA Level III candidate. Replace with real bio.]',
-  },
-  {
-    name: '[Markets Editor]',
-    title: 'Markets & Macro Editor',
-    credential:
-      '[Placeholder bio: Former buy-side analyst with experience in equities and FX desks. Replace with real bio.]',
-  },
-  {
-    name: '[Engineering Lead]',
-    title: 'Head of Engineering',
-    credential:
-      '[Placeholder bio: Built data pipelines and real-time systems at fintech firms. Replace with real bio.]',
-  },
-];
+// const TEAM = [
+//   {
+//     name: '[Editorial Lead]',
+//     title: 'Head of Editorial',
+//     credential:
+//       '[Placeholder bio: 10+ years covering global markets at a major financial publication; CFA Level III candidate. Replace with real bio.]',
+//   },
+//   {
+//     name: '[Markets Editor]',
+//     title: 'Markets & Macro Editor',
+//     credential:
+//       '[Placeholder bio: Former buy-side analyst with experience in equities and FX desks. Replace with real bio.]',
+//   },
+//   {
+//     name: '[Engineering Lead]',
+//     title: 'Head of Engineering',
+//     credential:
+//       '[Placeholder bio: Built data pipelines and real-time systems at fintech firms. Replace with real bio.]',
+//   },
+// ];
 
 const breadcrumbs = breadcrumbSchema([
   { name: 'Home', url: canonicalUrl('/') },
@@ -207,7 +207,7 @@ export default function AboutPage() {
               ))}
             </div>
 
-            <h2>Editorial Team</h2>
+            {/* <h2>Editorial Team</h2>
             <p className="about-team-note">
               The bios below are placeholders pending publication of the full
               team page. Real names, photos, credentials, and links will
@@ -222,7 +222,7 @@ export default function AboutPage() {
                   <p className="about-team-cred">{member.credential}</p>
                 </div>
               ))}
-            </div>
+            </div> */}
 
             <div className="about-meta-row">
               <div className="about-meta-item">
