@@ -24,6 +24,15 @@
   font-family: 'Fira Sans', sans-serif;
 }
 
+/* ── Top nav logo ── */
+.geo-top-nav .logo span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
 /* ── Page Header ── */
 .geo-header {
   text-align: center;

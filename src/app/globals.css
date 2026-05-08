@@ -124,9 +124,12 @@ header {
   transform: translateY(1px);
 }
 
-.logo span {
-  color: var(--text);
+.logo h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 nav {

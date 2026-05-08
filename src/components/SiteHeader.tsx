@@ -17,7 +17,7 @@ export default function SiteHeader() {
             height={40}
             priority
           />
-          <span>MacroStance</span>
+          <h1>MacroStance</h1>
         </Link>
         <NavMenu />
       </div>
