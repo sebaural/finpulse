@@ -107,9 +107,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable}`}>
-        <main style={{ flex: 1 }}>
-          {children}
-        </main>
+        {children}
         <Footer />
       </body>
     </html>

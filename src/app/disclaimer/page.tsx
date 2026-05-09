@@ -37,9 +37,9 @@ export default function DisclaimerPage() {
   return (
     <>
       <SiteHeader />
-      <div className="page disclaimer-page">
+      <main className="page disclaimer-page">
         {/* Hero — breaking-news style callout */}
-        <div className="disclaimer-hero" role="note" aria-label="Important disclaimer">
+        <aside className="disclaimer-hero" aria-label="Important disclaimer">
           <div className="disclaimer-hero-inner">
             <span className="disclaimer-hero-icon" aria-hidden="true">⚠</span>
             <p className="disclaimer-hero-text">
@@ -49,7 +49,7 @@ export default function DisclaimerPage() {
               tax advice.
             </p>
           </div>
-        </div>
+        </aside>
 
         <div className="disclaimer-header">
           <span className="disclaimer-eyebrow">Legal</span>
@@ -68,7 +68,7 @@ export default function DisclaimerPage() {
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </>
   );
 }

@@ -162,11 +162,11 @@ export function MarketSnapshot({ rows, isLive, loadingNames, onAdd, onRemove }: 
   const trackedSymbols = new Set(rows.map((r) => r.name));
 
   return (
-    <section className="widget market-snapshot" aria-label="Market snapshot">
-      <div className="widget-title">
+    <section className="widget market-snapshot">
+      <h2 className="widget-title">
         Market Snapshot
         {isLive && <span className="market-live-dot" title="Live data" />}
-      </div>
+      </h2>
       {rows.map((row) => (
         <div className="market-row" key={row.name}>
           <span className="market-name">{row.name}</span>

@@ -18,7 +18,7 @@ export function MarketTicker({ items }: MarketTickerProps) {
   }
 
   return (
-    <div className="ticker-wrap" aria-label="Market ticker" onMouseEnter={pause} onMouseLeave={resume}>
+    <section className="ticker-wrap" aria-label="Market ticker" onMouseEnter={pause} onMouseLeave={resume}>
       <div className="ticker-inner" ref={innerRef}>
         {items.concat(items).map((item, idx) => (
           <span className="ticker-item" key={`${item.symbol}-${idx}`}>
@@ -29,6 +29,6 @@ export function MarketTicker({ items }: MarketTickerProps) {
           </span>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

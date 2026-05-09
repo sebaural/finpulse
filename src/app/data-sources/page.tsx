@@ -102,8 +102,8 @@ export default function DataSourcesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
-      <div className="page disclaimer-page">
-        <div className="disclaimer-hero" role="note" aria-label="Data sources">
+      <main className="page disclaimer-page">
+        <aside className="disclaimer-hero" aria-label="Data sources">
           <div className="disclaimer-hero-inner">
             <span className="disclaimer-hero-icon" aria-hidden="true">◈</span>
             <p className="disclaimer-hero-text">
@@ -112,7 +112,7 @@ export default function DataSourcesPage() {
               and market data.
             </p>
           </div>
-        </div>
+        </aside>
 
         <div className="disclaimer-header">
           <span className="disclaimer-eyebrow">Transparency</span>
@@ -132,7 +132,7 @@ export default function DataSourcesPage() {
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </>
   );
 }

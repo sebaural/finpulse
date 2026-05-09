@@ -42,7 +42,7 @@ export default function ContactContent() {
   return (
     <>
       <SiteHeader />
-      <div className="page contact-page">
+      <main className="page contact-page">
       <div className="contact-header">
         <span className="contact-eyebrow">Get in Touch</span>
         <h1 className="contact-h1">Contact Us</h1>
@@ -70,7 +70,6 @@ export default function ContactContent() {
               className="contact-form"
               onSubmit={handleSubmit}
               noValidate
-              aria-label="Contact form"
             >
               <div className="contact-form-row">
                 <div className="contact-field">
@@ -202,7 +201,7 @@ export default function ContactContent() {
           </div>
         </aside>
       </div>
-    </div>
+    </main>
     </>
   );
 }

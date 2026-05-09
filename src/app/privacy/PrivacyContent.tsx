@@ -62,7 +62,7 @@ export default function PrivacyContent() {
   return (
     <>
       <SiteHeader />
-      <div className="page legal-page">
+      <main className="page legal-page">
       <div className="legal-header">
         <span className="legal-eyebrow">Legal</span>
         <h1 className="legal-h1">Privacy Policy</h1>
@@ -289,7 +289,7 @@ export default function PrivacyContent() {
           </section>
         </article>
       </div>
-    </div>
+    </main>
     </>
   );
 }

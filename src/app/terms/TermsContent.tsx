@@ -62,7 +62,7 @@ export default function TermsContent() {
   return (
     <>
       <SiteHeader />
-      <div className="page legal-page">
+      <main className="page legal-page">
       <div className="legal-header">
         <span className="legal-eyebrow">Legal</span>
         <h1 className="legal-h1">Terms of Use</h1>
@@ -75,7 +75,7 @@ export default function TermsContent() {
       </div>
 
       {/* Full-width financial disclaimer callout above the two-column layout */}
-      <div className="terms-disclaimer-callout" role="note">
+      <aside className="terms-disclaimer-callout">
         <span className="terms-callout-icon" aria-hidden="true">⚠</span>
         <div>
           <strong>Financial Advice Disclaimer</strong>
@@ -86,7 +86,7 @@ export default function TermsContent() {
             decisions.
           </p>
         </div>
-      </div>
+      </aside>
 
       <div className="legal-body">
         {/* Mobile accordion TOC */}
@@ -307,7 +307,7 @@ export default function TermsContent() {
           </section>
         </article>
       </div>
-    </div>
+    </main>
     </>
   );
 }

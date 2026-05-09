@@ -68,7 +68,7 @@ export default function AboutPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
-      <div className="page about-page">
+      <main className="page about-page">
         {/* Hero */}
         <div className="about-hero">
           <span className="about-eyebrow">Who We Are</span>
@@ -270,7 +270,7 @@ export default function AboutPage() {
             </div>
           </aside>
         </div>
-      </div>
+      </main>
     </>
   );
 }

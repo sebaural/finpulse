@@ -170,8 +170,8 @@ export default function EditorialStandardsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
-      <div className="page disclaimer-page">
-        <div className="disclaimer-hero" role="note" aria-label="Editorial standards">
+      <main className="page disclaimer-page">
+        <aside className="disclaimer-hero" aria-label="Editorial standards">
           <div className="disclaimer-hero-inner">
             <span className="disclaimer-hero-icon" aria-hidden="true">◈</span>
             <p className="disclaimer-hero-text">
@@ -180,7 +180,7 @@ export default function EditorialStandardsPage() {
               corrections — and how we keep the feed honest.
             </p>
           </div>
-        </div>
+        </aside>
 
         <div className="disclaimer-header">
           <span className="disclaimer-eyebrow">Editorial</span>
@@ -200,7 +200,7 @@ export default function EditorialStandardsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </>
   );
 }

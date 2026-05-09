@@ -1,6 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -25,11 +24,7 @@ import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import NavMenu from '@/components/topNav/NavMenu';
-
-const VoicePlayer = dynamic<{ speech: ReturnType<typeof useSpeechReader> }>(
-  () => import('@/modules/VoicePlayer').then((mod) => mod.VoicePlayer),
-  { ssr: false },
-);
+import { VoicePlayer } from '@/modules/VoicePlayer';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -322,7 +317,7 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
         </div>
       </header>
 
-      <div className="page">
+      <main className="page">
         <div className="layout">
           <div className="main-content">
             <div className="controls-holder" ref={controlsHolderRef}>
@@ -397,7 +392,7 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
               />
 
             <section className="widget">
-              <div className="widget-title">Most Read</div>
+              <h2 className="widget-title">Most Read</h2>
               {allArticles.slice(0, 6).map((article) => (
                 <SidebarNewsItem
                   key={article.id}
@@ -408,7 +403,7 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
             </section>
           </aside>
         </div>
-      </div>
+      </main>
       {showMarketModal && (
         <MarketSnapshotModal
           rows={marketRows}

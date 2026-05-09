@@ -21,7 +21,7 @@ export function HeaderFilters<CategoryKey extends string, PriorityKey extends st
   onPriorityChange,
 }: HeaderFiltersProps<CategoryKey, PriorityKey>) {
   return (
-    <div className="filters-holder" aria-label="Filters">
+    <div className="filters-holder">
       <label className="header-filter-field" htmlFor="priority-filter">
         <select
           id="priority-filter"

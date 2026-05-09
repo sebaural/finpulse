@@ -40,6 +40,10 @@ body {
   min-height: 100vh;
 }
 
+body > main {
+  flex: 1;
+}
+
 .footer-nav-link {
   color: var(--muted);
   text-decoration: none;
