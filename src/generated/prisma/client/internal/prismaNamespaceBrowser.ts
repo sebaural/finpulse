@@ -51,7 +51,9 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  SummaryArticle: 'SummaryArticle'
+  SummaryArticle: 'SummaryArticle',
+  MarketsArticle: 'MarketsArticle',
+  TechArticle: 'TechArticle'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -84,6 +86,38 @@ export const SummaryArticleScalarFieldEnum = {
 } as const
 
 export type SummaryArticleScalarFieldEnum = (typeof SummaryArticleScalarFieldEnum)[keyof typeof SummaryArticleScalarFieldEnum]
+
+
+export const MarketsArticleScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  summary: 'summary',
+  keyPoints: 'keyPoints',
+  sourceArticles: 'sourceArticles',
+  region: 'region',
+  tags: 'tags',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnum)[keyof typeof MarketsArticleScalarFieldEnum]
+
+
+export const TechArticleScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  summary: 'summary',
+  keyPoints: 'keyPoints',
+  sourceArticles: 'sourceArticles',
+  region: 'region',
+  tags: 'tags',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]
 
 
 export const SortOrder = {

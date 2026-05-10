@@ -384,7 +384,9 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  SummaryArticle: 'SummaryArticle'
+  SummaryArticle: 'SummaryArticle',
+  MarketsArticle: 'MarketsArticle',
+  TechArticle: 'TechArticle'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "summaryArticle"
+    modelProps: "summaryArticle" | "marketsArticle" | "techArticle"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -478,6 +480,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MarketsArticle: {
+      payload: Prisma.$MarketsArticlePayload<ExtArgs>
+      fields: Prisma.MarketsArticleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MarketsArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MarketsArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        findFirst: {
+          args: Prisma.MarketsArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MarketsArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        findMany: {
+          args: Prisma.MarketsArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>[]
+        }
+        create: {
+          args: Prisma.MarketsArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        createMany: {
+          args: Prisma.MarketsArticleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MarketsArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>[]
+        }
+        delete: {
+          args: Prisma.MarketsArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        update: {
+          args: Prisma.MarketsArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        deleteMany: {
+          args: Prisma.MarketsArticleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MarketsArticleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MarketsArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>[]
+        }
+        upsert: {
+          args: Prisma.MarketsArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MarketsArticlePayload>
+        }
+        aggregate: {
+          args: Prisma.MarketsArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMarketsArticle>
+        }
+        groupBy: {
+          args: Prisma.MarketsArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MarketsArticleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MarketsArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MarketsArticleCountAggregateOutputType> | number
+        }
+      }
+    }
+    TechArticle: {
+      payload: Prisma.$TechArticlePayload<ExtArgs>
+      fields: Prisma.TechArticleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TechArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TechArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        findFirst: {
+          args: Prisma.TechArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TechArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        findMany: {
+          args: Prisma.TechArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>[]
+        }
+        create: {
+          args: Prisma.TechArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        createMany: {
+          args: Prisma.TechArticleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TechArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>[]
+        }
+        delete: {
+          args: Prisma.TechArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        update: {
+          args: Prisma.TechArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        deleteMany: {
+          args: Prisma.TechArticleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TechArticleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TechArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>[]
+        }
+        upsert: {
+          args: Prisma.TechArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TechArticlePayload>
+        }
+        aggregate: {
+          args: Prisma.TechArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTechArticle>
+        }
+        groupBy: {
+          args: Prisma.TechArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TechArticleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TechArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TechArticleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -531,6 +681,38 @@ export const SummaryArticleScalarFieldEnum = {
 } as const
 
 export type SummaryArticleScalarFieldEnum = (typeof SummaryArticleScalarFieldEnum)[keyof typeof SummaryArticleScalarFieldEnum]
+
+
+export const MarketsArticleScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  summary: 'summary',
+  keyPoints: 'keyPoints',
+  sourceArticles: 'sourceArticles',
+  region: 'region',
+  tags: 'tags',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnum)[keyof typeof MarketsArticleScalarFieldEnum]
+
+
+export const TechArticleScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  summary: 'summary',
+  keyPoints: 'keyPoints',
+  sourceArticles: 'sourceArticles',
+  region: 'region',
+  tags: 'tags',
+  date: 'date',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -722,6 +904,8 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   summaryArticle?: Prisma.SummaryArticleOmit
+  marketsArticle?: Prisma.MarketsArticleOmit
+  techArticle?: Prisma.TechArticleOmit
 }
 
 /* Types for Logging */

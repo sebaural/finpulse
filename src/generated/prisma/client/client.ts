@@ -46,3 +46,13 @@ export { Prisma }
  * 
  */
 export type SummaryArticle = Prisma.SummaryArticleModel
+/**
+ * Model MarketsArticle
+ * 
+ */
+export type MarketsArticle = Prisma.MarketsArticleModel
+/**
+ * Model TechArticle
+ * 
+ */
+export type TechArticle = Prisma.TechArticleModel
