@@ -11,6 +11,7 @@ export interface SourceArticle {
 export interface SummaryArticle {
   id: string;
   title: string;
+  slug: string;
   summary: string;
   keyPoints: string[];
   sourceArticles: SourceArticle[];

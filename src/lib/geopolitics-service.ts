@@ -50,6 +50,19 @@ interface ClaudeGeopoliticsResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Private helper: derive a URL-safe slug from an article title
+// ---------------------------------------------------------------------------
+
+export function toSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// ---------------------------------------------------------------------------
 // Private helper: map raw Prisma row → SummaryArticle
 // ---------------------------------------------------------------------------
 
@@ -67,6 +80,7 @@ function mapDbToSummary(row: {
   return {
     id: row.id,
     title: row.title,
+    slug: toSlug(row.title),
     summary: row.summary,
     keyPoints: Array.isArray(row.keyPoints) ? (row.keyPoints as string[]) : [],
     sourceArticles: Array.isArray(row.sourceArticles)
@@ -271,6 +285,7 @@ export async function generateSummaryArticle(
 
   return {
     title: parsed.title,
+    slug: toSlug(parsed.title),
     summary: parsed.summary,
     keyPoints: parsed.keyPoints,
     sourceArticles: articles,

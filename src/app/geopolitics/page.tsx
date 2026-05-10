@@ -1,5 +1,6 @@
 // src/app/geopolitics/page.tsx
 
+import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getSummaryArticles } from '@/lib/geopolitics-service';
 import GeopoliticsPageClient from '@/components/geopolitics/GeopoliticsPageClient';
@@ -41,6 +42,10 @@ const EDITORIAL_AUTHOR = personSchema({
 export default async function GeopoliticsPage() {
   const articles = await getSummaryArticles(30);
   const lead = articles[0];
+
+  if (lead) {
+    redirect(`/geopolitics/${lead.slug}`);
+  }
 
   const breadcrumbs = breadcrumbSchema([
     { name: 'Home', url: canonicalUrl('/') },

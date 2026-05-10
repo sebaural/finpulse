@@ -10,6 +10,7 @@ import './geopolitics.css';
 
 interface Props {
   articles: SummaryArticle[];
+  initialArticleId?: string;
 }
 
 function formatShortDate(dateStr: string): string {
@@ -29,8 +30,10 @@ function formatFullDate(dateStr: string): string {
   });
 }
 
-export default function GeopoliticsPageClient({ articles }: Props) {
-  const [selected, setSelected] = useState<SummaryArticle | null>(articles[0] ?? null);
+export default function GeopoliticsPageClient({ articles, initialArticleId }: Props) {
+  const [selected, setSelected] = useState<SummaryArticle | null>(
+    (initialArticleId ? (articles.find((a) => a.id === initialArticleId) ?? articles[0]) : articles[0]) ?? null,
+  );
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -120,15 +123,16 @@ export default function GeopoliticsPageClient({ articles }: Props) {
             >
               <div className="geo-sidebar-items-inner">
                 {articles.map((a) => (
-                  <div
+                  <Link
                     key={a.id}
+                    href={`/geopolitics/${a.slug}`}
                     className={`geo-sidebar-item${selected?.id === a.id ? ' active' : ''}`}
                     onClick={() => handleArticleSelect(a)}
                   >
                     <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
                     <h3 className="geo-sidebar-title">{a.title}</h3>
                     <div className="geo-sidebar-region">{a.region}</div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

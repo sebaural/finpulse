@@ -131,10 +131,13 @@
   overflow: hidden;
 }
 .geo-sidebar-item {
+  display: block;
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.15s;
+  text-decoration: none;
+  color: inherit;
 }
 .geo-sidebar-item:hover {
   background: var(--surface2);
