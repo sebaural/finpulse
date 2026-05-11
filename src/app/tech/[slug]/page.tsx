@@ -9,9 +9,9 @@ import {
   jsonLd,
   breadcrumbSchema,
   canonicalUrl,
-  SITE_NAME,
+  publisherRef,
+  websiteRef,
   SITE_URL,
-  SITE_LOGO,
 } from '@/lib/seo';
 import '@/components/geopolitics/geopolitics.css';
 
@@ -69,20 +69,13 @@ export default async function TechArticlePage({ params }: Props) {
       '@type': 'WebPage',
       '@id': canonicalUrl(`/tech/${slug}`),
     },
+    isPartOf: websiteRef(),
     author: {
       '@type': 'Person',
       name: 'MacroStance Editorial Desk',
       url: `${SITE_URL}/about`,
     },
-    publisher: {
-      '@type': 'NewsMediaOrganization',
-      name: SITE_NAME,
-      url: SITE_URL,
-      logo: {
-        '@type': 'ImageObject',
-        url: SITE_LOGO,
-      },
-    },
+    publisher: publisherRef(),
     keywords: article.tags.join(', '),
     articleSection: 'Technology',
   };

@@ -5,6 +5,12 @@ export const SITE_NAME = 'MacroStance';
 export const SITE_LOGO = `${SITE_URL}/macrostance-logo.png`;
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/macrostance-logo.png`;
 
+export const ORG_ID = `${SITE_URL}/#organization`;
+export const WEBSITE_ID = `${SITE_URL}/#website`;
+
+export const publisherRef = () => ({ '@id': ORG_ID });
+export const websiteRef = () => ({ '@id': WEBSITE_ID });
+
 export const SITE_DESCRIPTION =
   'MacroStance delivers real-time financial news, market data, and geopolitical intelligence for traders, analysts, and market observers worldwide.';
 
@@ -71,6 +77,7 @@ export function newsMediaOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'NewsMediaOrganization',
+    '@id': ORG_ID,
     name: SITE_NAME,
     alternateName: 'MacroStance Financial News',
     url: SITE_URL,
@@ -123,15 +130,12 @@ export function webSiteSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': WEBSITE_ID,
     name: SITE_NAME,
     url: SITE_URL,
     description: SITE_DESCRIPTION,
     inLanguage: 'en-US',
-    publisher: {
-      '@type': 'NewsMediaOrganization',
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
+    publisher: publisherRef(),
     potentialAction: {
       '@type': 'SearchAction',
       target: {
