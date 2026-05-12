@@ -6,6 +6,17 @@
   padding: 0;
 }
 
+/* Restore nav-menu paddings suppressed by the wildcard reset above */
+.geo-root .nav-desktop-dropdown-link {
+  padding: 10px 16px;
+}
+.geo-root .nav-drawer-links {
+  padding: 8px 0;
+}
+.geo-root .nav-drawer-link {
+  padding: 14px 24px;
+}
+
 .geo-root {
   --bg: #0a0c0f;
   --surface: #111418;
