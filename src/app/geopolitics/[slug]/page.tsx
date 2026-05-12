@@ -12,7 +12,9 @@ import {
   publisherRef,
   websiteRef,
   SITE_URL,
+  DEFAULT_OG_IMAGE,
 } from '@/lib/seo';
+import { stripMarkdown, truncateDescription } from '@/lib/stripMarkdown';
 import '@/components/geopolitics/geopolitics.css';
 
 export const revalidate = 3600;
@@ -34,12 +36,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
 
+  const cleanSummary = stripMarkdown(article.summary);
+
   return buildMetadata({
     title: `${article.title} — MacroStance Geopolitics`,
-    description: article.summary.slice(0, 280),
+    description: truncateDescription(cleanSummary, 155),
     path: `/geopolitics/${slug}`,
     ogTitle: article.title,
-    ogDescription: article.summary.slice(0, 280),
+    ogDescription: truncateDescription(cleanSummary, 300),
+    twitterTitle: article.title,
+    twitterDescription: truncateDescription(cleanSummary, 200),
   });
 }
 
@@ -58,16 +64,19 @@ export default async function GeopoliticsArticlePage({ params }: Props) {
     { name: article.title, url: canonicalUrl(`/geopolitics/${slug}`) },
   ]);
 
+  const articleUrl = canonicalUrl(`/geopolitics/${slug}`);
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
-    headline: article.title,
-    description: article.summary.slice(0, 280),
+    headline: article.title.slice(0, 110),
+    description: truncateDescription(article.summary, 300),
+    url: articleUrl,
+    image: [DEFAULT_OG_IMAGE],
     datePublished: article.createdAt.toISOString(),
     dateModified: article.createdAt.toISOString(),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': canonicalUrl(`/geopolitics/${slug}`),
+      '@id': articleUrl,
     },
     isPartOf: websiteRef(),
     author: {
