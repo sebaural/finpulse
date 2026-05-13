@@ -3,7 +3,6 @@ import { SITE_URL } from '@/lib/seo';
 import { prisma } from '@/lib/db';
 import { toSlug } from '@/lib/geopolitics-service';
 
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 type ArticleRow = { title: string; updatedAt: Date };

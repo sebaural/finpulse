@@ -9,41 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/api/'],
       },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'Googlebot-News',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'GPTBot',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'ClaudeBot',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'PerplexityBot',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'Google-Extended',
-        allow: '/',
-        disallow: ['/api/'],
-      },
-      {
-        userAgent: 'CCBot',
-        allow: '/',
-        disallow: ['/api/'],
-      },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
