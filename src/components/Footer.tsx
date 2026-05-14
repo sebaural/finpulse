@@ -32,6 +32,15 @@ export default function Footer() {
             {label}
           </Link>
         ))}
+        <a
+          href="https://x.com/macrostance"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-nav-link"
+          aria-label="Follow MacroStance on X"
+        >
+          Follow us on X
+        </a>
       </nav>
     </footer>
   );

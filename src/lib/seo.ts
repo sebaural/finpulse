@@ -59,6 +59,7 @@ export function buildMetadata({
     twitter: {
       card: 'summary_large_image',
       site: '@macrostance',
+      creator: '@macrostance',
       title: twitterTitle ?? ogTitle ?? title,
       description: twitterDescription ?? ogDescription ?? description,
       images: [image],

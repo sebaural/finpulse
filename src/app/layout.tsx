@@ -74,6 +74,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@macrostance',
+    creator: '@macrostance',
     title: 'MacroStance — Real-Time Global Financial News',
     description:
       'High-signal financial headlines, market data, and geopolitical intelligence — built for traders, analysts, and serious market observers.',
