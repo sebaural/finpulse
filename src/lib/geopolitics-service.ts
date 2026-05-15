@@ -43,6 +43,7 @@ interface FinnhubNewsArticle {
 
 interface ClaudeGeopoliticsResponse {
   title: string;
+  slug: string;
   summary: string;
   keyPoints: string[];
   region: string;
@@ -255,6 +256,7 @@ export async function generateSummaryArticle(
     `Required JSON shape:\n` +
     `{\n` +
     `  "title": "engaging, professional headline capturing the gravity of today's events",\n` +
+    `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words (on the for and with meets of); verify hyphen count ≤ 4 before finalising",\n` +
     `  "summary": "<full structured report — min 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise intelligence takeaways from the report"],\n` +
     `  "region": "primary world region (Middle East / Europe / Asia-Pacific / Global / etc.)",\n` +
@@ -285,7 +287,7 @@ export async function generateSummaryArticle(
 
   return {
     title: parsed.title,
-    slug: toSlug(parsed.title),
+    slug: parsed.slug,
     summary: parsed.summary,
     keyPoints: parsed.keyPoints,
     sourceArticles: articles,
