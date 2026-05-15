@@ -235,7 +235,7 @@ export async function generateSummaryArticle(
     `Based on these articles, produce a comprehensive geopolitical intelligence report.\n` +
     `Respond with PURE JSON only — no markdown fences, no explanation text, just the JSON object.\n\n` +
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
-    `- Minimum 800 words. Use the word count to explore nuanced causal relationships,\n` +
+    `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and strategic paradoxes. No filler — every sentence must add depth.\n` +
     `- Structure the content using these EXACT section headers (bold markdown):\n` +
     `  **INTRODUCTION** — Establish the current high-stakes environment. Identify the immediate\n` +
@@ -257,7 +257,7 @@ export async function generateSummaryArticle(
     `{\n` +
     `  "title": "engaging, professional headline capturing the gravity of today's events",\n` +
     `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words (on the for and with meets of); verify hyphen count ≤ 4 before finalising",\n` +
-    `  "summary": "<full structured report — min 800 words — following the sections above>",\n` +
+    `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise intelligence takeaways from the report"],\n` +
     `  "region": "primary world region (Middle East / Europe / Asia-Pacific / Global / etc.)",\n` +
     `  "tags": ["4-6 country names, topics, or organizations"]\n` +

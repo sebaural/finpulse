@@ -230,7 +230,7 @@ export async function generateTechSummaryArticle(
     `Based on these articles, produce a comprehensive technology intelligence report.\n` +
     `Respond with PURE JSON only — no markdown fences, no explanation text, just the JSON object.\n\n` +
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
-    `- Minimum 800 words. Use the word count to explore nuanced causal relationships,\n` +
+    `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and platform-shift dynamics. No filler — every sentence must add depth.\n` +
     `- Structure the content using these EXACT section headers (bold markdown):\n` +
     `  **INTRODUCTION** — Establish today's tech environment. Identify the immediate catalyst\n` +
@@ -251,7 +251,7 @@ export async function generateTechSummaryArticle(
     `{\n` +
     `  "title": "engaging, professional headline capturing today's tech signal",\n` +
     `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words (on the for and with meets of); verify hyphen count ≤ 4 before finalising",\n` +
-    `  "summary": "<full structured report — min 800 words — following the sections above>",\n` +
+    `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise tech takeaways from the report"],\n` +
     `  "region": "primary tech region (US / Europe / Asia-Pacific / Global / China / etc.)",\n` +
     `  "tags": ["4-6 companies, technologies, or product categories"]\n` +
