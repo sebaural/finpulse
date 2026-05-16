@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { DM_Sans, DM_Serif_Display } from 'next/font/google';
-import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 import type { ReactNode } from 'react';
 import Footer from '@/components/Footer';
 import {
@@ -112,7 +112,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="layout-content">{children}</div>
         <Footer />
         {process.env.NODE_ENV === 'production' && (
-          <GoogleAnalytics gaId="G-6CMSHWMBZZ" />
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-6CMSHWMBZZ"
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-6CMSHWMBZZ');
+              `}
+            </Script>
+          </>
         )}
       </body>
     </html>
