@@ -87,6 +87,9 @@ export const metadata: Metadata = {
     apple: '/favicon.png',
   },
   category: 'finance',
+  verification: {
+    google: '-Rb9fAScldNCrWRGsUKNMGFUOucVGMh5MB10vb-Fn0E',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
