@@ -51,7 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  SummaryArticle: 'SummaryArticle',
+  GeopoliticsArticle: 'GeopoliticsArticle',
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle'
 } as const
@@ -72,9 +72,10 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const SummaryArticleScalarFieldEnum = {
+export const GeopoliticsArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',
@@ -85,12 +86,13 @@ export const SummaryArticleScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type SummaryArticleScalarFieldEnum = (typeof SummaryArticleScalarFieldEnum)[keyof typeof SummaryArticleScalarFieldEnum]
+export type GeopoliticsArticleScalarFieldEnum = (typeof GeopoliticsArticleScalarFieldEnum)[keyof typeof GeopoliticsArticleScalarFieldEnum]
 
 
 export const MarketsArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',
@@ -107,6 +109,7 @@ export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnu
 export const TechArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',

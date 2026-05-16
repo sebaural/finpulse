@@ -9,9 +9,10 @@ datasource db {
   provider = "postgresql"
 }
 
-model SummaryArticle {
+model GeopoliticsArticle {
   id             String   @id @default(cuid())
   title          String   @unique
+  slug           String   @default("")
   summary        String   @db.Text
   keyPoints      Json
   sourceArticles Json
@@ -23,12 +24,14 @@ model SummaryArticle {
 
   @@index([date])
   @@index([createdAt])
-  @@map("summary_articles")
+  @@index([slug])
+  @@map("geopolitics_articles")
 }
 
 model MarketsArticle {
   id             String   @id @default(cuid())
   title          String   @unique
+  slug           String   @default("")
   summary        String   @db.Text
   keyPoints      Json
   sourceArticles Json
@@ -40,12 +43,14 @@ model MarketsArticle {
 
   @@index([date])
   @@index([createdAt])
+  @@index([slug])
   @@map("markets_articles")
 }
 
 model TechArticle {
   id             String   @id @default(cuid())
   title          String   @unique
+  slug           String   @default("")
   summary        String   @db.Text
   keyPoints      Json
   sourceArticles Json
@@ -57,5 +62,6 @@ model TechArticle {
 
   @@index([date])
   @@index([createdAt])
+  @@index([slug])
   @@map("tech_articles")
 }

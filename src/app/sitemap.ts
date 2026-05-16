@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const select = { title: true, updatedAt: true } as const;
     const [geopolitics, markets, tech] = await Promise.all([
-      prisma.summaryArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+      prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
       prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
       prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
     ]);

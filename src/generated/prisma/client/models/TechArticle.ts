@@ -27,6 +27,7 @@ export type AggregateTechArticle = {
 export type TechArticleMinAggregateOutputType = {
   id: string | null
   title: string | null
+  slug: string | null
   summary: string | null
   region: string | null
   date: string | null
@@ -37,6 +38,7 @@ export type TechArticleMinAggregateOutputType = {
 export type TechArticleMaxAggregateOutputType = {
   id: string | null
   title: string | null
+  slug: string | null
   summary: string | null
   region: string | null
   date: string | null
@@ -47,6 +49,7 @@ export type TechArticleMaxAggregateOutputType = {
 export type TechArticleCountAggregateOutputType = {
   id: number
   title: number
+  slug: number
   summary: number
   keyPoints: number
   sourceArticles: number
@@ -62,6 +65,7 @@ export type TechArticleCountAggregateOutputType = {
 export type TechArticleMinAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   region?: true
   date?: true
@@ -72,6 +76,7 @@ export type TechArticleMinAggregateInputType = {
 export type TechArticleMaxAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   region?: true
   date?: true
@@ -82,6 +87,7 @@ export type TechArticleMaxAggregateInputType = {
 export type TechArticleCountAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   keyPoints?: true
   sourceArticles?: true
@@ -168,6 +174,7 @@ export type TechArticleGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type TechArticleGroupByOutputType = {
   id: string
   title: string
+  slug: string
   summary: string
   keyPoints: runtime.JsonValue
   sourceArticles: runtime.JsonValue
@@ -202,6 +209,7 @@ export type TechArticleWhereInput = {
   NOT?: Prisma.TechArticleWhereInput | Prisma.TechArticleWhereInput[]
   id?: Prisma.StringFilter<"TechArticle"> | string
   title?: Prisma.StringFilter<"TechArticle"> | string
+  slug?: Prisma.StringFilter<"TechArticle"> | string
   summary?: Prisma.StringFilter<"TechArticle"> | string
   keyPoints?: Prisma.JsonFilter<"TechArticle">
   sourceArticles?: Prisma.JsonFilter<"TechArticle">
@@ -215,6 +223,7 @@ export type TechArticleWhereInput = {
 export type TechArticleOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -231,6 +240,7 @@ export type TechArticleWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.TechArticleWhereInput | Prisma.TechArticleWhereInput[]
   OR?: Prisma.TechArticleWhereInput[]
   NOT?: Prisma.TechArticleWhereInput | Prisma.TechArticleWhereInput[]
+  slug?: Prisma.StringFilter<"TechArticle"> | string
   summary?: Prisma.StringFilter<"TechArticle"> | string
   keyPoints?: Prisma.JsonFilter<"TechArticle">
   sourceArticles?: Prisma.JsonFilter<"TechArticle">
@@ -244,6 +254,7 @@ export type TechArticleWhereUniqueInput = Prisma.AtLeast<{
 export type TechArticleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -263,6 +274,7 @@ export type TechArticleScalarWhereWithAggregatesInput = {
   NOT?: Prisma.TechArticleScalarWhereWithAggregatesInput | Prisma.TechArticleScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"TechArticle"> | string
   title?: Prisma.StringWithAggregatesFilter<"TechArticle"> | string
+  slug?: Prisma.StringWithAggregatesFilter<"TechArticle"> | string
   summary?: Prisma.StringWithAggregatesFilter<"TechArticle"> | string
   keyPoints?: Prisma.JsonWithAggregatesFilter<"TechArticle">
   sourceArticles?: Prisma.JsonWithAggregatesFilter<"TechArticle">
@@ -276,6 +288,7 @@ export type TechArticleScalarWhereWithAggregatesInput = {
 export type TechArticleCreateInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -289,6 +302,7 @@ export type TechArticleCreateInput = {
 export type TechArticleUncheckedCreateInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -302,6 +316,7 @@ export type TechArticleUncheckedCreateInput = {
 export type TechArticleUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -315,6 +330,7 @@ export type TechArticleUpdateInput = {
 export type TechArticleUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -328,6 +344,7 @@ export type TechArticleUncheckedUpdateInput = {
 export type TechArticleCreateManyInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -341,6 +358,7 @@ export type TechArticleCreateManyInput = {
 export type TechArticleUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -354,6 +372,7 @@ export type TechArticleUpdateManyMutationInput = {
 export type TechArticleUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -367,6 +386,7 @@ export type TechArticleUncheckedUpdateManyInput = {
 export type TechArticleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -380,6 +400,7 @@ export type TechArticleCountOrderByAggregateInput = {
 export type TechArticleMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   region?: Prisma.SortOrder
   date?: Prisma.SortOrder
@@ -390,6 +411,7 @@ export type TechArticleMaxOrderByAggregateInput = {
 export type TechArticleMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   region?: Prisma.SortOrder
   date?: Prisma.SortOrder
@@ -402,6 +424,7 @@ export type TechArticleMinOrderByAggregateInput = {
 export type TechArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -415,6 +438,7 @@ export type TechArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 export type TechArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -428,6 +452,7 @@ export type TechArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type TechArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -441,6 +466,7 @@ export type TechArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type TechArticleSelectScalar = {
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -451,7 +477,7 @@ export type TechArticleSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["techArticle"]>
+export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["techArticle"]>
 
 export type $TechArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TechArticle"
@@ -459,6 +485,7 @@ export type $TechArticlePayload<ExtArgs extends runtime.Types.Extensions.Interna
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
+    slug: string
     summary: string
     keyPoints: runtime.JsonValue
     sourceArticles: runtime.JsonValue
@@ -892,6 +919,7 @@ export interface Prisma__TechArticleClient<T, Null = never, ExtArgs extends runt
 export interface TechArticleFieldRefs {
   readonly id: Prisma.FieldRef<"TechArticle", 'String'>
   readonly title: Prisma.FieldRef<"TechArticle", 'String'>
+  readonly slug: Prisma.FieldRef<"TechArticle", 'String'>
   readonly summary: Prisma.FieldRef<"TechArticle", 'String'>
   readonly keyPoints: Prisma.FieldRef<"TechArticle", 'Json'>
   readonly sourceArticles: Prisma.FieldRef<"TechArticle", 'Json'>

@@ -384,7 +384,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  SummaryArticle: 'SummaryArticle',
+  GeopoliticsArticle: 'GeopoliticsArticle',
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle'
 } as const
@@ -402,81 +402,81 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "summaryArticle" | "marketsArticle" | "techArticle"
+    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
-    SummaryArticle: {
-      payload: Prisma.$SummaryArticlePayload<ExtArgs>
-      fields: Prisma.SummaryArticleFieldRefs
+    GeopoliticsArticle: {
+      payload: Prisma.$GeopoliticsArticlePayload<ExtArgs>
+      fields: Prisma.GeopoliticsArticleFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.SummaryArticleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload> | null
+          args: Prisma.GeopoliticsArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.SummaryArticleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         findFirst: {
-          args: Prisma.SummaryArticleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload> | null
+          args: Prisma.GeopoliticsArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.SummaryArticleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         findMany: {
-          args: Prisma.SummaryArticleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>[]
+          args: Prisma.GeopoliticsArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>[]
         }
         create: {
-          args: Prisma.SummaryArticleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         createMany: {
-          args: Prisma.SummaryArticleCreateManyArgs<ExtArgs>
+          args: Prisma.GeopoliticsArticleCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.SummaryArticleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>[]
+          args: Prisma.GeopoliticsArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>[]
         }
         delete: {
-          args: Prisma.SummaryArticleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         update: {
-          args: Prisma.SummaryArticleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         deleteMany: {
-          args: Prisma.SummaryArticleDeleteManyArgs<ExtArgs>
+          args: Prisma.GeopoliticsArticleDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.SummaryArticleUpdateManyArgs<ExtArgs>
+          args: Prisma.GeopoliticsArticleUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.SummaryArticleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>[]
+          args: Prisma.GeopoliticsArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>[]
         }
         upsert: {
-          args: Prisma.SummaryArticleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$SummaryArticlePayload>
+          args: Prisma.GeopoliticsArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GeopoliticsArticlePayload>
         }
         aggregate: {
-          args: Prisma.SummaryArticleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateSummaryArticle>
+          args: Prisma.GeopoliticsArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGeopoliticsArticle>
         }
         groupBy: {
-          args: Prisma.SummaryArticleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.SummaryArticleGroupByOutputType>[]
+          args: Prisma.GeopoliticsArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GeopoliticsArticleGroupByOutputType>[]
         }
         count: {
-          args: Prisma.SummaryArticleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.SummaryArticleCountAggregateOutputType> | number
+          args: Prisma.GeopoliticsArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GeopoliticsArticleCountAggregateOutputType> | number
         }
       }
     }
@@ -667,9 +667,10 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const SummaryArticleScalarFieldEnum = {
+export const GeopoliticsArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',
@@ -680,12 +681,13 @@ export const SummaryArticleScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type SummaryArticleScalarFieldEnum = (typeof SummaryArticleScalarFieldEnum)[keyof typeof SummaryArticleScalarFieldEnum]
+export type GeopoliticsArticleScalarFieldEnum = (typeof GeopoliticsArticleScalarFieldEnum)[keyof typeof GeopoliticsArticleScalarFieldEnum]
 
 
 export const MarketsArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',
@@ -702,6 +704,7 @@ export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnu
 export const TechArticleScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   summary: 'summary',
   keyPoints: 'keyPoints',
   sourceArticles: 'sourceArticles',
@@ -903,7 +906,7 @@ export type PrismaClientOptions = ({
   comments?: runtime.SqlCommenterPlugin[]
 }
 export type GlobalOmitConfig = {
-  summaryArticle?: Prisma.SummaryArticleOmit
+  geopoliticsArticle?: Prisma.GeopoliticsArticleOmit
   marketsArticle?: Prisma.MarketsArticleOmit
   techArticle?: Prisma.TechArticleOmit
 }

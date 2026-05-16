@@ -27,6 +27,7 @@ export type AggregateMarketsArticle = {
 export type MarketsArticleMinAggregateOutputType = {
   id: string | null
   title: string | null
+  slug: string | null
   summary: string | null
   region: string | null
   date: string | null
@@ -37,6 +38,7 @@ export type MarketsArticleMinAggregateOutputType = {
 export type MarketsArticleMaxAggregateOutputType = {
   id: string | null
   title: string | null
+  slug: string | null
   summary: string | null
   region: string | null
   date: string | null
@@ -47,6 +49,7 @@ export type MarketsArticleMaxAggregateOutputType = {
 export type MarketsArticleCountAggregateOutputType = {
   id: number
   title: number
+  slug: number
   summary: number
   keyPoints: number
   sourceArticles: number
@@ -62,6 +65,7 @@ export type MarketsArticleCountAggregateOutputType = {
 export type MarketsArticleMinAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   region?: true
   date?: true
@@ -72,6 +76,7 @@ export type MarketsArticleMinAggregateInputType = {
 export type MarketsArticleMaxAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   region?: true
   date?: true
@@ -82,6 +87,7 @@ export type MarketsArticleMaxAggregateInputType = {
 export type MarketsArticleCountAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   summary?: true
   keyPoints?: true
   sourceArticles?: true
@@ -168,6 +174,7 @@ export type MarketsArticleGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 export type MarketsArticleGroupByOutputType = {
   id: string
   title: string
+  slug: string
   summary: string
   keyPoints: runtime.JsonValue
   sourceArticles: runtime.JsonValue
@@ -202,6 +209,7 @@ export type MarketsArticleWhereInput = {
   NOT?: Prisma.MarketsArticleWhereInput | Prisma.MarketsArticleWhereInput[]
   id?: Prisma.StringFilter<"MarketsArticle"> | string
   title?: Prisma.StringFilter<"MarketsArticle"> | string
+  slug?: Prisma.StringFilter<"MarketsArticle"> | string
   summary?: Prisma.StringFilter<"MarketsArticle"> | string
   keyPoints?: Prisma.JsonFilter<"MarketsArticle">
   sourceArticles?: Prisma.JsonFilter<"MarketsArticle">
@@ -215,6 +223,7 @@ export type MarketsArticleWhereInput = {
 export type MarketsArticleOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -231,6 +240,7 @@ export type MarketsArticleWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.MarketsArticleWhereInput | Prisma.MarketsArticleWhereInput[]
   OR?: Prisma.MarketsArticleWhereInput[]
   NOT?: Prisma.MarketsArticleWhereInput | Prisma.MarketsArticleWhereInput[]
+  slug?: Prisma.StringFilter<"MarketsArticle"> | string
   summary?: Prisma.StringFilter<"MarketsArticle"> | string
   keyPoints?: Prisma.JsonFilter<"MarketsArticle">
   sourceArticles?: Prisma.JsonFilter<"MarketsArticle">
@@ -244,6 +254,7 @@ export type MarketsArticleWhereUniqueInput = Prisma.AtLeast<{
 export type MarketsArticleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -263,6 +274,7 @@ export type MarketsArticleScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MarketsArticleScalarWhereWithAggregatesInput | Prisma.MarketsArticleScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"MarketsArticle"> | string
   title?: Prisma.StringWithAggregatesFilter<"MarketsArticle"> | string
+  slug?: Prisma.StringWithAggregatesFilter<"MarketsArticle"> | string
   summary?: Prisma.StringWithAggregatesFilter<"MarketsArticle"> | string
   keyPoints?: Prisma.JsonWithAggregatesFilter<"MarketsArticle">
   sourceArticles?: Prisma.JsonWithAggregatesFilter<"MarketsArticle">
@@ -276,6 +288,7 @@ export type MarketsArticleScalarWhereWithAggregatesInput = {
 export type MarketsArticleCreateInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -289,6 +302,7 @@ export type MarketsArticleCreateInput = {
 export type MarketsArticleUncheckedCreateInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -302,6 +316,7 @@ export type MarketsArticleUncheckedCreateInput = {
 export type MarketsArticleUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -315,6 +330,7 @@ export type MarketsArticleUpdateInput = {
 export type MarketsArticleUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -328,6 +344,7 @@ export type MarketsArticleUncheckedUpdateInput = {
 export type MarketsArticleCreateManyInput = {
   id?: string
   title: string
+  slug?: string
   summary: string
   keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -341,6 +358,7 @@ export type MarketsArticleCreateManyInput = {
 export type MarketsArticleUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -354,6 +372,7 @@ export type MarketsArticleUpdateManyMutationInput = {
 export type MarketsArticleUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -367,6 +386,7 @@ export type MarketsArticleUncheckedUpdateManyInput = {
 export type MarketsArticleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   keyPoints?: Prisma.SortOrder
   sourceArticles?: Prisma.SortOrder
@@ -380,6 +400,7 @@ export type MarketsArticleCountOrderByAggregateInput = {
 export type MarketsArticleMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   region?: Prisma.SortOrder
   date?: Prisma.SortOrder
@@ -390,6 +411,7 @@ export type MarketsArticleMaxOrderByAggregateInput = {
 export type MarketsArticleMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   region?: Prisma.SortOrder
   date?: Prisma.SortOrder
@@ -402,6 +424,7 @@ export type MarketsArticleMinOrderByAggregateInput = {
 export type MarketsArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -415,6 +438,7 @@ export type MarketsArticleSelect<ExtArgs extends runtime.Types.Extensions.Intern
 export type MarketsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -428,6 +452,7 @@ export type MarketsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Type
 export type MarketsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -441,6 +466,7 @@ export type MarketsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
 export type MarketsArticleSelectScalar = {
   id?: boolean
   title?: boolean
+  slug?: boolean
   summary?: boolean
   keyPoints?: boolean
   sourceArticles?: boolean
@@ -451,7 +477,7 @@ export type MarketsArticleSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MarketsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["marketsArticle"]>
+export type MarketsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["marketsArticle"]>
 
 export type $MarketsArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MarketsArticle"
@@ -459,6 +485,7 @@ export type $MarketsArticlePayload<ExtArgs extends runtime.Types.Extensions.Inte
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
+    slug: string
     summary: string
     keyPoints: runtime.JsonValue
     sourceArticles: runtime.JsonValue
@@ -892,6 +919,7 @@ export interface Prisma__MarketsArticleClient<T, Null = never, ExtArgs extends r
 export interface MarketsArticleFieldRefs {
   readonly id: Prisma.FieldRef<"MarketsArticle", 'String'>
   readonly title: Prisma.FieldRef<"MarketsArticle", 'String'>
+  readonly slug: Prisma.FieldRef<"MarketsArticle", 'String'>
   readonly summary: Prisma.FieldRef<"MarketsArticle", 'String'>
   readonly keyPoints: Prisma.FieldRef<"MarketsArticle", 'Json'>
   readonly sourceArticles: Prisma.FieldRef<"MarketsArticle", 'Json'>

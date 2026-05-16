@@ -70,6 +70,7 @@ export function toSlug(title: string): string {
 function mapDbToSummary(row: {
   id: string;
   title: string;
+  slug: string;
   summary: string;
   keyPoints: unknown;
   sourceArticles: unknown;
@@ -81,7 +82,7 @@ function mapDbToSummary(row: {
   return {
     id: row.id,
     title: row.title,
-    slug: toSlug(row.title),
+    slug: row.slug || toSlug(row.title),
     summary: row.summary,
     keyPoints: Array.isArray(row.keyPoints) ? (row.keyPoints as string[]) : [],
     sourceArticles: Array.isArray(row.sourceArticles)
@@ -304,31 +305,32 @@ export async function generateSummaryArticle(
 export async function saveSummaryArticle(
   data: Omit<SummaryArticle, 'id' | 'createdAt'>,
 ): Promise<SummaryArticle> {
-  const existing = await prisma.summaryArticle.findFirst({
+  const existing = await prisma.geopoliticsArticle.findFirst({
     where: { date: data.date },
   });
 
   const payload = {
     title: data.title,
+    slug: data.slug,
     summary: data.summary,
     keyPoints: data.keyPoints,
     sourceArticles: data.sourceArticles as unknown as Parameters<
-      typeof prisma.summaryArticle.create
+      typeof prisma.geopoliticsArticle.create
     >[0]['data']['sourceArticles'],
     region: data.region,
     tags: data.tags,
     date: data.date,
   };
 
-  let row: Awaited<ReturnType<typeof prisma.summaryArticle.create>>;
+  let row: Awaited<ReturnType<typeof prisma.geopoliticsArticle.create>>;
 
   if (existing) {
-    row = await prisma.summaryArticle.update({
+    row = await prisma.geopoliticsArticle.update({
       where: { id: existing.id },
       data: payload,
     });
   } else {
-    row = await prisma.summaryArticle.create({ data: payload });
+    row = await prisma.geopoliticsArticle.create({ data: payload });
   }
 
   return mapDbToSummary(row);
@@ -339,7 +341,7 @@ export async function saveSummaryArticle(
 // ---------------------------------------------------------------------------
 
 export async function getSummaryArticles(limit = 20): Promise<SummaryArticle[]> {
-  const rows = await prisma.summaryArticle.findMany({
+  const rows = await prisma.geopoliticsArticle.findMany({
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
@@ -351,7 +353,7 @@ export async function getSummaryArticles(limit = 20): Promise<SummaryArticle[]> 
 // ---------------------------------------------------------------------------
 
 export async function getSummaryArticleByDate(date: string): Promise<SummaryArticle | null> {
-  const row = await prisma.summaryArticle.findFirst({ where: { date } });
+  const row = await prisma.geopoliticsArticle.findFirst({ where: { date } });
   return row ? mapDbToSummary(row) : null;
 }
 

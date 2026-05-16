@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/SummaryArticle'
+export type * from './models/GeopoliticsArticle'
 export type * from './models/MarketsArticle'
 export type * from './models/TechArticle'
 export type * from './commonInputTypes'
