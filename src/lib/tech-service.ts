@@ -184,7 +184,12 @@ export async function fetchTopTechArticles(): Promise<SourceArticle[]> {
     combined.push(article);
   }
 
-  const sorted = [...combined].sort(
+  const BLOCKED_DOMAINS = ['rt.com'];
+  const filtered = combined.filter(
+    (a) => !BLOCKED_DOMAINS.some((d) => a.url.toLowerCase().includes(d)),
+  );
+
+  const sorted = [...filtered].sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
 

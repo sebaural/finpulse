@@ -181,7 +181,7 @@ export default function TechPageClient({ articles, initialArticleId }: Props) {
                 <section>
                   <p className="geo-sources-title">Source Articles</p>
                   <div className="geo-sources-grid">
-                    {selected.sourceArticles.map((src, i) => (
+                    {selected.sourceArticles.filter((src) => !src.url.includes('rt.com')).map((src, i) => (
                       <div key={i} className="geo-source-card">
                         <p className="geo-source-name">{src.source}</p>
                         <a

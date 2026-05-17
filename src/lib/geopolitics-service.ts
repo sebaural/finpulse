@@ -186,9 +186,14 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
     combined.push(article);
   }
 
+  const BLOCKED_DOMAINS = ['rt.com'];
+  const filtered = combined.filter(
+    (a) => !BLOCKED_DOMAINS.some((d) => a.url.toLowerCase().includes(d)),
+  );
+
   // Sort newest-first then filter for "important" articles (importance === 2
   // = class="priority-dot important" in the news card UI).
-  const sorted = [...combined].sort(
+  const sorted = [...filtered].sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
 
