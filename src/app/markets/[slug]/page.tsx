@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getMarketsSummaryArticles, toSlug } from '@/lib/markets-service';
+import { getMarketsSummaryArticles } from '@/lib/markets-service';
 import MarketsPageClient from '@/components/markets/MarketsPageClient';
 import {
   buildMetadata,
@@ -26,7 +26,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const articles = await getMarketsSummaryArticles(30);
-  const article = articles.find((a) => toSlug(a.title) === slug);
+  const article = articles.find((a) => a.slug === slug);
 
   if (!article) {
     return buildMetadata({
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function MarketsArticlePage({ params }: Props) {
   const { slug } = await params;
   const articles = await getMarketsSummaryArticles(30);
-  const article = articles.find((a) => toSlug(a.title) === slug);
+  const article = articles.find((a) => a.slug === slug);
 
   if (!article) {
     notFound();

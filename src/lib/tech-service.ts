@@ -70,6 +70,7 @@ export function toSlug(title: string): string {
 function mapDbToSummary(row: {
   id: string;
   title: string;
+  slug: string;
   summary: string;
   keyPoints: unknown;
   sourceArticles: unknown;
@@ -81,7 +82,7 @@ function mapDbToSummary(row: {
   return {
     id: row.id,
     title: row.title,
-    slug: toSlug(row.title),
+    slug: row.slug || toSlug(row.title),
     summary: row.summary,
     keyPoints: Array.isArray(row.keyPoints) ? (row.keyPoints as string[]) : [],
     sourceArticles: Array.isArray(row.sourceArticles)
@@ -303,6 +304,7 @@ export async function saveTechSummaryArticle(
 
   const payload = {
     title: data.title,
+    slug: data.slug,
     summary: data.summary,
     keyPoints: data.keyPoints,
     sourceArticles: data.sourceArticles as unknown as Parameters<
