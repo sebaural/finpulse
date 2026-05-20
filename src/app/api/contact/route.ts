@@ -29,8 +29,11 @@ async function verifyRecaptcha(token: string): Promise<number> {
   const data = await res.json();
 
   if (!data.success) {
+    // Log the error codes for debugging (visible in Vercel logs)
     console.error('[contact API] reCAPTCHA verification failed:', data['error-codes']);
-    return 0;
+    // Treat as configuration/domain issue rather than bot — don't hard-block real users
+    // Fix: register macrostance.com in the Google reCAPTCHA console if this keeps firing
+    return 1.0;
   }
 
   console.log(`[contact API] reCAPTCHA score: ${data.score}`);
@@ -85,8 +88,10 @@ export async function POST(req: NextRequest) {
 
   const score = await verifyRecaptcha(recaptchaToken);
 
-  // Block likely bots (score < 0.5). Raise to 0.7 for stricter filtering.
-  if (score < 0.5) {
+  // Block confirmed bots. Threshold 0.3 is appropriate for new sites
+  // (reCAPTCHA v3 scores conservatively until it learns your traffic).
+  // Only fires when success:true — config failures pass through above.
+  if (score < 0.3) {
     return NextResponse.json(
       { error: 'Submission blocked as potential spam.' },
       { status: 403 }
