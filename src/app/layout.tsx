@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { ReCaptchaProvider } from 'next-recaptcha-v3';
 import Footer from '@/components/Footer';
 import { GTMScript, GTMNoScript } from '@/components/GoogleTagManager';
 import {
@@ -114,8 +115,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable}`}>
         <GTMNoScript />
-        <div className="layout-content">{children}</div>
-        <Footer />
+        <ReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}>
+          <div className="layout-content">{children}</div>
+          <Footer />
+        </ReCaptchaProvider>
       </body>
     </html>
   );

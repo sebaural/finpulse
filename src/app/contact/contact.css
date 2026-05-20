@@ -171,6 +171,39 @@
   line-height: 1.65;
 }
 
+/* ── Error message ── */
+
+.contact-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(240, 84, 84, 0.06);
+  border: 1px solid rgba(240, 84, 84, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.contact-error-icon {
+  font-size: 20px;
+  color: #f05454;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.contact-error strong {
+  display: block;
+  font-size: 15px;
+  color: #f05454;
+  margin-bottom: 4px;
+}
+
+.contact-error p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 /* ── Details panel ── */
 
 .contact-details-card {
