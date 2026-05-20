@@ -1828,3 +1828,8 @@ nav {
   .vsm-panel        { padding: 14px; }
 }
 
+/* ── Hide reCAPTCHA badge (attribution text shown on /contact form instead) ── */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
