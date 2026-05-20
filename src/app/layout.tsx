@@ -91,6 +91,9 @@ export const metadata: Metadata = {
   verification: {
     google: '-Rb9fAScldNCrWRGsUKNMGFUOucVGMh5MB10vb-Fn0E',
   },
+  other: {
+    'msvalidate.01': process.env.BING_VERIFICATION_CODE ?? '',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
