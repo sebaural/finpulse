@@ -786,9 +786,7 @@ nav {
 
 .quote-lookup-wrap {
   position: relative;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 14px;
 }
 
 .quote-lookup-row {
