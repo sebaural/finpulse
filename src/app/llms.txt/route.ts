@@ -6,7 +6,6 @@ export const revalidate = 86400;
 export async function GET() {
   const body =
 `# MacroStance
-
 > MacroStance aggregates real-time financial news and market intelligence across equities, macro, forex, commodities, crypto, geopolitics, and tech — built for traders, analysts, and market observers.
 
 Updated continuously. Sourced from 50+ providers including Reuters, Bloomberg, WSJ, and CNBC.

@@ -114,6 +114,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(webSiteSchema()) }}
         />
+        <link rel="describedby" href="/llms.txt" type="text/plain" />
         <GTMScript />
       </head>
       <body suppressHydrationWarning className={`${dmSans.variable} ${dmSerif.variable}`}>
