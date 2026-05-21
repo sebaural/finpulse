@@ -2,7 +2,7 @@
   --bg: #0a0c0f;
   --surface: #111418;
   --surface2: #181c22;
-  --border: #1e2530;
+  --border: #4e5a6d;
   --text: #e8eaf0;
   --muted: #6b7385;
   --accent: #e8b84b;
@@ -807,8 +807,8 @@ nav {
 }
 
 .quote-lookup-icon {
-  font-size: 11px;
-  opacity: 0.5;
+  font-size: 12px;
+  opacity: 0.9;
   flex-shrink: 0;
 }
 
