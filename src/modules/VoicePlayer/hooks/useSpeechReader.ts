@@ -133,7 +133,6 @@ interface SpeechState {
   voice:               SpeechSynthesisVoice | null;
   currentArticleId:    string | null;
   currentArticleTitle: string | null;
-  progressPct:         number;
   mode:                ReadMode;
   voiceSettings:       VoiceSettings;
   voices:              SpeechSynthesisVoice[];
@@ -148,7 +147,6 @@ interface SpeechState {
 export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
   // ── Refs (mutable state that does not drive renders) ──────────────────────
   const utteranceRef       = useRef<SpeechSynthesisUtterance | null>(null);
-  const progressTimerRef   = useRef<number | null>(null);
   const gapTimerRef        = useRef<number | null>(null);
   const readByIdRef        = useRef<(id: string) => void>(() => {});
   const articlesRef        = useRef(articles);
@@ -175,7 +173,6 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     voice:               null,
     currentArticleId:    null,
     currentArticleTitle: null,
-    progressPct:         0,
     mode:                'headline',
     voiceSettings:       DEFAULT_VOICE_SETTINGS,
     voices:              [],
@@ -229,15 +226,11 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
 
       if (!first) {
-        if (progressTimerRef.current !== null) {
-          window.clearInterval(progressTimerRef.current);
-          progressTimerRef.current = null;
-        }
         // Reset currentArticleId so the next ▶ press plays from the new list
         // instead of silently failing to find the stale article ID.
         setState(prev => ({
           ...prev,
-          isPlaying: false, isPaused: false, progressPct: 0,
+          isPlaying: false, isPaused: false,
           currentArticleId: null, currentArticleTitle: null,
           statusMessage: 'No articles match the current filters.',
         }));
@@ -268,7 +261,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
       setState(prev => ({
         ...prev,
-        isPlaying: false, isPaused: false, progressPct: 0,
+        isPlaying: false, isPaused: false,
         autoplay: false,
         currentArticleId: null, currentArticleTitle: null,
       }));
@@ -341,21 +334,11 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       window.speechSynthesis.removeEventListener('voiceschanged', updateVoices);
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown',     unlock);
-      if (progressTimerRef.current  !== null) window.clearInterval(progressTimerRef.current);
       if (gapTimerRef.current       !== null) window.clearTimeout(gapTimerRef.current);
       if (restartTimerRef.current   !== null) window.clearTimeout(restartTimerRef.current);
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     };
   }, [updateVoices]);
-
-  // ── Progress timer helper ─────────────────────────────────────────────────
-
-  const clearProgressTimer = useCallback(() => {
-    if (progressTimerRef.current !== null) {
-      window.clearInterval(progressTimerRef.current);
-      progressTimerRef.current = null;
-    }
-  }, []);
 
   // ── Core speak() — uses refs so callbacks never go stale ─────────────────
 
@@ -363,7 +346,6 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     (article: NewsArticle) => {
       if (typeof window === 'undefined' || !hasSpeechSupport(window)) return;
 
-      clearProgressTimer();
       if (gapTimerRef.current !== null) {
         window.clearTimeout(gapTimerRef.current);
         gapTimerRef.current = null;
@@ -417,9 +399,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
 
       utterance.onend = () => {
         isPlayingRef.current = false;
-        clearProgressTimer();
-        setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 100 }));
-        window.setTimeout(() => setState(prev => ({ ...prev, progressPct: 0 })), 500);
+        setState(prev => ({ ...prev, isPlaying: false, isPaused: false }));
 
         if (!autoplayRef.current) return;
 
@@ -444,28 +424,18 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
 
       utterance.onerror = () => {
         isPlayingRef.current = false;
-        clearProgressTimer();
         setState(prev => ({ ...prev, isPlaying: false, isPaused: false }));
       };
-
-      const duration = Math.max(8, text.length / (vs.rate * 14));
-      progressTimerRef.current = window.setInterval(() => {
-        setState(prev => {
-          if (!prev.isPlaying) return prev;
-          return { ...prev, progressPct: Math.min(prev.progressPct + 100 / (duration * 10), 96) };
-        });
-      }, 100);
 
       utteranceRef.current = utterance;
       try { window.speechSynthesis.speak(utterance); }
       catch {
-        clearProgressTimer();
         setState(prev => ({
           ...prev, hasResolvedSupport: true, isSupported: false, isPlaying: false,
         }));
       }
     },
-    [clearProgressTimer],
+    [],
   );
 
   // ── Public actions ────────────────────────────────────────────────────────
@@ -475,7 +445,6 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       if (typeof window === 'undefined') return;
       const article = articlesRef.current.find(a => a.id === id);
       if (!article) return;
-      setState(prev => ({ ...prev, progressPct: 0 }));
       speakArticle(article);
     },
     [speakArticle],
@@ -547,19 +516,17 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     // immediate onend callback sees the updated refs and won't auto-advance.
     autoplayRef.current  = false;
     isPlayingRef.current = false;
-    clearProgressTimer();
     if (gapTimerRef.current !== null) {
       window.clearTimeout(gapTimerRef.current);
       gapTimerRef.current = null;
     }
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
-    setState(prev => ({ ...prev, isPlaying: false, isPaused: false, progressPct: 0, autoplay: false }));
-  }, [clearProgressTimer]);
+    setState(prev => ({ ...prev, isPlaying: false, isPaused: false, autoplay: false }));
+  }, []);
 
   const replayLast = useCallback(() => {
     const last = lastSpokenRef.current;
     if (!last) return;
-    setState(prev => ({ ...prev, progressPct: 0 }));
     speakArticle(last);
   }, [speakArticle]);
 

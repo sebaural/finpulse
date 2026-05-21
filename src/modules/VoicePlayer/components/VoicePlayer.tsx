@@ -117,10 +117,6 @@ export function VoicePlayer({ speech }: VoicePlayerProps) {
 
         </div>
 
-        {/* ── Progress bar ── */}
-        <div className={styles.progressBar} aria-label="Playback progress">
-          <div className={styles.progressFill} style={{ width: `${speech.progressPct}%` }} />
-        </div>
 
       </div>
 
