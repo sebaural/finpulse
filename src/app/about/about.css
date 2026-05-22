@@ -276,6 +276,10 @@
   margin-bottom: 28px;
 }
 
+.about-team-grid--single {
+  grid-template-columns: minmax(0, 520px);
+}
+
 .about-team-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -320,6 +324,19 @@
   line-height: 1.55 !important;
   color: var(--muted);
   margin: 4px 0 0 0 !important;
+}
+
+.about-team-link {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.about-team-link:hover {
+  text-decoration: underline;
 }
 
 /* ── Responsive ── */

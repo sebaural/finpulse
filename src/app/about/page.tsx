@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import SiteHeader from '@/components/SiteHeader';
-import { buildMetadata, jsonLd, breadcrumbSchema, canonicalUrl } from '@/lib/seo';
+import {
+  buildMetadata,
+  jsonLd,
+  breadcrumbSchema,
+  canonicalUrl,
+  sebastianPereiraSchema,
+  SEBASTIAN_PEREIRA_LINKEDIN,
+} from '@/lib/seo';
 import './about.css';
 
 export const metadata: Metadata = buildMetadata({
@@ -34,31 +41,15 @@ const PRINCIPLES = [
   'Clean signal — no noise, no clickbait',
 ];
 
-// const TEAM = [
-//   {
-//     name: '[Editorial Lead]',
-//     title: 'Head of Editorial',
-//     credential:
-//       '[Placeholder bio: 10+ years covering global markets at a major financial publication; CFA Level III candidate. Replace with real bio.]',
-//   },
-//   {
-//     name: '[Markets Editor]',
-//     title: 'Markets & Macro Editor',
-//     credential:
-//       '[Placeholder bio: Former buy-side analyst with experience in equities and FX desks. Replace with real bio.]',
-//   },
-//   {
-//     name: '[Engineering Lead]',
-//     title: 'Head of Engineering',
-//     credential:
-//       '[Placeholder bio: Built data pipelines and real-time systems at fintech firms. Replace with real bio.]',
-//   },
-// ];
-
 const breadcrumbs = breadcrumbSchema([
   { name: 'Home', url: canonicalUrl('/') },
   { name: 'About', url: canonicalUrl('/about') },
 ]);
+
+const aboutGraph = {
+  '@context': 'https://schema.org',
+  '@graph': [sebastianPereiraSchema(), breadcrumbs],
+};
 
 export default function AboutPage() {
   return (
@@ -66,7 +57,7 @@ export default function AboutPage() {
       <SiteHeader />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(aboutGraph) }}
       />
       <main className="page about-page">
         {/* Hero */}
@@ -207,22 +198,40 @@ export default function AboutPage() {
               ))}
             </div>
 
-            {/* <h2>Editorial Team</h2>
-            <p className="about-team-note">
-              The bios below are placeholders pending publication of the full
-              team page. Real names, photos, credentials, and links will
-              replace these entries.
-            </p>
-            <div className="about-team-grid">
-              {TEAM.map((member) => (
-                <div key={member.name} className="about-team-card">
-                  <div className="about-team-avatar" aria-hidden="true">◈</div>
-                  <div className="about-team-name">{member.name}</div>
-                  <div className="about-team-title">{member.title}</div>
-                  <p className="about-team-cred">{member.credential}</p>
+            <h2>Editorial Leadership</h2>
+            <div className="about-team-grid about-team-grid--single">
+              <article
+                className="about-team-card"
+                itemScope
+                itemType="https://schema.org/Person"
+              >
+                {/* <div className="about-team-avatar" aria-hidden="true">SP</div> */}
+                <div className="about-team-name" itemProp="name">
+                  Sebastian Pereira
                 </div>
-              ))}
-            </div> */}
+                <div className="about-team-title" itemProp="jobTitle">
+                  Founder &amp; Editor-in-Chief
+                </div>
+                <p className="about-team-cred" itemProp="description">
+                  Sebastian leads editorial standards, source vetting, and
+                  signal-quality methodology at MacroStance. He sets the
+                  framework by which headlines are admitted to the feed, how
+                  duplicates are collapsed, and how independence from issuers,
+                  advertisers, and market participants is maintained. His
+                  coverage focus spans equities, macroeconomics, commodities,
+                  forex, crypto, and geopolitics.
+                </p>
+                <a
+                  className="about-team-link"
+                  href={SEBASTIAN_PEREIRA_LINKEDIN}
+                  target="_blank"
+                  rel="noopener noreferrer me author"
+                  itemProp="sameAs"
+                >
+                  LinkedIn profile →
+                </a>
+              </article>
+            </div>
 
             <div className="about-meta-row">
               <div className="about-meta-item">

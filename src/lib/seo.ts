@@ -7,9 +7,11 @@ export const DEFAULT_OG_IMAGE = `${SITE_URL}/macrostance-logo.png`;
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
+export const AUTHOR_SEBASTIAN_ID = `${SITE_URL}/#sebastian-pereira`;
 
 export const publisherRef = () => ({ '@id': ORG_ID });
 export const websiteRef = () => ({ '@id': WEBSITE_ID });
+export const sebastianPereiraRef = () => ({ '@id': AUTHOR_SEBASTIAN_ID });
 
 export const SITE_DESCRIPTION =
   'MacroStance delivers real-time financial news, market data, and geopolitical intelligence for traders, analysts, and market observers worldwide.';
@@ -124,6 +126,7 @@ export function newsMediaOrganizationSchema() {
       'Energy Markets',
       'Technology Sector',
     ],
+    founder: sebastianPereiraRef(),
   };
 }
 
@@ -167,30 +170,58 @@ export function breadcrumbSchema(items: BreadcrumbItem[]) {
 }
 
 interface PersonSchemaInput {
+  id?: string;
   name: string;
   url?: string;
   jobTitle?: string;
   description?: string;
   image?: string;
   sameAs?: string[];
+  knowsAbout?: string[];
+  alumniOf?: string[];
 }
 
 export function personSchema(input: PersonSchemaInput) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    '@id': input.id,
     name: input.name,
     url: input.url,
     jobTitle: input.jobTitle,
     description: input.description,
     image: input.image,
     sameAs: input.sameAs,
-    worksFor: {
-      '@type': 'NewsMediaOrganization',
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
+    knowsAbout: input.knowsAbout,
+    alumniOf: input.alumniOf,
+    worksFor: publisherRef(),
   };
+}
+
+export const SEBASTIAN_PEREIRA_LINKEDIN =
+  'https://www.linkedin.com/in/sebastian-pereira-0a4a71410/';
+
+export function sebastianPereiraSchema() {
+  return personSchema({
+    id: AUTHOR_SEBASTIAN_ID,
+    name: 'Sebastian Pereira',
+    url: canonicalUrl('/about'),
+    jobTitle: 'Founder & Editor-in-Chief',
+    description:
+      'Sebastian Pereira is the founder and Editor-in-Chief of MacroStance, an independent financial news platform aggregating real-time headlines and market data from 50+ trusted global sources. He leads editorial standards, source vetting, and signal-quality methodology across MacroStance’s coverage of equities, macroeconomics, commodities, forex, crypto, and geopolitics.',
+    sameAs: [SEBASTIAN_PEREIRA_LINKEDIN],
+    knowsAbout: [
+      'Financial Markets',
+      'Macroeconomics',
+      'Equities',
+      'Foreign Exchange',
+      'Commodities',
+      'Cryptocurrency',
+      'Geopolitics',
+      'Financial Journalism',
+      'Market Data Analysis',
+    ],
+  });
 }
 
 export function jsonLd(data: unknown): string {
