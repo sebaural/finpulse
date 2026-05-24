@@ -264,7 +264,7 @@ export async function generateTechSummaryArticle(
     `}`;
 
   const response = await client.messages.create({
-    model: 'claude-opus-4-5',
+    model: 'claude-opus-4-6',
     max_tokens: 4000,
     system:
       'You are a Senior Technology Strategist and Lead Content Strategist with 25 years of ' +
