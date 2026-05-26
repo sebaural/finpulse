@@ -244,17 +244,17 @@ export async function generateSummaryArticle(
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and strategic paradoxes. No filler — every sentence must add depth.\n` +
     `- Structure the content using these EXACT section headers (bold markdown):\n` +
-    `  **INTRODUCTION** — Establish the current high-stakes environment. Identify the immediate\n` +
+    `  INTRODUCTION — Establish the current high-stakes environment. Identify the immediate\n` +
     `    catalyst or "Redline" that has brought this situation to a head.\n` +
-    `  **HISTORICAL CONTEXT** — Detail the long-term trends, past conflicts, broken treaties, or\n` +
+    `  HISTORICAL CONTEXT — Detail the long-term trends, past conflicts, broken treaties, or\n` +
     `    structural forces that led to this moment. Go back 10–20 years where relevant.\n` +
-    `  **PRIMARY STAKEHOLDERS** — Analyze each key actor's motivations, internal pressures,\n` +
+    `  PRIMARY STAKEHOLDERS — Analyze each key actor's motivations, internal pressures,\n` +
     `    domestic political constraints, and Grand Strategy. Apply Realism, Liberalism, or\n` +
     `    Constructivism frameworks to explain state behavior.\n` +
-    `  **ECONOMIC IMPLICATIONS** — Evaluate concrete impacts on global supply chains, energy\n` +
+    `  ECONOMIC IMPLICATIONS — Evaluate concrete impacts on global supply chains, energy\n` +
     `    markets, currency stability, trade blocs, or financial systems. Reference specific\n` +
     `    economic figures, indices, or market sectors where possible.\n` +
-    `  **FUTURE PROJECTIONS** — Provide three scenarios:\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
     `    - BEST CASE: [scenario + logic-based justification]\n` +
     `    - BASE CASE: [scenario + logic-based justification]\n` +
     `    - WORST CASE: [scenario + logic-based justification]\n` +

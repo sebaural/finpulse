@@ -239,16 +239,16 @@ export async function generateTechSummaryArticle(
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and platform-shift dynamics. No filler — every sentence must add depth.\n` +
     `- Structure the content using these EXACT section headers (bold markdown):\n` +
-    `  **INTRODUCTION** — Establish today's tech environment. Identify the immediate catalyst\n` +
+    `  INTRODUCTION — Establish today's tech environment. Identify the immediate catalyst\n` +
     `    (product launch, regulatory action, breakthrough, M&A, security incident).\n` +
-    `  **HISTORICAL CONTEXT** — Detail the multi-cycle technology trends, prior platform shifts,\n` +
+    `  HISTORICAL CONTEXT — Detail the multi-cycle technology trends, prior platform shifts,\n` +
     `    research breakthroughs, or regulatory regimes that led to this moment.\n` +
-    `  **PRIMARY STAKEHOLDERS** — Analyze key actors: hyperscalers, model labs, chipmakers,\n` +
+    `  PRIMARY STAKEHOLDERS — Analyze key actors: hyperscalers, model labs, chipmakers,\n` +
     `    regulators, startups, enterprise buyers. Cover their incentives and constraints.\n` +
-    `  **ECONOMIC IMPLICATIONS** — Evaluate impacts on capex cycles, enterprise IT spend,\n` +
+    `  ECONOMIC IMPLICATIONS — Evaluate impacts on capex cycles, enterprise IT spend,\n` +
     `    semiconductor supply chains, equity multiples, and incumbent moats. Reference\n` +
     `    specific companies, models, chip families, or product lines where possible.\n` +
-    `  **FUTURE PROJECTIONS** — Provide three scenarios:\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
     `    - BEST CASE: [scenario + logic-based justification]\n` +
     `    - BASE CASE: [scenario + logic-based justification]\n` +
     `    - WORST CASE: [scenario + logic-based justification]\n` +
