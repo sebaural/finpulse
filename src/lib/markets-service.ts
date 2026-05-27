@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
+import { selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -48,19 +49,6 @@ interface ClaudeMarketsResponse {
   keyPoints: string[];
   region: string;
   tags: string[];
-}
-
-// ---------------------------------------------------------------------------
-// Private helper: derive a URL-safe slug from an article title
-// ---------------------------------------------------------------------------
-
-export function toSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
 }
 
 // ---------------------------------------------------------------------------
@@ -176,37 +164,11 @@ export async function fetchTopMarketsArticles(): Promise<SourceArticle[]> {
     console.error('[markets-pipeline] Finnhub fetch failed:', finnhubResult.reason);
   }
 
-  // Merge and deduplicate by URL.
-  const seenUrls = new Set<string>();
-  const combined: SourceArticle[] = [];
-  for (const article of [...newsApiArticles, ...finnhubArticles]) {
-    const key = article.url.trim().toLowerCase();
-    if (key && seenUrls.has(key)) continue;
-    if (key) seenUrls.add(key);
-    combined.push(article);
-  }
-
-  const BLOCKED_DOMAINS = ['rt.com'];
-  const filtered = combined.filter(
-    (a) => !BLOCKED_DOMAINS.some((d) => a.url.toLowerCase().includes(d)),
+  return selectImportantArticles(
+    [...newsApiArticles, ...finnhubArticles],
+    detectImportance,
+    'markets',
   );
-
-  const sorted = [...filtered].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
-
-  const importantArticles = sorted.filter(
-    (a) => detectImportance(`${a.title} ${a.description ?? ''}`) === 2,
-  );
-
-  if (importantArticles.length === 0) {
-    throw new Error(
-      'No "important" (priority-dot important) markets articles found across ' +
-      'NewsAPI and Finnhub in the last 2 days. Pipeline aborted — will retry on next cron run.',
-    );
-  }
-
-  return importantArticles.slice(0, 5);
 }
 
 // ---------------------------------------------------------------------------

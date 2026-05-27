@@ -9,8 +9,8 @@ import {
   toId,
   timeAgo,
 } from '../services/news';
-import { listFeedSources } from '../app/api/feeds/feedsStore';
-import { getNewsCache, setNewsCache } from '../app/api/news/newsCache';
+import { listFeedSources } from './feedsStore';
+import { getNewsCache, setNewsCache } from './newsCache';
 import { newsProviderEnv } from '../lib/env';
 import type { FeedSource, NewsArticle } from '../types';
 

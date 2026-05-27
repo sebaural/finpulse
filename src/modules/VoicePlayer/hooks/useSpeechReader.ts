@@ -228,12 +228,14 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       if (!first) {
         // Reset currentArticleId so the next ▶ press plays from the new list
         // instead of silently failing to find the stale article ID.
-        setState(prev => ({
-          ...prev,
-          isPlaying: false, isPaused: false,
-          currentArticleId: null, currentArticleTitle: null,
-          statusMessage: 'No articles match the current filters.',
-        }));
+        window.setTimeout(() => {
+          setState(prev => ({
+            ...prev,
+            isPlaying: false, isPaused: false,
+            currentArticleId: null, currentArticleTitle: null,
+            statusMessage: 'No articles match the current filters.',
+          }));
+        }, 0);
         window.setTimeout(() => setState(prev => ({ ...prev, statusMessage: null })), 3000);
         return;
       }
@@ -259,14 +261,16 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       // Paused: stop cleanly so the next ▶ press starts fresh from the new list.
       try { window.speechSynthesis.resume(); } catch { /* ignore */ }
       try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
-      setState(prev => ({
-        ...prev,
-        isPlaying: false, isPaused: false,
-        autoplay: false,
-        currentArticleId: null, currentArticleTitle: null,
-      }));
+      window.setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          isPlaying: false, isPaused: false,
+          autoplay: false,
+          currentArticleId: null, currentArticleTitle: null,
+        }));
+      }, 0);
     }
-  }, [filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterKey]);
 
   // ── Voice loading ─────────────────────────────────────────────────────────
 
@@ -293,10 +297,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     [articles, state.currentArticleId],
   );
 
-  const queuedArticles = useMemo(() => {
-    if (!state.rules.dedup) return articles;
-    return articles.filter(a => !spokenIdsRef.current.has(a.id));
-  }, [articles, state.rules.dedup]);
+  const queuedArticles = articles;
 
   const nextArticle = useMemo(() => {
     if (!state.autoplay || !state.currentArticleId) return null;
@@ -313,7 +314,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
     let supported = hasSpeechSupport(window);
 
     if (supported) {
-      try { updateVoices(); }
+      try { window.setTimeout(() => updateVoices(), 0); }
       catch { supported = false; }
     }
 
@@ -351,13 +352,19 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
         gapTimerRef.current = null;
       }
 
-      // resume() before cancel() is the standard Chrome workaround for the
-      // "rapid cancel freezes the speech engine" bug.
-      try { window.speechSynthesis.resume(); } catch { /* ignore */ }
-      try { window.speechSynthesis.cancel(); }
-      catch {
-        setState(prev => ({ ...prev, hasResolvedSupport: true, isSupported: false }));
-        return;
+      // Only cancel if the engine has something to cancel. An unnecessary
+      // cancel right after the filter-change cancel causes Chrome's speech
+      // engine to get stuck and silently ignore all subsequent speak() calls
+      // (the "double-cancel stuck engine" bug).
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        // resume() before cancel() is the standard Chrome workaround for the
+        // "rapid cancel freezes the speech engine" bug.
+        try { window.speechSynthesis.resume(); } catch { /* ignore */ }
+        try { window.speechSynthesis.cancel(); }
+        catch {
+          setState(prev => ({ ...prev, hasResolvedSupport: true, isSupported: false }));
+          return;
+        }
       }
 
       const text = buildSpeechText(article, modeRef.current);
@@ -398,6 +405,10 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       };
 
       utterance.onend = () => {
+        // Guard against stale callbacks: if a newer utterance has already been
+        // created (e.g. filter restart fired after a late onend from cancel()),
+        // ignore this callback to avoid overwriting the new utterance's state.
+        if (utteranceRef.current !== utterance) return;
         isPlayingRef.current = false;
         setState(prev => ({ ...prev, isPlaying: false, isPaused: false }));
 
@@ -423,6 +434,7 @@ export function useSpeechReader(articles: NewsArticle[], filterKey?: string) {
       };
 
       utterance.onerror = () => {
+        if (utteranceRef.current !== utterance) return; // stale
         isPlayingRef.current = false;
         setState(prev => ({ ...prev, isPlaying: false, isPaused: false }));
       };

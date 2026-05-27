@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { listFeedSources, saveFeedSources } from '../feedsStore';
-import { clearNewsCache } from '../../news/newsCache';
+import { listFeedSources, saveFeedSources } from '@/server/feedsStore';
+import { clearNewsCache } from '@/server/newsCache';
 import type { FeedSource } from '../../../../types';
 
 type UpdateInput = Partial<Omit<FeedSource, 'id'>>;

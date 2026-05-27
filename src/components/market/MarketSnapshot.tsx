@@ -27,7 +27,7 @@ function QuoteLookup({ trackedSymbols, onAdd }: QuoteLookupProps) {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const q = query.trim();
-    if (!q) { setResults([]); setOpen(false); return; }
+    if (!q) return;
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/market/search?q=${encodeURIComponent(q)}`);
@@ -82,7 +82,15 @@ function QuoteLookup({ trackedSymbols, onAdd }: QuoteLookupProps) {
           type="text"
           placeholder="Quote Lookup"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const nextQuery = e.target.value;
+            setQuery(nextQuery);
+            if (!nextQuery.trim()) {
+              setResults([]);
+              setOpen(false);
+              setActiveIdx(-1);
+            }
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setOpen(true)}
           autoComplete="off"
@@ -124,7 +132,10 @@ interface MarketSnapshotModalProps extends MarketSnapshotProps {
 
 export function MarketSnapshotModal({ onClose, ...props }: MarketSnapshotModalProps) {
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo';
 import { prisma } from '@/lib/db';
-import { toSlug } from '@/lib/geopolitics-service';
+import { toSlug } from '@/lib/summary-pipeline';
 
 export const revalidate = 3600;
 

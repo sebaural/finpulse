@@ -13,6 +13,28 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["src/server/**/*.ts", "src/lib/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/api/*", "@/app/api/**"],
+              message:
+                "Server/lib code must not depend on App Router API internals. Import from '@/server/*' or '@/lib/*' instead.",
+            },
+            {
+              group: ["../app/api/*", "../app/api/**", "../../app/api/*", "../../app/api/**", "../../../app/api/*", "../../../app/api/**"],
+              message:
+                "Server/lib code must not import from src/app/api internals via relative paths.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

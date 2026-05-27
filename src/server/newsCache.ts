@@ -1,4 +1,4 @@
-import type { NewsArticle } from '../../../types';
+import type { NewsArticle } from '@/types';
 
 export interface NewsCacheEntry {
   articles: NewsArticle[];

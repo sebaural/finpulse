@@ -7,44 +7,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runDailyTechPipeline } from '@/lib/tech-service';
-
-async function runPipeline() {
-  const article = await runDailyTechPipeline();
-  return NextResponse.json({ success: true, article });
-}
-
-function isAuthorized(req: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return false;
-
-  const authHeader = req.headers.get('authorization') ?? '';
-  return authHeader === `Bearer ${cronSecret}`;
-}
+import { isCronAuthorized, runCronPipeline } from '@/server/cron';
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  try {
-    return await runPipeline();
-  } catch (err) {
-    const details = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
-  }
+  return runCronPipeline(runDailyTechPipeline);
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  try {
-    return await runPipeline();
-  } catch (err) {
-    const details = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
-  }
+  return runCronPipeline(runDailyTechPipeline);
 }

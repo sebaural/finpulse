@@ -1,7 +1,7 @@
 // src/components/tech/TechPageClient.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { SummaryArticle } from '@/types/tech';
@@ -41,7 +41,7 @@ const ARTICLE_HEADERS = [
   'WORST CASE:',
 ];
 
-function renderSummary(summary: string): JSX.Element[] {
+function renderSummary(summary: string): ReactElement[] {
   const clean = summary.replace(/\*\*/g, '');
   return clean.split('\n\n').flatMap((block, bi) => {
     const trimmed = block.trim();
