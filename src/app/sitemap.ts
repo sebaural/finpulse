@@ -5,7 +5,7 @@ import { toSlug } from '@/lib/summary-pipeline';
 
 export const revalidate = 3600;
 
-type ArticleRow = { title: string; updatedAt: Date };
+type ArticleRow = { slug: string; title: string; updatedAt: Date };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let articleEntries: MetadataRoute.Sitemap = [];
 
   try {
-    const select = { title: true, updatedAt: true } as const;
+    const select = { slug: true, title: true, updatedAt: true } as const;
     const [geopolitics, markets, tech] = await Promise.all([
       prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
       prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
@@ -35,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const toEntry = (section: 'geopolitics' | 'markets' | 'tech') => (row: ArticleRow) => ({
-      url: `${SITE_URL}/${section}/${toSlug(row.title)}`,
+      url: `${SITE_URL}/${section}/${row.slug || toSlug(row.title)}`,
       lastModified: row.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
