@@ -30,6 +30,38 @@ function formatFullDate(dateStr: string): string {
   });
 }
 
+const ARTICLE_HEADERS = [
+  'INTRODUCTION',
+  'HISTORICAL CONTEXT',
+  'PRIMARY STAKEHOLDERS',
+  'ECONOMIC IMPLICATIONS',
+  'FUTURE PROJECTIONS',
+  'BEST CASE:',
+  'BASE CASE:',
+  'WORST CASE:',
+];
+
+function renderSummary(summary: string): JSX.Element[] {
+  const clean = summary.replace(/\*\*/g, '');
+  return clean.split('\n\n').flatMap((block, bi) => {
+    const trimmed = block.trim();
+    if (!trimmed) return [];
+    const upper = trimmed.toUpperCase();
+    const header = ARTICLE_HEADERS.find(
+      (h) => upper === h || upper.startsWith(h + ' ') || upper.startsWith(h + '\n'),
+    );
+    if (header) {
+      const rest = trimmed.slice(header.length).replace(/^[\s\u2014\-]+/, '').trim();
+      if (!rest) return [<h4 key={bi}>{trimmed.slice(0, header.length)}</h4>];
+      return [
+        <h4 key={`${bi}h`}>{trimmed.slice(0, header.length)}</h4>,
+        <p key={`${bi}p`}>{rest}</p>,
+      ];
+    }
+    return [<p key={bi}>{trimmed}</p>];
+  });
+}
+
 export default function GeopoliticsPageClient({ articles, initialArticleId }: Props) {
   const [selected, setSelected] = useState<SummaryArticle | null>(
     (initialArticleId ? (articles.find((a) => a.id === initialArticleId) ?? articles[0]) : articles[0]) ?? null,
@@ -160,9 +192,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
                 <hr className="geo-rule" />
 
                 <div className="geo-body">
-                  {selected.summary.split('\n\n').map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
+                  {renderSummary(selected.summary)}
                 </div>
 
                 <section className="geo-takeaways">

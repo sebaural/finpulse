@@ -240,7 +240,7 @@ export async function generateMarketsSummaryArticle(
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and cross-asset linkages. No filler — every sentence must add depth.\n` +
-    `- Structure the content using these EXACT section headers (bold markdown):\n` +
+    `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
     `  INTRODUCTION — Establish today's market environment. Identify the immediate\n` +
     `    catalyst (data print, central-bank decision, earnings shock, etc.).\n` +
     `  HISTORICAL CONTEXT — Detail the multi-month or multi-cycle trends, prior policy\n` +

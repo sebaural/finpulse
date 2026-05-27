@@ -243,7 +243,7 @@ export async function generateSummaryArticle(
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and strategic paradoxes. No filler — every sentence must add depth.\n` +
-    `- Structure the content using these EXACT section headers (bold markdown):\n` +
+    `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
     `  INTRODUCTION — Establish the current high-stakes environment. Identify the immediate\n` +
     `    catalyst or "Redline" that has brought this situation to a head.\n` +
     `  HISTORICAL CONTEXT — Detail the long-term trends, past conflicts, broken treaties, or\n` +
