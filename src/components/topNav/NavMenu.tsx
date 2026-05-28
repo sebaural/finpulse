@@ -1,7 +1,7 @@
 // src/components/topNav/NavMenu.tsx
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -105,33 +105,24 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
               );
             }
 
-            const groupActive = item.children.some((c) => isActive(c.href, pathname));
             return (
-              <li key={item.label} className="nav-desktop-group">
-                <button
-                  type="button"
-                  className={`nav-desktop-link nav-desktop-group-trigger${groupActive ? ' active' : ''}`}
-                  aria-haspopup="menu"
-                >
-                  <span className="nav-dot" aria-hidden="true" />
-                  {item.label}
-                  <span className="nav-desktop-group-caret" aria-hidden="true">▾</span>
-                </button>
-                <ul className="nav-desktop-dropdown" role="menu">
-                  {item.children.map((child) => (
-                    <li key={child.href} role="none">
+              <Fragment key={item.label}>
+                {item.children.map((child, idx) => (
+                  <Fragment key={child.href}>
+                    {idx > 0 && <li className="nav-desktop-sep" role="none" aria-hidden="true" />}
+                    <li role="none">
                       <Link
                         role="menuitem"
                         href={child.href}
-                        className={`nav-desktop-dropdown-link${isActive(child.href, pathname) ? ' active' : ''}`}
+                        className={`nav-desktop-link${isActive(child.href, pathname) ? ' active' : ''}`}
                       >
                         <span className="nav-dot" aria-hidden="true" />
                         {child.label}
                       </Link>
                     </li>
-                  ))}
-                </ul>
-              </li>
+                  </Fragment>
+                ))}
+              </Fragment>
             );
           })}
         </ul>

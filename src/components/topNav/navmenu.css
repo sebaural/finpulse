@@ -56,76 +56,15 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   flex-shrink: 0;
 }
 
-/* ── Desktop dropdown group ── */
-.nav-desktop-group {
-  position: relative;
-}
-.nav-desktop-group-trigger {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-}
-.nav-desktop-group-caret {
-  font-size: 10px;
-  margin-left: 2px;
-  transition: transform 0.15s;
-}
-.nav-desktop-group:hover .nav-desktop-group-caret,
-.nav-desktop-group:focus-within .nav-desktop-group-caret {
-  transform: rotate(180deg);
-}
-.nav-desktop-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 180px;
-  margin: 0;
-  padding: 4px 0;
+/* ── Desktop inline group separator ── */
+.nav-desktop-sep {
+  width: 1px;
+  height: 14px;
+  background: #6c87b1;
+  align-self: center;
+  flex-shrink: 0;
   list-style: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.15s, transform 0.15s, visibility 0s linear 0.15s;
-}
-.nav-desktop-group:hover > .nav-desktop-dropdown,
-.nav-desktop-group:focus-within > .nav-desktop-dropdown {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  transition: opacity 0.15s, transform 0.15s, visibility 0s;
-}
-.nav-desktop-dropdown-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-family: 'Inconsolata', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text);
-  text-decoration: none;
-  border-left: 2px solid transparent;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.nav-desktop-dropdown-link:hover,
-.nav-desktop-dropdown-link.active {
-  background: var(--surface2);
-  color: var(--accent);
-  border-left-color: var(--accent);
-}
-nav.nav-menu[data-variant="accent2"] .nav-desktop-dropdown-link:hover,
-nav.nav-menu[data-variant="accent2"] .nav-desktop-dropdown-link.active {
-  color: var(--accent2);
-  border-left-color: var(--accent2);
+  margin: 0 2px;
 }
 
 /* ── Hamburger button ── */
