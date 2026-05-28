@@ -61,7 +61,7 @@
 }
 .geo-masthead {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(32px, 5vw, 56px);
+  font-size: clamp(32px, 5vw, 44px);
   font-weight: 900;
   line-height: 1.05;
   color: var(--text);
