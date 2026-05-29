@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getMarketsSummaryArticles } from '@/lib/markets-service';
+import { getSummaryArticles as getGeopoliticsArticles } from '@/lib/geopolitics-service';
+import { getTechSummaryArticles } from '@/lib/tech-service';
+import { hasPosted, markPosted } from '@/lib/dedup';
+import { generateTweet } from '@/lib/claude';
+import { postTweet } from '@/lib/twitter';
+import { X_SECTIONS, type XBriefing, type XCronResult, type XPosterSection } from '@/types';
 
 export function isCronAuthorized(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
@@ -20,4 +27,65 @@ export async function runCronPipeline<T>(
     const details = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
   }
+}
+
+// ---------------------------------------------------------------------------
+// X Auto-Poster pipeline
+// ---------------------------------------------------------------------------
+
+const SITE_URL = 'https://macrostance.com';
+
+async function getLatestBriefing(section: XPosterSection): Promise<XBriefing | null> {
+  let articles: { title: string; slug: string; summary: string; keyPoints: string[]; date: string }[];
+
+  if (section === 'markets') {
+    articles = await getMarketsSummaryArticles(1);
+  } else if (section === 'geopolitics') {
+    articles = await getGeopoliticsArticles(1);
+  } else {
+    articles = await getTechSummaryArticles(1);
+  }
+
+  const article = articles[0];
+  if (!article) return null;
+
+  return {
+    section,
+    title:    article.title,
+    url:      `${SITE_URL}/${section}/${article.slug}`,
+    date:     article.date,
+    bodyText: article.summary + '\n' + article.keyPoints.join('. '),
+  };
+}
+
+export async function runXPosterPipeline(): Promise<XCronResult[]> {
+  return Promise.all(
+    X_SECTIONS.map(async ({ section }): Promise<XCronResult> => {
+      const ts = new Date().toISOString();
+      try {
+        const briefing = await getLatestBriefing(section);
+        if (!briefing) {
+          return { section, success: false, error: 'No articles found' };
+        }
+
+        const alreadyPosted = await hasPosted(section, briefing.url);
+        if (alreadyPosted) {
+          return { section, success: true, skipped: true };
+        }
+
+        const tweetText = await generateTweet(briefing);
+        const result   = await postTweet(tweetText);
+
+        if (result.success) {
+          await markPosted(section, briefing.url);
+          return { section, success: true, tweetId: result.tweetId };
+        }
+        return { section, success: false, error: result.error };
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        console.error(`[x-poster] [${section}] ${ts} ${error}`);
+        return { section, success: false, error };
+      }
+    }),
+  );
 }

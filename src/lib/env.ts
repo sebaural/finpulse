@@ -56,3 +56,65 @@ function getNewsProviderEnv(): NewsProviderEnv {
 }
 
 export const newsProviderEnv = getNewsProviderEnv();
+
+// ---------------------------------------------------------------------------
+// X Auto-Poster env vars — same validation pattern as above
+// ---------------------------------------------------------------------------
+
+interface XPosterEnv {
+  bearerToken:    string;
+  clientId:       string;
+  clientSecret:   string;
+  nextAuthSecret: string;
+  adminSecret:    string;
+  cronSecret:     string;
+  kvUrl:          string;
+  kvToken:        string;
+}
+
+function readXKey(
+  name:
+    | 'X_BEARER_TOKEN'
+    | 'X_CLIENT_ID'
+    | 'X_CLIENT_SECRET'
+    | 'NEXTAUTH_SECRET'
+    | 'ADMIN_SECRET'
+    | 'CRON_SECRET'
+    | 'FINPULSE_KV_REST_API_URL'
+    | 'FINPULSE_KV_REST_API_TOKEN',
+): string {
+  return (process.env[name] ?? '').trim();
+}
+
+function getXPosterEnv(): XPosterEnv {
+  const env: XPosterEnv = {
+    bearerToken:    readXKey('X_BEARER_TOKEN'),
+    clientId:       readXKey('X_CLIENT_ID'),
+    clientSecret:   readXKey('X_CLIENT_SECRET'),
+    nextAuthSecret: readXKey('NEXTAUTH_SECRET'),
+    adminSecret:    readXKey('ADMIN_SECRET'),
+    cronSecret:     readXKey('CRON_SECRET'),
+    kvUrl:          readXKey('FINPULSE_KV_REST_API_URL'),
+    kvToken:        readXKey('FINPULSE_KV_REST_API_TOKEN'),
+  };
+
+  const missing = Object.entries(env)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0 && process.env.NODE_ENV !== 'production') {
+    console.info(
+      `[x-poster-env] Missing keys: ${missing.join(', ')}. X auto-poster will not function.`,
+    );
+  }
+
+  if (process.env.NODE_ENV === 'production' && missing.length > 0) {
+    console.warn(
+      `[x-poster-env] Missing production keys: ${missing.join(', ')}.`,
+    );
+  }
+
+  return env;
+}
+
+export const xPosterEnv = getXPosterEnv();
