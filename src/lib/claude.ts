@@ -41,15 +41,22 @@ async function callClaude(briefing: XBriefing, bodyText: string): Promise<string
 }
 
 export async function generateTweet(briefing: XBriefing): Promise<string> {
-  let tweetText = await callClaude(briefing, briefing.bodyText);
-  let full      = `${tweetText}\n${briefing.url}`;
+  const MAX_TWEET = 280;
+  const urlPart   = `\n${briefing.url}`;
+  const textBudget = MAX_TWEET - urlPart.length;
 
-  if (full.length > 280) {
+  let tweetText = await callClaude(briefing, briefing.bodyText);
+
+  if (`${tweetText}${urlPart}`.length > MAX_TWEET) {
     // Retry once with truncated bodyText
     const truncated = briefing.bodyText.slice(0, 1500);
     tweetText       = await callClaude(briefing, truncated);
-    full            = `${tweetText}\n${briefing.url}`;
   }
 
-  return full;
+  // Hard-truncate as final safety net — guarantees ≤ 280 chars regardless of model output
+  if (tweetText.length > textBudget) {
+    tweetText = tweetText.slice(0, textBudget - 1) + '…';
+  }
+
+  return `${tweetText}${urlPart}`;
 }
