@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
     code_challenge_method: 'S256',
   });
 
-  return NextResponse.redirect(
-    `https://twitter.com/i/oauth2/authorize?${params.toString()}`,
-  );
+  return NextResponse.json({
+    message:      'Open this URL in your browser to authorize',
+    authorizeUrl: `https://twitter.com/i/oauth2/authorize?${params.toString()}`,
+  });
 }
