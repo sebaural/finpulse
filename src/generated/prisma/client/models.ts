@@ -11,4 +11,5 @@
 export type * from './models/GeopoliticsArticle'
 export type * from './models/MarketsArticle'
 export type * from './models/TechArticle'
+export type * from './models/User'
 export type * from './commonInputTypes'

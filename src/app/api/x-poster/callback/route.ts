@@ -1,62 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv, saveTokens } from '@/lib/tokens';
+import { prisma } from '@/lib/db';
+
+const CLIENT_ID = 'Nk1Pb0JoUmpBam8wMkdRV1pBX2k6MTpjaQ';
+const CLIENT_SECRET = process.env.X_CLIENT_SECRET;
+
+const REDIRECT_URI =
+  process.env.NODE_ENV === 'production'
+    ? 'https://macrostance.com/api/x-poster/callback'
+    : 'http://localhost:3000/api/x-poster/callback';
+
+const SUCCESS_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://macrostance.com/'
+    : 'http://localhost:3000/';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
+  const code = request.nextUrl.searchParams.get('code');
+  const codeVerifier = request.cookies.get('code_verifier')?.value;
 
-  if (!code) {
-    return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
-  }
-
-  const codeVerifier = await kv.get<string>('x_pkce_verifier');
-  if (!codeVerifier) {
+  if (!code || !codeVerifier) {
     return NextResponse.json(
       { error: 'PKCE verifier not found — re-run /api/x-poster/authorize' },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
-  const clientId     = process.env.X_CLIENT_ID!;
-  const clientSecret = process.env.X_CLIENT_SECRET!;
-  const credentials  = btoa(`${clientId}:${clientSecret}`);
-  const redirectUri  = `${process.env.NEXTAUTH_URL}/api/x-poster/callback`;
+  const basicAuth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
-  const res = await fetch('https://api.twitter.com/2/oauth2/token', {
+  const tokenRes = await fetch('https://api.x.com/2/oauth2/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization:  `Basic ${credentials}`,
+      Authorization: `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
-      grant_type:    'authorization_code',
+      grant_type: 'authorization_code',
       code,
-      redirect_uri:  redirectUri,
+      redirect_uri: REDIRECT_URI,
+      client_id: CLIENT_ID,
       code_verifier: codeVerifier,
     }),
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    return NextResponse.json(
-      { error: `Token exchange failed: ${res.status} — ${body}` },
-      { status: 500 },
-    );
+  const tokens = await tokenRes.json();
+
+  if (!tokenRes.ok) {
+    return NextResponse.json({ error: tokens }, { status: 400 });
   }
 
-  const data = (await res.json()) as {
-    access_token:  string;
-    refresh_token: string;
-    expires_in:    number;
-  };
+  // Save tokens to database
+  await prisma.user.upsert({
+  where: { id: 'uralsebastian' },
+  update: {
+    xAccessToken: tokens.access_token,
+    xRefreshToken: tokens.refresh_token,
+    xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+  },
+  create: {
+    id: 'uralsebastian',
+    email: 'your@email.com', // ← change to your email
+    xAccessToken: tokens.access_token,
+    xRefreshToken: tokens.refresh_token,
+    xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+  },
+});
 
-  await saveTokens({
-    accessToken:  data.access_token,
-    refreshToken: data.refresh_token,
-    expiresAt:    Math.floor(Date.now() / 1000) + data.expires_in,
-  });
+  const response = NextResponse.redirect(SUCCESS_URL);
+  response.cookies.set('code_verifier', '', { maxAge: 0, path: '/' });
 
-  await kv.del('x_pkce_verifier');
-
-  return NextResponse.json({ message: 'Authorization successful. Tokens stored.' });
+  return response;
 }

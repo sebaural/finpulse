@@ -65,3 +65,13 @@ model TechArticle {
   @@index([slug])
   @@map("tech_articles")
 }
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  xAccessToken      String?
+  xRefreshToken     String?
+  xTokenExpiresAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

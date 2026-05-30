@@ -32,3 +32,8 @@ export type MarketsArticle = Prisma.MarketsArticleModel
  * 
  */
 export type TechArticle = Prisma.TechArticleModel
+/**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
