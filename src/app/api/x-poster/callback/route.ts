@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const CLIENT_ID = 'NnhTUmh2dzU0Z3lSdFd3MGNBNG86MTpjaQ';
+const CLIENT_ID = 'eFgxMFQzY1oyTFgxUUw2Nk5XWnI6MTpjaQ';
 
 // const REDIRECT_URI =
 //   process.env.NODE_ENV === 'production'
