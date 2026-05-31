@@ -3,11 +3,9 @@ import crypto from 'crypto';
 
 const CLIENT_ID = 'Nk1Pb0JoUmpBam8wMkdRV1pBX2k6MTpjaQ';
 
-// const REDIRECT_URI = process.env.NODE_ENV === 'production'
-//   ? 'https://macrostance.com/api/x-poster/callback'
-//   : 'http://localhost:3000/api/x-poster/callback';
-
-const REDIRECT_URI = 'https://macrostance.com/api/x-poster/callback/';
+const REDIRECT_URI = process.env.NODE_ENV === 'production'
+  ? 'https://macrostance.com/api/x-poster/callback'
+  : 'http://localhost:3000/api/x-poster/callback';
 
 function generateCodeVerifier() {
   return crypto.randomBytes(32).toString('base64url');
