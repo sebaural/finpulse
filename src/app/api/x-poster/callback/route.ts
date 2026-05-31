@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
 
   const state = crypto.randomBytes(16).toString('base64url');
 
-  // const authUrl = new URL('https://x.com/i/oauth2/authorize');
-  const authUrl = new URL('https://twitter.com/i/oauth2/authorize');   // ← try this
+  const authUrl = new URL('https://x.com/i/oauth2/authorize');
+  //const authUrl = new URL('https://twitter.com/i/oauth2/authorize');   // ← try this
   authUrl.searchParams.append('response_type', 'code');
   authUrl.searchParams.append('client_id', CLIENT_ID);
   authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
