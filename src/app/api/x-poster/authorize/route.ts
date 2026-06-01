@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const CLIENT_ID = 'eFgxMFQzY1oyTFgxUUw2Nk5XWnI6MTpjaQ';
+const CLIENT_ID = 'akJSN0RkRThtNmh0Q1hvNVJkU3k6MTpjaQ';
 
 // const REDIRECT_URI = process.env.NODE_ENV === 'production'
 //   ? 'https://macrostance.com/api/x-poster/callback'
