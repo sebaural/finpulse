@@ -1,10 +1,5 @@
-import { createClient } from '@vercel/kv';
+import { redis } from '@/lib/redis';
 import type { FeedSource } from '@/types';
-
-const kv = createClient({
-  url: process.env.FINPULSE_KV_REST_API_URL ?? process.env.KV_REST_API_URL ?? '',
-  token: process.env.FINPULSE_KV_REST_API_TOKEN ?? process.env.KV_REST_API_TOKEN ?? '',
-});
 
 const KV_KEY = 'feeds:config';
 
@@ -96,22 +91,22 @@ function normalizeSources(sources: FeedSource[]): FeedSource[] {
 }
 
 export async function listFeedSources(): Promise<FeedSource[]> {
-  const stored = await kv.get<FeedSource[]>(KV_KEY);
+  const stored = await redis.get<FeedSource[]>(KV_KEY);
   if (!stored) {
-    await kv.set(KV_KEY, defaultSources);
+    await redis.set(KV_KEY, defaultSources);
     return defaultSources;
   }
 
   const normalized = Array.isArray(stored) ? normalizeSources(stored) : defaultSources;
   if (JSON.stringify(normalized) !== JSON.stringify(stored)) {
-    await kv.set(KV_KEY, normalized);
+    await redis.set(KV_KEY, normalized);
   }
 
   return normalized;
 }
 
 export async function saveFeedSources(sources: FeedSource[]): Promise<void> {
-  await kv.set(KV_KEY, sources);
+  await redis.set(KV_KEY, sources);
 }
 
 export { defaultSources };

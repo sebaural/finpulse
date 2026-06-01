@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, tweet: result });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

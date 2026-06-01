@@ -117,8 +117,8 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
       const bRank = b.importance === targetImportance ? 0 : 1;
 
       if (aRank !== bRank) return aRank - bRank;
-      const aMs = a.publishedAt ? new Date(a.publishedAt).getTime() : Date.now();
-      const bMs = b.publishedAt ? new Date(b.publishedAt).getTime() : Date.now();
+      const aMs = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const bMs = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return bMs - aMs;
     });
   }, [allArticles, categoryFilter, priorityFilter]);
@@ -214,6 +214,7 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
 
@@ -225,6 +226,7 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshMarket();
     void restoreUserSymbols();
     const id = window.setInterval(() => { void refreshMarket(); }, 15_000);
