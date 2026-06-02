@@ -1,35 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { generateCodeChallenge, generateCodeVerifier } from '@/lib/x-oauth';
 
-const CLIENT_ID = 'akJSN0RkRThtNmh0Q1hvNVJkU3k6MTpjaQ';
-
-// const REDIRECT_URI = process.env.NODE_ENV === 'production'
-//   ? 'https://macrostance.com/api/x-poster/callback'
-//   : 'http://localhost:3000/api/x-poster/callback';
-
-  const REDIRECT_URI = 'https://macrostance.com/api/x-poster/callback'; // hard-coded for test
-
-function generateCodeVerifier() {
-  return crypto.randomBytes(32).toString('base64url');
+function getRedirectUri(request: NextRequest): string {
+  return new URL('/api/x-poster/callback', request.nextUrl.origin).toString();
 }
 
-function generateCodeChallenge(verifier: string) {
-  return crypto
-    .createHash('sha256')
-    .update(verifier)
-    .digest('base64url');
-}
+export async function GET(request: NextRequest) {
+  const clientId = process.env.X_CLIENT_ID?.trim();
+  if (!clientId) {
+    return NextResponse.json({ error: 'X_CLIENT_ID is not configured' }, { status: 500 });
+  }
 
-export async function GET() {
+  const redirectUri = getRedirectUri(request);
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
   const state = crypto.randomBytes(16).toString('base64url');
 
   const authUrl = new URL('https://x.com/i/oauth2/authorize');
-  //const authUrl = new URL('https://twitter.com/i/oauth2/authorize');   // ← try this
   authUrl.searchParams.append('response_type', 'code');
-  authUrl.searchParams.append('client_id', CLIENT_ID);
-  authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+  authUrl.searchParams.append('client_id', clientId);
+  authUrl.searchParams.append('redirect_uri', redirectUri);
   authUrl.searchParams.append('scope', 'tweet.read tweet.write users.read offline.access');
   authUrl.searchParams.append('state', state);
   authUrl.searchParams.append('code_challenge', codeChallenge);
@@ -37,12 +28,20 @@ export async function GET() {
 
   const response = NextResponse.redirect(authUrl.toString());
 
-  response.cookies.set('code_verifier', codeVerifier, {
+  response.cookies.set('x_code_verifier', codeVerifier, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 10 * 60, // 10 minutes
+    maxAge: 10 * 60,
+  });
+
+  response.cookies.set('x_oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 10 * 60,
   });
 
   return response;

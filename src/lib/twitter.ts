@@ -1,5 +1,5 @@
 import { TwitterApi } from 'twitter-api-v2';
-import { getValidAccessToken } from './refreshToken';
+import { getValidAccessToken } from './x-token';
 import type { XPostResult } from '@/types';
 import path from 'path';
 
@@ -8,11 +8,10 @@ const IMAGE_PATH = path.join(process.cwd(), 'public', 'macrostance_X.png');
 export async function postTweet(text: string): Promise<XPostResult> {
   try {
     const accessToken = await getValidAccessToken();
-    const userClient  = new TwitterApi(accessToken);
-    const appClient   = new TwitterApi(process.env.X_BEARER_TOKEN!);
+    const userClient = new TwitterApi(accessToken);
 
-    const mediaId    = await appClient.v1.uploadMedia(IMAGE_PATH, { mimeType: 'image/png' });
-    const { data }   = await userClient.v2.tweet({
+    const mediaId = await userClient.v1.uploadMedia(IMAGE_PATH, { mimeType: 'image/png' });
+    const { data } = await userClient.v2.tweet({
       text,
       media: { media_ids: [mediaId] },
     });

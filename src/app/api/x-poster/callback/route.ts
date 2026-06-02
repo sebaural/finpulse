@@ -1,55 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { exchangeCodeForTokens } from '@/lib/x-oauth';
+import { saveXTokens } from '@/lib/x-token';
 
-const CLIENT_ID = 'akJSN0RkRThtNmh0Q1hvNVJkU3k6MTpjaQ';
-
-// const REDIRECT_URI =
-//   process.env.NODE_ENV === 'production'
-//     ? 'https://macrostance.com/api/x-poster/callback'
-//     : 'http://localhost:3000/api/x-poster/callback';
-
-const REDIRECT_URI = 'https://macrostance.com/api/x-poster/callback'; // hard-coded for test
-
-function generateCodeVerifier() {
-  return crypto.randomBytes(32).toString('base64url');
-}
-
-function generateCodeChallenge(verifier: string) {
-  return crypto
-    .createHash('sha256')
-    .update(verifier)
-    .digest('base64url');
+function getRedirectUri(request: NextRequest): string {
+  return new URL('/api/x-poster/callback', request.nextUrl.origin).toString();
 }
 
 export async function GET(request: NextRequest) {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
+  const code = request.nextUrl.searchParams.get('code');
+  const state = request.nextUrl.searchParams.get('state');
+  const codeVerifier = request.cookies.get('x_code_verifier')?.value;
+  const storedState = request.cookies.get('x_oauth_state')?.value;
 
-  const state = crypto.randomBytes(16).toString('base64url');
+  if (!code || !codeVerifier || !state || state !== storedState) {
+    return NextResponse.redirect(new URL('/dashboard?x-error=invalid_state', request.nextUrl.origin));
+  }
 
-  const authUrl = new URL('https://x.com/i/oauth2/authorize');
-  //const authUrl = new URL('https://twitter.com/i/oauth2/authorize');   // ← try this
-  authUrl.searchParams.append('response_type', 'code');
-  authUrl.searchParams.append('client_id', CLIENT_ID);
-  authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-  authUrl.searchParams.append('scope', 'tweet.read tweet.write users.read offline.access');
-  authUrl.searchParams.append('state', state);
-  authUrl.searchParams.append('code_challenge', codeChallenge);
-  authUrl.searchParams.append('code_challenge_method', 'S256');
+  try {
+    const tokens = await exchangeCodeForTokens(code, codeVerifier, getRedirectUri(request));
+    await saveXTokens(tokens);
 
-  const response = NextResponse.redirect(authUrl.toString());
+    const response = NextResponse.redirect(
+      new URL('/dashboard?x-connected=success', request.nextUrl.origin),
+    );
 
-  // ← THIS IS THE CRITICAL PART
-  response.cookies.set('code_verifier', codeVerifier, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',        // Important: 'lax' or 'none'
-    path: '/',
-    maxAge: 10 * 60,        // 10 minutes
-  });
+    response.cookies.delete('x_code_verifier');
+    response.cookies.delete('x_oauth_state');
 
-  // Optional: also store state if you want to validate it later
-  // response.cookies.set('oauth_state', state, { ...same options });
-
-  return response;
+    return response;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[x-poster-callback]', message);
+    return NextResponse.redirect(
+      new URL(`/dashboard?x-error=${encodeURIComponent(message)}`, request.nextUrl.origin),
+    );
+  }
 }

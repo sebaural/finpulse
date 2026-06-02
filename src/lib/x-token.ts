@@ -1,11 +1,34 @@
 import { prisma } from './db';
+import { refreshXToken, type XTokens } from './x-oauth';
 
-const CLIENT_ID = 'Nk1Pb0JoUmpBam8wMkdRV1pBX2k6MTpjaQ';
-const CLIENT_SECRET = process.env.X_CLIENT_SECRET!;
+const DEFAULT_OPERATOR_EMAIL = 'x-operator@local.invalid';
+
+function getOperatorEmail(): string {
+  return process.env.X_OPERATOR_EMAIL?.trim() || DEFAULT_OPERATOR_EMAIL;
+}
+
+export async function saveXTokens(tokens: XTokens): Promise<void> {
+  const operatorEmail = getOperatorEmail();
+
+  await prisma.user.upsert({
+    where: { email: operatorEmail },
+    update: {
+      xAccessToken: tokens.access_token,
+      xRefreshToken: tokens.refresh_token ?? null,
+      xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+    },
+    create: {
+      email: operatorEmail,
+      xAccessToken: tokens.access_token,
+      xRefreshToken: tokens.refresh_token ?? null,
+      xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+    },
+  });
+}
 
 export async function getValidAccessToken(): Promise<string> {
   const user = await prisma.user.findUnique({
-    where: { id: 'uralsebastian' },   // ← Changed here
+    where: { email: getOperatorEmail() },
   });
 
   if (!user?.xAccessToken || !user.xRefreshToken) {
@@ -17,37 +40,8 @@ export async function getValidAccessToken(): Promise<string> {
     return user.xAccessToken;
   }
 
-  // Token expired → refresh it
-  const basicAuth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-
-  const refreshRes = await fetch('https://api.x.com/2/oauth2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${basicAuth}`,
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: user.xRefreshToken,
-      client_id: CLIENT_ID,
-    }),
-  });
-
-  const newTokens = await refreshRes.json();
-
-  if (!refreshRes.ok) {
-    throw new Error('Failed to refresh X token');
-  }
-
-  // Save new tokens
-  await prisma.user.update({
-    where: { id: 'uralsebastian' },   // ← Changed here
-    data: {
-      xAccessToken: newTokens.access_token,
-      xRefreshToken: newTokens.refresh_token,
-      xTokenExpiresAt: new Date(Date.now() + newTokens.expires_in * 1000),
-    },
-  });
+  const newTokens = await refreshXToken(user.xRefreshToken);
+  await saveXTokens(newTokens);
 
   return newTokens.access_token;
 }
