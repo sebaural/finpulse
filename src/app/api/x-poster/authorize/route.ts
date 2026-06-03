@@ -22,15 +22,18 @@ export async function GET() {
   const cookie = `x_oauth=${encodeURIComponent(oauthData)}; HttpOnly; Path=/; Max-Age=600; Secure; SameSite=Lax`;
 
   // Build X OAuth 2.0 authorize URL
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: 'tweet.read tweet.write users.read offline.access',
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-  });
+ 
+const params = new URLSearchParams({
+  response_type: 'code',
+  client_id: clientId,
+  redirect_uri: redirectUri,
+  scope: 'tweet.read tweet.write users.read offline.access media.write',
+  state,
+  code_challenge: codeChallenge,
+  code_challenge_method: 'S256',
+  prompt: 'consent',           // ← Add this line
+});
+
 
   const authorizeUrl = `https://x.com/i/oauth2/authorize?${params.toString()}`;
 
