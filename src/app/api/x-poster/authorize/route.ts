@@ -1,48 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { generateCodeChallenge, generateCodeVerifier } from '@/lib/x-oauth';
+import { NextResponse } from 'next/server';
+import { generateCodeVerifier, generateCodeChallenge } from '@/lib/x-oauth';
 
-function getRedirectUri(request: NextRequest): string {
-  return new URL('/api/x-poster/callback', request.nextUrl.origin).toString();
-}
+export async function GET() {
+  const clientId = process.env.X_CLIENT_ID;
+  const redirectUri = process.env.X_REDIRECT_URI;
 
-export async function GET(request: NextRequest) {
-  const clientId = process.env.X_CLIENT_ID?.trim();
-  if (!clientId) {
-    return NextResponse.json({ error: 'X_CLIENT_ID is not configured' }, { status: 500 });
+  if (!clientId || !redirectUri) {
+    return NextResponse.json(
+      { error: 'X_CLIENT_ID or X_REDIRECT_URI is not configured' },
+      { status: 500 }
+    );
   }
 
-  const redirectUri = getRedirectUri(request);
+  // Generate PKCE values
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
-  const state = crypto.randomBytes(16).toString('base64url');
+  const state = crypto.randomUUID();
 
-  const authUrl = new URL('https://x.com/i/oauth2/authorize');
-  authUrl.searchParams.append('response_type', 'code');
-  authUrl.searchParams.append('client_id', clientId);
-  authUrl.searchParams.append('redirect_uri', redirectUri);
-  authUrl.searchParams.append('scope', 'tweet.read tweet.write users.read offline.access');
-  authUrl.searchParams.append('state', state);
-  authUrl.searchParams.append('code_challenge', codeChallenge);
-  authUrl.searchParams.append('code_challenge_method', 'S256');
+  // Store PKCE values in httpOnly cookie (valid for 10 minutes)
+  const oauthData = JSON.stringify({ codeVerifier, state });
+  const cookie = `x_oauth=${encodeURIComponent(oauthData)}; HttpOnly; Path=/; Max-Age=600; Secure; SameSite=Lax`;
 
-  const response = NextResponse.redirect(authUrl.toString());
-
-  response.cookies.set('x_code_verifier', codeVerifier, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 10 * 60,
+  // Build X OAuth 2.0 authorize URL
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: 'tweet.read tweet.write users.read offline.access',
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
   });
 
-  response.cookies.set('x_oauth_state', state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 10 * 60,
-  });
+  const authorizeUrl = `https://x.com/i/oauth2/authorize?${params.toString()}`;
 
-  return response;
+  return NextResponse.redirect(authorizeUrl, {
+    headers: {
+      'Set-Cookie': cookie,
+    },
+  });
 }

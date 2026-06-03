@@ -22,13 +22,20 @@ export async function exchangeCodeForTokens(
   redirectUri: string,
 ): Promise<XTokens> {
   const clientId = process.env.X_CLIENT_ID?.trim();
-  if (!clientId) {
-    throw new Error('X_CLIENT_ID is not configured');
+  const clientSecret = process.env.X_CLIENT_SECRET?.trim();
+
+  if (!clientId || !clientSecret) {
+    throw new Error('X_CLIENT_ID and X_CLIENT_SECRET must be configured');
   }
+
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
   const response = await fetch('https://api.x.com/2/oauth2/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${basicAuth}`,
+    },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
@@ -49,6 +56,7 @@ export async function exchangeCodeForTokens(
 export async function refreshXToken(refreshToken: string): Promise<XTokens> {
   const clientId = process.env.X_CLIENT_ID?.trim();
   const clientSecret = process.env.X_CLIENT_SECRET?.trim();
+
   if (!clientId || !clientSecret) {
     throw new Error('X_CLIENT_ID and X_CLIENT_SECRET must be configured');
   }
