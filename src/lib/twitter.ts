@@ -10,7 +10,7 @@ async function uploadMediaChunked(accessToken: string, filePath: string): Promis
   const totalBytes = fileBuffer.length;
 
   // INIT
-  const initRes = await fetch('https://api.x.com/2/media/upload', {
+  const initRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -34,7 +34,7 @@ async function uploadMediaChunked(accessToken: string, filePath: string): Promis
 
   // APPEND
   const appendRes = await fetch(
-    `https://api.x.com/2/media/upload?command=APPEND&media_id=${mediaId}&segment_index=0`,
+    `https://upload.twitter.com/1.1/media/upload.json?command=APPEND&media_id=${mediaId}&segment_index=0`,
     {
       method: 'POST',
       headers: {
@@ -51,7 +51,7 @@ async function uploadMediaChunked(accessToken: string, filePath: string): Promis
   }
 
   // FINALIZE
-  const finalizeRes = await fetch('https://api.x.com/2/media/upload', {
+  const finalizeRes = await fetch('https://upload.twitter.com/1.1/media/upload.json', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
