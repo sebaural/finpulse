@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 
 const CUSTOM_SYMBOLS_KEY = 'finpuls-custom-symbols';
 
@@ -207,11 +207,11 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
     if (updated.length !== stored.length) saveStoredSymbols(updated);
   }
 
-  async function restoreUserSymbols() {
+  const restoreUserSymbols = useEffectEvent(async () => {
     const stored = loadStoredSymbols();
     if (stored.length === 0) return;
     await Promise.allSettled(stored.map(({ symbol, label }) => fetchAndInsertSymbol(symbol, label)));
-  }
+  });
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
