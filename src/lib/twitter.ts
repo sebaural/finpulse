@@ -11,18 +11,19 @@ async function uploadMediaChunked(accessToken: string, filePath: string): Promis
   const mediaType = 'image/png';
 
   // INIT
-  const initRes = await fetch('https://api.x.com/2/media/upload', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      command: 'INIT',
-      media_type: mediaType,
-      total_bytes: totalBytes,
-    }),
-  });
+const initRes = await fetch('https://api.x.com/2/media/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    command: 'INIT',
+    media_type: 'image/png',
+    total_bytes: totalBytes,
+    media_category: 'tweet_image',   // ← Add this line
+  }),
+});
 
   if (!initRes.ok) throw new Error(`INIT failed: ${initRes.status}`);
   const { data: initData } = await initRes.json();
