@@ -1,24 +1,29 @@
 import { prisma } from './db';
 import { refreshXToken, type XTokens } from './x-oauth';
 
-const DEFAULT_OPERATOR_EMAIL = 'x-operator@local.invalid';
+const DEFAULT_OPERATOR_ID = 'uralsebastian';
 
-function getOperatorEmail(): string {
-  return process.env.X_OPERATOR_EMAIL?.trim() || DEFAULT_OPERATOR_EMAIL;
+function getOperatorId(): string {
+  return process.env.X_OPERATOR_ID?.trim() || DEFAULT_OPERATOR_ID;
+}
+
+function getOperatorEmail(operatorId: string): string {
+  return process.env.X_OPERATOR_EMAIL?.trim() || `${operatorId}@local.invalid`;
 }
 
 export async function saveXTokens(tokens: XTokens): Promise<void> {
-  const operatorEmail = getOperatorEmail();
+  const operatorId = getOperatorId();
 
   await prisma.user.upsert({
-    where: { email: operatorEmail },
+    where: { id: operatorId },
     update: {
       xAccessToken: tokens.access_token,
       xRefreshToken: tokens.refresh_token ?? null,
       xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
     },
     create: {
-      email: operatorEmail,
+      id: operatorId,
+      email: getOperatorEmail(operatorId),
       xAccessToken: tokens.access_token,
       xRefreshToken: tokens.refresh_token ?? null,
       xTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
@@ -28,7 +33,7 @@ export async function saveXTokens(tokens: XTokens): Promise<void> {
 
 export async function getValidAccessToken(): Promise<string> {
   const user = await prisma.user.findUnique({
-    where: { email: getOperatorEmail() },
+    where: { id: getOperatorId() },
   });
 
   if (!user?.xAccessToken || !user.xRefreshToken) {
