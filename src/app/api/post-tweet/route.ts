@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hasPosted, markPosted } from '@/lib/dedup';
 import { postTweet } from '@/lib/twitter';
 import type { XPosterSection } from '@/types';
+import { readFileSync } from 'fs';
+import path from 'path';
+
+const DEFAULT_IMAGE = path.join(process.cwd(), 'public/macrostance_X.png');
 
 export async function POST(request: NextRequest) {
   try {
-    const { tweet, briefingUrl, section } = (await request.json()) as {
-      tweet:       string;
-      briefingUrl: string;
-      section:     XPosterSection;
+    const { tweet, briefingUrl, section, imageBase64 } = (await request.json()) as {
+      tweet:        string;
+      briefingUrl:  string;
+      section:      XPosterSection;
+      imageBase64?: string;
     };
 
     const alreadyPosted = await hasPosted(section, briefingUrl);
@@ -16,7 +21,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'already posted' }, { status: 409 });
     }
 
-    const result = await postTweet(tweet);
+    // Use provided image or fall back to default
+    let mediaBuffer: Buffer | undefined;
+    if (imageBase64) {
+      mediaBuffer = Buffer.from(imageBase64, 'base64');
+    } else {
+      try {
+        mediaBuffer = readFileSync(DEFAULT_IMAGE);
+      } catch {
+        console.warn('[post-tweet] Default image not found');
+      }
+    }
+
+    const result = await postTweet(tweet, mediaBuffer);
 
     if (result.success) {
       await markPosted(section, briefingUrl);
