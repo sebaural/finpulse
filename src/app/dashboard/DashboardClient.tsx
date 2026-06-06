@@ -272,17 +272,6 @@ export default function DashboardClient() {
               fontFamily:   'inherit',
             }}
           />
-
-          {/* Image Preview */}
-          <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/macrostance_X.png"
-              alt="X attachment preview"
-              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
-            />
-            <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>macrostance_X.png will be attached</span>
-          </div>
         </div>
 
         {/* Action Buttons */}
