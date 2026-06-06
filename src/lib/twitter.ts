@@ -11,7 +11,6 @@ export async function postTweet(
 
     let mediaIds: string[] = [];
 
-    // Upload media if provided
     if (mediaBuffer) {
       const uploadRes = await fetch('https://api.x.com/2/media/upload', {
         method: 'POST',
@@ -28,8 +27,8 @@ export async function postTweet(
       });
 
       if (!uploadRes.ok) {
-        const err = await uploadRes.text();
-        console.error('[media upload]', uploadRes.status, err);
+        const errorText = await uploadRes.text();
+        console.error('[media upload] FULL ERROR:', uploadRes.status, errorText);
         return { success: false, error: 'Media upload failed' };
       }
 
@@ -37,7 +36,6 @@ export async function postTweet(
       mediaIds = [uploadData.data.id];
     }
 
-    // Create post
     const tweetBody: any = { text };
     if (mediaIds.length > 0) {
       tweetBody.media = { media_ids: mediaIds };
