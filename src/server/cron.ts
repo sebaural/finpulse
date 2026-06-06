@@ -6,15 +6,13 @@ import { hasPosted, markPosted } from '@/lib/dedup';
 import { generateTweet } from '@/lib/claude';
 import { postTweet } from '@/lib/twitter';
 import { X_SECTIONS, type XBriefing, type XCronResult, type XPosterSection } from '@/types';
-import { readFileSync } from 'fs';
-import path from 'path';
-
-const DEFAULT_IMAGE = path.join(process.cwd(), 'public/macrostance_X.png');
 
 export function isCronAuthorized(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'development') return true;
+
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) return false;
+
   const authHeader = req.headers.get('authorization') ?? '';
   return authHeader === `Bearer ${cronSecret}`;
 }
@@ -30,6 +28,10 @@ export async function runCronPipeline<T>(
     return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
   }
 }
+
+// ---------------------------------------------------------------------------
+// X Auto-Poster pipeline
+// ---------------------------------------------------------------------------
 
 const SITE_URL = 'https://macrostance.com';
 
@@ -72,16 +74,7 @@ export async function runXPosterPipeline(): Promise<XCronResult[]> {
         }
 
         const tweetText = await generateTweet(briefing);
-
-        // Use single default image for all sections
-        let mediaBuffer: Buffer | undefined;
-        try {
-          mediaBuffer = readFileSync(DEFAULT_IMAGE);
-        } catch {
-          console.warn(`[x-poster] Default image not found: public/macrostance_X.png`);
-        }
-
-        const result = await postTweet(tweetText, mediaBuffer);
+        const result   = await postTweet(tweetText);
 
         if (result.success) {
           await markPosted(section, briefing.url);
