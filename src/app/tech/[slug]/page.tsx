@@ -3,9 +3,9 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getTechSummaryArticles } from '@/lib/tech-service';
+import { generateArticleMetadata } from '@/lib/metadata';
 import TechPageClient from '@/components/tech/TechPageClient';
 import {
-  buildMetadata,
   jsonLd,
   breadcrumbSchema,
   canonicalUrl,
@@ -14,7 +14,7 @@ import {
   SITE_URL,
   DEFAULT_OG_IMAGE,
 } from '@/lib/seo';
-import { stripMarkdown, truncateDescription } from '@/lib/stripMarkdown';
+import { truncateDescription } from '@/lib/stripMarkdown';
 import '@/components/geopolitics/geopolitics.css';
 
 export const revalidate = 3600;
@@ -29,23 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = articles.find((a) => a.slug === slug);
 
   if (!article) {
-    return buildMetadata({
-      title: 'Briefing Not Found — MacroStance Tech',
-      description: 'This tech briefing could not be found.',
-      path: `/tech/${slug}`,
-    });
+    return { title: 'Article not found' };
   }
 
-  const cleanSummary = stripMarkdown(article.summary);
-
-  return buildMetadata({
-    title: `${article.title} — MacroStance Tech`,
-    description: truncateDescription(cleanSummary, 155),
-    path: `/tech/${slug}`,
-    ogTitle: article.title,
-    ogDescription: truncateDescription(cleanSummary, 300),
-    twitterTitle: article.title,
-    twitterDescription: truncateDescription(cleanSummary, 200),
+  return generateArticleMetadata({
+    section: 'tech',
+    title: article.title,
+    summary: article.summary,
+    slug,
   });
 }
 
