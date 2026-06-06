@@ -10,11 +10,11 @@ export async function postTweet(
     const accessToken = await getValidAccessToken();
 
     if (accessToken) {
-      console.log('[twitter] Access token retrieved successfully. First 10 chars:', accessToken.substring(0, 10));
-    } else {
-      console.error('[twitter] Failed to retrieve access token');
-      return { success: false, error: 'No access token' };
-    }
+  console.log('[twitter] Access token retrieved successfully. First 30 chars:', accessToken.substring(0, 30));
+} else {
+  console.error('[twitter] Failed to retrieve access token');
+  return { success: false, error: 'No access token' };
+}
 
     let mediaIds: string[] = [];
 
