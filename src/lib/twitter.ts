@@ -9,21 +9,32 @@ export async function postTweet(
   try {
     const accessToken = await getValidAccessToken();
 
+    if (accessToken) {
+      console.log('[twitter] Access token retrieved successfully. First 10 chars:', accessToken.substring(0, 10));
+    } else {
+      console.error('[twitter] Failed to retrieve access token');
+      return { success: false, error: 'No access token' };
+    }
+
     let mediaIds: string[] = [];
 
     if (mediaBuffer) {
+      const mediaPayload = {
+        media: {
+          media: mediaBuffer.toString('base64'),
+          media_type: mediaType,
+        },
+      };
+
+      console.log('[media upload] Request payload:', JSON.stringify(mediaPayload, null, 2));
+
       const uploadRes = await fetch('https://api.x.com/2/media/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          media: {
-            media: mediaBuffer.toString('base64'),
-            media_type: mediaType,
-          },
-        }),
+        body: JSON.stringify(mediaPayload),
       });
 
       if (!uploadRes.ok) {
