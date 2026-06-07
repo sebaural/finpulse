@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { contactRateLimit } from '@/lib/rate-limit';
 
-function getResend() {
+function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
-
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured');
   }
-
   return new Resend(apiKey);
 }
 
@@ -25,14 +23,21 @@ async function verifyRecaptcha(token: string): Promise<number> {
     return 1.0;
   }
 
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) {
+    console.error('[contact API] Missing RECAPTCHA_SECRET_KEY');
+    return 1.0;
+  }
+
   const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      secret: process.env.RECAPTCHA_SECRET_KEY!,
+      secret,
       response: token,
     }),
   });
+
   const data = await res.json();
 
   if (!data.success) {
@@ -40,7 +45,6 @@ async function verifyRecaptcha(token: string): Promise<number> {
     return 1.0;
   }
 
-  console.log(`[contact API] reCAPTCHA score: ${data.score}`);
   return data.score as number;
 }
 
@@ -97,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const resend = getResend();
+    const resend = getResendClient();
 
     await resend.emails.send({
       from: `MacroStance Contact <${process.env.FROM_EMAIL}>`,

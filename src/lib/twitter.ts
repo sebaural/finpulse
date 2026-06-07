@@ -1,9 +1,34 @@
 import { getValidAccessToken } from './x-token';
 import type { XPostResult } from '@/types';
 
-export async function postTweet(text: string): Promise<XPostResult> {
+async function uploadMedia(accessToken: string, imageBuffer: Buffer): Promise<string> {
+  const res = await fetch('https://api.x.com/2/media/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      media: {
+        media: imageBuffer.toString('base64'),
+        media_type: 'image/png',
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`X media upload failed: ${res.status} ${error}`);
+  }
+
+  const data = await res.json();
+  return data.data.id;
+}
+
+export async function postTweet(text: string, imageBuffer?: Buffer): Promise<XPostResult> {
   try {
     const accessToken = await getValidAccessToken();
+    const mediaId = imageBuffer ? await uploadMedia(accessToken, imageBuffer) : null;
 
     const res = await fetch('https://api.x.com/2/tweets', {
       method: 'POST',
@@ -11,7 +36,9 @@ export async function postTweet(text: string): Promise<XPostResult> {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(
+        mediaId ? { text, media: { media_ids: [mediaId] } } : { text },
+      ),
     });
 
     if (!res.ok) {

@@ -1,15 +1,42 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const redis = new Redis({
-  url: process.env.FINPULSE_KV_REST_API_URL!,
-  token: process.env.FINPULSE_KV_REST_API_TOKEN!,
-});
+type RateLimitResult = {
+  success: boolean;
+  remaining: number;
+  reset: number;
+};
 
-// 5 submissions per 10 minutes per IP
-export const contactRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '10 m'),
-  analytics: true,
-  prefix: 'macrostance:contact',
-});
+function getContactRateLimit() {
+  const url = process.env.FINPULSE_KV_REST_API_URL;
+  const token = process.env.FINPULSE_KV_REST_API_TOKEN;
+
+  if (!url || !token) {
+    return null;
+  }
+
+  const redis = new Redis({ url, token });
+
+  return new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '10 m'),
+    analytics: true,
+    prefix: 'macrostance:contact',
+  });
+}
+
+export const contactRateLimit = {
+  async limit(identifier: string): Promise<RateLimitResult> {
+    const ratelimit = getContactRateLimit();
+
+    if (!ratelimit) {
+      return {
+        success: true,
+        remaining: 5,
+        reset: Date.now() + 10 * 60 * 1000,
+      };
+    }
+
+    return ratelimit.limit(identifier);
+  },
+};

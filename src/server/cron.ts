@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFileSync } from 'fs';
+import path from 'path';
 import { getMarketsSummaryArticles } from '@/lib/markets-service';
 import { getSummaryArticles as getGeopoliticsArticles } from '@/lib/geopolitics-service';
 import { getTechSummaryArticles } from '@/lib/tech-service';
@@ -34,6 +36,7 @@ export async function runCronPipeline<T>(
 // ---------------------------------------------------------------------------
 
 const SITE_URL = 'https://macrostance.com';
+const DEFAULT_X_IMAGE_PATH = path.join(process.cwd(), 'public', 'macrostance_X.png');
 
 async function getLatestBriefing(section: XPosterSection): Promise<XBriefing | null> {
   let articles: { title: string; slug: string; summary: string; keyPoints: string[]; date: string }[];
@@ -59,6 +62,8 @@ async function getLatestBriefing(section: XPosterSection): Promise<XBriefing | n
 }
 
 export async function runXPosterPipeline(): Promise<XCronResult[]> {
+  const defaultImage = readFileSync(DEFAULT_X_IMAGE_PATH);
+
   return Promise.all(
     X_SECTIONS.map(async ({ section }): Promise<XCronResult> => {
       const ts = new Date().toISOString();
@@ -74,7 +79,7 @@ export async function runXPosterPipeline(): Promise<XCronResult[]> {
         }
 
         const tweetText = await generateTweet(briefing);
-        const result   = await postTweet(tweetText);
+        const result   = await postTweet(tweetText, defaultImage);
 
         if (result.success) {
           await markPosted(section, briefing.url);
