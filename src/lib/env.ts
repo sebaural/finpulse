@@ -47,8 +47,8 @@ function getNewsProviderEnv(): NewsProviderEnv {
 
   const totalKeys = Object.keys(env).length;
   if (process.env.NODE_ENV === 'production' && missing.length === totalKeys) {
-    throw new Error(
-      'No news provider keys configured for production. Set at least one API key in your deployment secrets.',
+    console.warn(
+      '[news-env] No news provider keys configured. The /api/news route will serve fallback demo data.',
     );
   }
 
@@ -56,6 +56,11 @@ function getNewsProviderEnv(): NewsProviderEnv {
 }
 
 export const newsProviderEnv = getNewsProviderEnv();
+
+/** Returns true if at least one news provider API key is configured. */
+export function hasNewsProviderKeys(): boolean {
+  return Object.values(newsProviderEnv).some(Boolean);
+}
 
 // ---------------------------------------------------------------------------
 // X Auto-Poster env vars — same validation pattern as above
