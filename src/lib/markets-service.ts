@@ -1,14 +1,10 @@
 // src/lib/markets-service.ts
 
 import Anthropic from '@anthropic-ai/sdk';
-import { prisma } from './db';
+import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
 import { selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
-
-// ---------------------------------------------------------------------------
-// NewsAPI response shape
-// ---------------------------------------------------------------------------
 
 interface NewsApiArticle {
   title: string | null;
@@ -23,13 +19,9 @@ interface NewsApiResponse {
   articles: NewsApiArticle[];
 }
 
-// ---------------------------------------------------------------------------
-// Finnhub general-news response shape
-// ---------------------------------------------------------------------------
-
 interface FinnhubNewsArticle {
   category: string;
-  datetime: number; // Unix timestamp (seconds)
+  datetime: number;
   headline: string;
   id: number;
   related: string;
@@ -37,10 +29,6 @@ interface FinnhubNewsArticle {
   summary: string;
   url: string;
 }
-
-// ---------------------------------------------------------------------------
-// Claude JSON response shape
-// ---------------------------------------------------------------------------
 
 interface ClaudeMarketsResponse {
   title: string;
@@ -50,10 +38,6 @@ interface ClaudeMarketsResponse {
   region: string;
   tags: string[];
 }
-
-// ---------------------------------------------------------------------------
-// Private helper: map raw Prisma row → SummaryArticle
-// ---------------------------------------------------------------------------
 
 function mapDbToSummary(row: {
   id: string;
@@ -82,10 +66,6 @@ function mapDbToSummary(row: {
     createdAt: row.createdAt,
   };
 }
-
-// ---------------------------------------------------------------------------
-// 1. Fetch top markets articles — NewsAPI + Finnhub in parallel
-// ---------------------------------------------------------------------------
 
 async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
@@ -119,8 +99,6 @@ async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
 }
 
 async function fetchFromFinnhub(apiKey: string): Promise<SourceArticle[]> {
-  // Finnhub "general" news endpoint — returns latest 100 headlines across all categories.
-  // The "general" category includes business/markets headlines.
   const url =
     `https://finnhub.io/api/v1/news` +
     `?category=general` +
@@ -148,7 +126,6 @@ export async function fetchTopMarketsArticles(): Promise<SourceArticle[]> {
   if (!newsApiKey) throw new Error('NEWS_API_KEY environment variable is not set');
   if (!finnhubKey) throw new Error('FINNHUB_KEY environment variable is not set');
 
-  // Fetch both sources in parallel; let either fail independently.
   const [newsApiResult, finnhubResult] = await Promise.allSettled([
     fetchFromNewsApi(newsApiKey),
     fetchFromFinnhub(finnhubKey),
@@ -170,10 +147,6 @@ export async function fetchTopMarketsArticles(): Promise<SourceArticle[]> {
     'markets',
   );
 }
-
-// ---------------------------------------------------------------------------
-// 2. Generate AI summary via Anthropic Claude
-// ---------------------------------------------------------------------------
 
 export async function generateMarketsSummaryArticle(
   articles: SourceArticle[],
@@ -219,7 +192,7 @@ export async function generateMarketsSummaryArticle(
     `Required JSON shape:\n` +
     `{\n` +
     `  "title": "engaging, professional headline capturing the day's market signal",\n` +
-    `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words (on the for and with meets of); verify hyphen count ≤ 4 before finalising",\n` +
+    `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words; verify hyphen count ≤ 4 before finalising",\n` +
     `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise market takeaways from the report"],\n` +
     `  "region": "primary market region (US / Europe / Asia-Pacific / Global / EM / etc.)",\n` +
@@ -259,13 +232,10 @@ export async function generateMarketsSummaryArticle(
   };
 }
 
-// ---------------------------------------------------------------------------
-// 3. Save (upsert) summary article to the database
-// ---------------------------------------------------------------------------
-
 export async function saveMarketsSummaryArticle(
   data: Omit<SummaryArticle, 'id' | 'createdAt'>,
 ): Promise<SummaryArticle> {
+  const prisma = getPrisma();
   const existing = await prisma.marketsArticle.findFirst({
     where: { date: data.date },
   });
@@ -297,30 +267,30 @@ export async function saveMarketsSummaryArticle(
   return mapDbToSummary(row);
 }
 
-// ---------------------------------------------------------------------------
-// 4. Fetch many markets summary articles
-// ---------------------------------------------------------------------------
-
 export async function getMarketsSummaryArticles(limit = 20): Promise<SummaryArticle[]> {
-  const rows = await prisma.marketsArticle.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  });
-  return rows.map(mapDbToSummary);
+  try {
+    const prisma = getPrisma();
+    const rows = await prisma.marketsArticle.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map(mapDbToSummary);
+  } catch (error) {
+    console.error('[markets-service] failed to load summary articles', error);
+    return [];
+  }
 }
-
-// ---------------------------------------------------------------------------
-// 5. Fetch one markets summary article by date
-// ---------------------------------------------------------------------------
 
 export async function getMarketsSummaryArticleByDate(date: string): Promise<SummaryArticle | null> {
-  const row = await prisma.marketsArticle.findFirst({ where: { date } });
-  return row ? mapDbToSummary(row) : null;
+  try {
+    const prisma = getPrisma();
+    const row = await prisma.marketsArticle.findFirst({ where: { date } });
+    return row ? mapDbToSummary(row) : null;
+  } catch (error) {
+    console.error('[markets-service] failed to load summary article by date', error);
+    return null;
+  }
 }
-
-// ---------------------------------------------------------------------------
-// 6. Full daily pipeline: fetch → generate → save → return
-// ---------------------------------------------------------------------------
 
 export async function runDailyMarketsPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopMarketsArticles();

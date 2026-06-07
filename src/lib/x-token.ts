@@ -1,4 +1,4 @@
-import { prisma } from './db';
+import { getPrisma } from './db';
 import { refreshXToken, type XTokens } from './x-oauth';
 
 const DEFAULT_OPERATOR_ID = 'uralsebastian';
@@ -16,6 +16,7 @@ function getTokenExpiresAt(expiresIn: number): Date {
 }
 
 export async function saveXTokens(tokens: XTokens): Promise<void> {
+  const prisma = getPrisma();
   const operatorId = getOperatorId();
   const existingUser = await prisma.user.findUnique({
     where: { id: operatorId },
@@ -41,6 +42,7 @@ export async function saveXTokens(tokens: XTokens): Promise<void> {
 }
 
 export async function clearXTokens(): Promise<void> {
+  const prisma = getPrisma();
   await prisma.user.updateMany({
     where: { id: getOperatorId() },
     data: {
@@ -52,6 +54,7 @@ export async function clearXTokens(): Promise<void> {
 }
 
 export async function refreshStoredXToken(): Promise<{ accessToken: string; expiresAt: string }> {
+  const prisma = getPrisma();
   const user = await prisma.user.findUnique({
     where: { id: getOperatorId() },
     select: { xRefreshToken: true },
@@ -71,6 +74,7 @@ export async function refreshStoredXToken(): Promise<{ accessToken: string; expi
 }
 
 export async function getValidAccessToken(): Promise<string> {
+  const prisma = getPrisma();
   const user = await prisma.user.findUnique({
     where: { id: getOperatorId() },
   });
@@ -79,7 +83,6 @@ export async function getValidAccessToken(): Promise<string> {
     throw new Error('No X tokens found. Please authorize first.');
   }
 
-  // Check if token is still valid (with 5 min buffer)
   if (user.xTokenExpiresAt && user.xTokenExpiresAt > new Date(Date.now() + 5 * 60 * 1000)) {
     return user.xAccessToken;
   }

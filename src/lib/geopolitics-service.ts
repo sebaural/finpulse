@@ -1,7 +1,7 @@
 // src/lib/geopolitics-service.ts
 
 import Anthropic from '@anthropic-ai/sdk';
-import { prisma } from './db';
+import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
 import { selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
@@ -51,10 +51,6 @@ interface ClaudeGeopoliticsResponse {
   tags: string[];
 }
 
-// ---------------------------------------------------------------------------
-// Private helper: map raw Prisma row → SummaryArticle
-// ---------------------------------------------------------------------------
-
 function mapDbToSummary(row: {
   id: string;
   title: string;
@@ -82,10 +78,6 @@ function mapDbToSummary(row: {
     createdAt: row.createdAt,
   };
 }
-
-// ---------------------------------------------------------------------------
-// 1. Fetch top geopolitics articles — NewsAPI + Finnhub in parallel
-// ---------------------------------------------------------------------------
 
 async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
@@ -119,8 +111,6 @@ async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
 }
 
 async function fetchFromFinnhub(apiKey: string): Promise<SourceArticle[]> {
-  // Finnhub "general" news endpoint — returns latest 100 headlines across all categories.
-  // We pass the category filter "general" which covers geopolitics, world news, etc.
   const url =
     `https://finnhub.io/api/v1/news` +
     `?category=general` +
@@ -148,7 +138,6 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
   if (!newsApiKey) throw new Error('NEWS_API_KEY environment variable is not set');
   if (!finnhubKey) throw new Error('FINNHUB_KEY environment variable is not set');
 
-  // Fetch both sources in parallel; let either fail independently.
   const [newsApiResult, finnhubResult] = await Promise.allSettled([
     fetchFromNewsApi(newsApiKey),
     fetchFromFinnhub(finnhubKey),
@@ -170,10 +159,6 @@ export async function fetchTopGeopoliticsArticles(): Promise<SourceArticle[]> {
     'geopolitics',
   );
 }
-
-// ---------------------------------------------------------------------------
-// 2. Generate AI summary via Anthropic Claude
-// ---------------------------------------------------------------------------
 
 export async function generateSummaryArticle(
   articles: SourceArticle[],
@@ -262,13 +247,10 @@ export async function generateSummaryArticle(
   };
 }
 
-// ---------------------------------------------------------------------------
-// 3. Save (upsert) summary article to the database
-// ---------------------------------------------------------------------------
-
 export async function saveSummaryArticle(
   data: Omit<SummaryArticle, 'id' | 'createdAt'>,
 ): Promise<SummaryArticle> {
+  const prisma = getPrisma();
   const existing = await prisma.geopoliticsArticle.findFirst({
     where: { date: data.date },
   });
@@ -300,30 +282,30 @@ export async function saveSummaryArticle(
   return mapDbToSummary(row);
 }
 
-// ---------------------------------------------------------------------------
-// 4. Fetch many summary articles
-// ---------------------------------------------------------------------------
-
 export async function getSummaryArticles(limit = 20): Promise<SummaryArticle[]> {
-  const rows = await prisma.geopoliticsArticle.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  });
-  return rows.map(mapDbToSummary);
+  try {
+    const prisma = getPrisma();
+    const rows = await prisma.geopoliticsArticle.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map(mapDbToSummary);
+  } catch (error) {
+    console.error('[geopolitics-service] failed to load summary articles', error);
+    return [];
+  }
 }
-
-// ---------------------------------------------------------------------------
-// 5. Fetch one summary article by date
-// ---------------------------------------------------------------------------
 
 export async function getSummaryArticleByDate(date: string): Promise<SummaryArticle | null> {
-  const row = await prisma.geopoliticsArticle.findFirst({ where: { date } });
-  return row ? mapDbToSummary(row) : null;
+  try {
+    const prisma = getPrisma();
+    const row = await prisma.geopoliticsArticle.findFirst({ where: { date } });
+    return row ? mapDbToSummary(row) : null;
+  } catch (error) {
+    console.error('[geopolitics-service] failed to load summary article by date', error);
+    return null;
+  }
 }
-
-// ---------------------------------------------------------------------------
-// 6. Full daily pipeline: fetch → generate → save → return
-// ---------------------------------------------------------------------------
 
 export async function runDailyGeopoliticsPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopGeopoliticsArticles();

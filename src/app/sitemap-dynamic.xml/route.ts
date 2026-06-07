@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getPrisma } from '@/lib/db';
 import { SITE_URL } from '@/lib/seo';
 import { toSlug } from '@/lib/summary-pipeline';
 
@@ -13,8 +13,8 @@ function buildEntry(
   row: ArticleRow,
 ): string {
   const slug = row.slug || toSlug(row.title);
-  const loc  = `${SITE_URL}/${section}/${slug}`;
-  const mod  = row.updatedAt.toISOString();
+  const loc = `${SITE_URL}/${section}/${slug}`;
+  const mod = row.updatedAt.toISOString();
   return (
     `  <url>\n` +
     `    <loc>${loc}</loc>\n` +
@@ -27,6 +27,7 @@ function buildEntry(
 
 export async function GET() {
   try {
+    const prisma = getPrisma();
     const select = { slug: true, title: true, updatedAt: true } as const;
 
     const [geopolitics, markets, tech] = await Promise.all([
@@ -36,11 +37,11 @@ export async function GET() {
     ]);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml    += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-    xml    += geopolitics.map(r => buildEntry('geopolitics', r)).join('');
-    xml    += markets.map(r => buildEntry('markets', r)).join('');
-    xml    += tech.map(r => buildEntry('tech', r)).join('');
-    xml    += `</urlset>`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+    xml += geopolitics.map((r) => buildEntry('geopolitics', r)).join('');
+    xml += markets.map((r) => buildEntry('markets', r)).join('');
+    xml += tech.map((r) => buildEntry('tech', r)).join('');
+    xml += `</urlset>`;
 
     return new NextResponse(xml, {
       headers: {

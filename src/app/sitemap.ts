@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo';
-import { prisma } from '@/lib/db';
+import { getPrisma } from '@/lib/db';
 import { toSlug } from '@/lib/summary-pipeline';
 
 export const revalidate = 3600;
@@ -27,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let articleEntries: MetadataRoute.Sitemap = [];
 
   try {
+    const prisma = getPrisma();
     const select = { slug: true, title: true, updatedAt: true } as const;
     const [geopolitics, markets, tech] = await Promise.all([
       prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
