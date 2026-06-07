@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { contactRateLimit } from '@/lib/rate-limit';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+
+  return new Resend(apiKey);
+}
 
 function getIP(req: NextRequest): string {
   return (
@@ -13,7 +21,6 @@ function getIP(req: NextRequest): string {
 }
 
 async function verifyRecaptcha(token: string): Promise<number> {
-  // Skip verification in development — localhost is not a registered reCAPTCHA domain
   if (process.env.NODE_ENV === 'development') {
     return 1.0;
   }
@@ -29,10 +36,7 @@ async function verifyRecaptcha(token: string): Promise<number> {
   const data = await res.json();
 
   if (!data.success) {
-    // Log the error codes for debugging (visible in Vercel logs)
     console.error('[contact API] reCAPTCHA verification failed:', data['error-codes']);
-    // Treat as configuration/domain issue rather than bot — don't hard-block real users
-    // Fix: register macrostance.com in the Google reCAPTCHA console if this keeps firing
     return 1.0;
   }
 
@@ -41,7 +45,6 @@ async function verifyRecaptcha(token: string): Promise<number> {
 }
 
 export async function POST(req: NextRequest) {
-  // ── 1. Rate limiting ────────────────────────────────────────────
   const ip = getIP(req);
   const { success: withinLimit, remaining, reset } = await contactRateLimit.limit(ip);
 
@@ -59,7 +62,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── 2. Parse & validate ─────────────────────────────────────────
   let body: Record<string, string>;
   try {
     body = await req.json();
@@ -81,16 +83,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
   }
 
-  // ── 3. reCAPTCHA verification ───────────────────────────────────
   if (!recaptchaToken) {
     return NextResponse.json({ error: 'Missing reCAPTCHA token.' }, { status: 400 });
   }
 
   const score = await verifyRecaptcha(recaptchaToken);
 
-  // Block confirmed bots. Threshold 0.3 is appropriate for new sites
-  // (reCAPTCHA v3 scores conservatively until it learns your traffic).
-  // Only fires when success:true — config failures pass through above.
   if (score < 0.3) {
     return NextResponse.json(
       { error: 'Submission blocked as potential spam.' },
@@ -98,8 +96,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── 4. Send email via Resend ────────────────────────────────────
   try {
+    const resend = getResend();
+
     await resend.emails.send({
       from: `MacroStance Contact <${process.env.FROM_EMAIL}>`,
       to: process.env.TO_EMAIL!,
