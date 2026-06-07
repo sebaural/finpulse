@@ -101,12 +101,12 @@ describe('X token storage and posting flow', () => {
     const upsert = vi.fn().mockResolvedValueOnce(undefined);
 
     vi.doMock('@/lib/db', () => ({
-      prisma: {
+      getPrisma: () => ({
         user: {
           findUnique,
           upsert,
         },
-      },
+      }),
     }));
 
     const { saveXTokens } = await import('@/lib/x-token');
@@ -154,12 +154,12 @@ describe('X token storage and posting flow', () => {
     });
 
     vi.doMock('@/lib/db', () => ({
-      prisma: {
+      getPrisma: () => ({
         user: {
           findUnique,
           upsert,
         },
-      },
+      }),
     }));
 
     vi.doMock('@/lib/x-oauth', () => ({
@@ -186,12 +186,12 @@ describe('X token storage and posting flow', () => {
     });
 
     vi.doMock('@/lib/db', () => ({
-      prisma: {
+      getPrisma: () => ({
         user: {
           findUnique,
           upsert,
         },
-      },
+      }),
     }));
 
     vi.doMock('@/lib/x-oauth', () => ({
