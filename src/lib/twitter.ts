@@ -1,16 +1,28 @@
 import { getValidAccessToken } from './x-token';
 import type { XPostResult } from '@/types';
 
+<<<<<<< HEAD
 async function uploadMedia(accessToken: string, imageBuffer: Buffer): Promise<string> {
   const res = await fetch('https://api.x.com/2/media/upload', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
+=======
+async function uploadMedia(accessToken: string, image: Buffer): Promise<string> {
+  const res = await fetch('https://api.x.com/2/media/upload', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+>>>>>>> da9211f (fix: restore X media posting flow)
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       media: {
+<<<<<<< HEAD
         media: imageBuffer.toString('base64'),
+=======
+        media: image.toString('base64'),
+>>>>>>> da9211f (fix: restore X media posting flow)
         media_type: 'image/png',
       },
     }),
@@ -18,27 +30,42 @@ async function uploadMedia(accessToken: string, imageBuffer: Buffer): Promise<st
 
   if (!res.ok) {
     const error = await res.text();
+<<<<<<< HEAD
     throw new Error(`X media upload failed: ${res.status} ${error}`);
+=======
+    throw new Error(`X media upload error: ${res.status} ${error}`);
+>>>>>>> da9211f (fix: restore X media posting flow)
   }
 
   const data = await res.json();
   return data.data.id;
 }
 
+<<<<<<< HEAD
 export async function postTweet(text: string, imageBuffer?: Buffer): Promise<XPostResult> {
   try {
     const accessToken = await getValidAccessToken();
     const mediaId = imageBuffer ? await uploadMedia(accessToken, imageBuffer) : null;
+=======
+export async function postTweet(text: string, image?: Buffer): Promise<XPostResult> {
+  try {
+    const accessToken = await getValidAccessToken();
+    const mediaId = image ? await uploadMedia(accessToken, image) : undefined;
+>>>>>>> da9211f (fix: restore X media posting flow)
 
     const res = await fetch('https://api.x.com/2/tweets', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: 'Bearer ' + accessToken,
         'Content-Type': 'application/json',
       },
+<<<<<<< HEAD
       body: JSON.stringify(
         mediaId ? { text, media: { media_ids: [mediaId] } } : { text },
       ),
+=======
+      body: JSON.stringify(mediaId ? { text, media: { media_ids: [mediaId] } } : { text }),
+>>>>>>> da9211f (fix: restore X media posting flow)
     });
 
     if (!res.ok) {
