@@ -1,4 +1,4 @@
-import { redis } from '@/lib/redis';
+import { getRedis } from '@/lib/redis';
 import type { FeedSource } from '@/types';
 
 const KV_KEY = 'feeds:config';
@@ -91,6 +91,11 @@ function normalizeSources(sources: FeedSource[]): FeedSource[] {
 }
 
 export async function listFeedSources(): Promise<FeedSource[]> {
+  const redis = getRedis();
+  if (!redis) {
+    return defaultSources;
+  }
+
   const stored = await redis.get<FeedSource[]>(KV_KEY);
   if (!stored) {
     await redis.set(KV_KEY, defaultSources);
@@ -106,6 +111,11 @@ export async function listFeedSources(): Promise<FeedSource[]> {
 }
 
 export async function saveFeedSources(sources: FeedSource[]): Promise<void> {
+  const redis = getRedis();
+  if (!redis) {
+    return;
+  }
+
   await redis.set(KV_KEY, sources);
 }
 

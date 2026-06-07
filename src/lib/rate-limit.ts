@@ -7,7 +7,7 @@ type RateLimitResult = {
   reset: number;
 };
 
-function getContactRateLimit() {
+function getContactRateLimit(): Ratelimit | null {
   const url = process.env.FINPULSE_KV_REST_API_URL;
   const token = process.env.FINPULSE_KV_REST_API_TOKEN;
 
@@ -37,6 +37,12 @@ export const contactRateLimit = {
       };
     }
 
-    return ratelimit.limit(identifier);
+    const result = await ratelimit.limit(identifier);
+
+    return {
+      success: result.success,
+      remaining: result.remaining,
+      reset: result.reset,
+    };
   },
 };
