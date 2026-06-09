@@ -190,6 +190,10 @@ export async function generateSummaryArticle(
     `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
     `  INTRODUCTION — Establish the current high-stakes environment. Identify the immediate\n` +
     `    catalyst or "Redline" that has brought this situation to a head.\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
+    `    - BEST CASE: [scenario + logic-based justification]\n` +
+    `    - BASE CASE: [scenario + logic-based justification]\n` +
+    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `  HISTORICAL CONTEXT — Detail the long-term trends, past conflicts, broken treaties, or\n` +
     `    structural forces that led to this moment. Go back 10–20 years where relevant.\n` +
     `  PRIMARY STAKEHOLDERS — Analyze each key actor's motivations, internal pressures,\n` +
@@ -198,10 +202,6 @@ export async function generateSummaryArticle(
     `  ECONOMIC IMPLICATIONS — Evaluate concrete impacts on global supply chains, energy\n` +
     `    markets, currency stability, trade blocs, or financial systems. Reference specific\n` +
     `    economic figures, indices, or market sectors where possible.\n` +
-    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
-    `    - BEST CASE: [scenario + logic-based justification]\n` +
-    `    - BASE CASE: [scenario + logic-based justification]\n` +
-    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
     `Required JSON shape:\n` +
     `{\n` +

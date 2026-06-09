@@ -247,6 +247,11 @@
   color: var(--text);
   margin-bottom: 40px;
 }
+
+.geo-body > h4 {
+  color: var(--accent2);
+}
+
 .geo-body p {
   margin-bottom: 1.2em;
   break-inside: avoid;

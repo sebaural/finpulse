@@ -178,6 +178,10 @@ export async function generateTechSummaryArticle(
     `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
     `  INTRODUCTION — Establish today's tech environment. Identify the immediate catalyst\n` +
     `    (product launch, regulatory action, breakthrough, M&A, security incident).\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
+    `    - BEST CASE: [scenario + logic-based justification]\n` +
+    `    - BASE CASE: [scenario + logic-based justification]\n` +
+    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `  HISTORICAL CONTEXT — Detail the multi-cycle technology trends, prior platform shifts,\n` +
     `    research breakthroughs, or regulatory regimes that led to this moment.\n` +
     `  PRIMARY STAKEHOLDERS — Analyze key actors: hyperscalers, model labs, chipmakers,\n` +
@@ -185,10 +189,6 @@ export async function generateTechSummaryArticle(
     `  ECONOMIC IMPLICATIONS — Evaluate impacts on capex cycles, enterprise IT spend,\n` +
     `    semiconductor supply chains, equity multiples, and incumbent moats. Reference\n` +
     `    specific companies, models, chip families, or product lines where possible.\n` +
-    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
-    `    - BEST CASE: [scenario + logic-based justification]\n` +
-    `    - BASE CASE: [scenario + logic-based justification]\n` +
-    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
     `Required JSON shape:\n` +
     `{\n` +

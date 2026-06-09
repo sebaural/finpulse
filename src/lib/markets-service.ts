@@ -178,16 +178,16 @@ export async function generateMarketsSummaryArticle(
     `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
     `  INTRODUCTION — Establish today's market environment. Identify the immediate\n` +
     `    catalyst (data print, central-bank decision, earnings shock, etc.).\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
+    `    - BEST CASE: [scenario + logic-based justification]\n` +
+    `    - BASE CASE: [scenario + logic-based justification]\n` +
+    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `  HISTORICAL CONTEXT — Detail the multi-month or multi-cycle trends, prior policy\n` +
     `    regimes, and structural forces (inflation regime, liquidity cycle) that led here.\n` +
     `  PRIMARY STAKEHOLDERS — Analyze key actors: central banks, institutional investors,\n` +
     `    corporate earners, retail flows. Cover their constraints, incentives, and positioning.\n` +
     `  ECONOMIC IMPLICATIONS — Evaluate impacts on equities, fixed income, FX, commodities,\n` +
     `    credit spreads, and volatility surfaces. Reference specific indices, yields, or sectors.\n` +
-    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
-    `    - BEST CASE: [scenario + logic-based justification]\n` +
-    `    - BASE CASE: [scenario + logic-based justification]\n` +
-    `    - WORST CASE: [scenario + logic-based justification]\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
     `Required JSON shape:\n` +
     `{\n` +
