@@ -5,13 +5,27 @@ interface SourceArticleLike {
   description?: string;
 }
 
-export function toSlug(title: string): string {
-  return title
+function safeDecodeSlug(slug: string): string {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
+export function canonicalizeSlug(slug: string): string {
+  return safeDecodeSlug(slug)
     .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+}
+
+export function toSlug(title: string): string {
+  return canonicalizeSlug(title);
 }
 
 export function selectImportantArticles<T extends SourceArticleLike>(

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
+import { canonicalizeSlug, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -63,10 +63,12 @@ function mapDbToSummary(row: {
   date: string;
   createdAt: Date;
 }): SummaryArticle {
+  const canonicalSlug = canonicalizeSlug(row.slug || toSlug(row.title));
+
   return {
     id: row.id,
     title: row.title,
-    slug: row.slug || toSlug(row.title),
+    slug: canonicalSlug,
     summary: row.summary,
     keyPoints: Array.isArray(row.keyPoints) ? (row.keyPoints as string[]) : [],
     sourceArticles: Array.isArray(row.sourceArticles)
@@ -237,7 +239,7 @@ export async function generateSummaryArticle(
 
   return {
     title: parsed.title,
-    slug: parsed.slug,
+    slug: canonicalizeSlug(parsed.slug || parsed.title),
     summary: parsed.summary,
     keyPoints: parsed.keyPoints,
     sourceArticles: articles,
@@ -257,7 +259,7 @@ export async function saveSummaryArticle(
 
   const payload = {
     title: data.title,
-    slug: data.slug,
+    slug: canonicalizeSlug(data.slug || data.title),
     summary: data.summary,
     keyPoints: data.keyPoints,
     sourceArticles: data.sourceArticles as unknown as Parameters<

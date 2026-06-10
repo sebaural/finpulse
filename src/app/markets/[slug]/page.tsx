@@ -15,6 +15,7 @@ import {
   DEFAULT_OG_IMAGE,
 } from '@/lib/seo';
 import { truncateDescription } from '@/lib/stripMarkdown';
+import { canonicalizeSlug } from '@/lib/summary-pipeline';
 import '@/components/geopolitics/geopolitics.css';
 
 export const revalidate = 3600;
@@ -25,8 +26,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalSlug = canonicalizeSlug(slug);
   const articles = await getMarketsSummaryArticles(30);
-  const article = articles.find((a) => a.slug === slug);
+  const article = articles.find((a) => canonicalizeSlug(a.slug) === canonicalSlug);
 
   if (!article) {
     return { title: 'Article not found' };
@@ -36,14 +38,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     section: 'markets',
     title: article.title,
     summary: article.summary,
-    slug,
+    slug: article.slug,
   });
 }
 
 export default async function MarketsArticlePage({ params }: Props) {
   const { slug } = await params;
+  const canonicalSlug = canonicalizeSlug(slug);
   const articles = await getMarketsSummaryArticles(30);
-  const article = articles.find((a) => a.slug === slug);
+  const article = articles.find((a) => canonicalizeSlug(a.slug) === canonicalSlug);
 
   if (!article) {
     notFound();
@@ -52,10 +55,10 @@ export default async function MarketsArticlePage({ params }: Props) {
   const breadcrumbs = breadcrumbSchema([
     { name: 'Home', url: canonicalUrl('/') },
     { name: 'Markets', url: canonicalUrl('/markets') },
-    { name: article.title, url: canonicalUrl(`/markets/${slug}`) },
+    { name: article.title, url: canonicalUrl(`/markets/${article.slug}`) },
   ]);
 
-  const articleUrl = canonicalUrl(`/markets/${slug}`);
+  const articleUrl = canonicalUrl(`/markets/${article.slug}`);
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
