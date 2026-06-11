@@ -8,6 +8,8 @@ interface GenerateArticleMetadataParams {
 }
 
 const SITE_URL = 'https://macrostance.com';
+
+// Use a high-quality, consistent image (1200x630 recommended)
 const DEFAULT_IMAGE = `${SITE_URL}/macrostance_X.png`;
 
 export function generateArticleMetadata({
@@ -25,7 +27,14 @@ export function generateArticleMetadata({
       title,
       description: summary,
       url,
-      images: [{ url: DEFAULT_IMAGE }],
+      images: [
+        {
+          url: DEFAULT_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',

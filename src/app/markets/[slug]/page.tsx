@@ -12,7 +12,6 @@ import {
   publisherRef,
   websiteRef,
   SITE_URL,
-  DEFAULT_OG_IMAGE,
 } from '@/lib/seo';
 import { truncateDescription } from '@/lib/stripMarkdown';
 import { canonicalizeSlug } from '@/lib/summary-pipeline';
@@ -52,20 +51,24 @@ export default async function MarketsArticlePage({ params }: Props) {
     notFound();
   }
 
+  const articleUrl = canonicalUrl(`/markets/${article.slug}`);
+
   const breadcrumbs = breadcrumbSchema([
     { name: 'Home', url: canonicalUrl('/') },
     { name: 'Markets', url: canonicalUrl('/markets') },
-    { name: article.title, url: canonicalUrl(`/markets/${article.slug}`) },
+    { name: article.title, url: articleUrl },
   ]);
 
-  const articleUrl = canonicalUrl(`/markets/${article.slug}`);
+  // Use the same image as defined in generateArticleMetadata
+  const articleImage = `${SITE_URL}/macrostance_X.png`;
+
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title.slice(0, 110),
     description: truncateDescription(article.summary, 300),
     url: articleUrl,
-    image: [DEFAULT_OG_IMAGE],
+    image: [articleImage],
     datePublished: article.createdAt.toISOString(),
     dateModified: article.createdAt.toISOString(),
     mainEntityOfPage: {
