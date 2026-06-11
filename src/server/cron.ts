@@ -35,7 +35,7 @@ export async function runCronPipeline<T>(
 
 const SITE_URL = 'https://macrostance.com';
 
-async function getLatestBriefing(section: XPosterSection): Promise<XBriefing | null> {
+export async function getLatestBriefing(section: XPosterSection): Promise<XBriefing | null> {
   let articles: { title: string; slug: string; summary: string; keyPoints: string[]; date: string }[];
 
   if (section === 'markets') {
