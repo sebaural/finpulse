@@ -74,7 +74,7 @@ export async function runXPosterPipeline(): Promise<XCronResult[]> {
         }
 
         const tweetText = await generateTweet(briefing);
-        const result   = await postTweet(tweetText); // ← TEXT ONLY
+        const result = await postTweet(tweetText); // ← TEXT ONLY (no image)
 
         if (result.success) {
           await markPosted(section, briefing.url);
