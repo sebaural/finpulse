@@ -30,7 +30,7 @@ export async function runCronPipeline<T>(
 }
 
 // ---------------------------------------------------------------------------
-// X Auto-Poster pipeline (TEXT ONLY)
+// X Auto-Poster pipeline
 // ---------------------------------------------------------------------------
 
 const SITE_URL = 'https://macrostance.com';
@@ -74,7 +74,7 @@ export async function runXPosterPipeline(): Promise<XCronResult[]> {
         }
 
         const tweetText = await generateTweet(briefing);
-        const result = await postTweet(tweetText); // ← TEXT ONLY (no image)
+        const result = await postTweet(tweetText); // TEXT ONLY
 
         if (result.success) {
           await markPosted(section, briefing.url);

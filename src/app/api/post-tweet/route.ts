@@ -5,11 +5,10 @@ import type { XPosterSection } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tweet, briefingUrl, section, imageBase64 } = (await request.json()) as {
-      tweet: string;
+    const { tweet, briefingUrl, section } = (await request.json()) as {
+      tweet:       string;
       briefingUrl: string;
-      section: XPosterSection;
-      imageBase64?: string;
+      section:     XPosterSection;
     };
 
     const alreadyPosted = await hasPosted(section, briefingUrl);
@@ -17,8 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'already posted' }, { status: 409 });
     }
 
-    const imageBuffer = imageBase64 ? Buffer.from(imageBase64, 'base64') : undefined;
-    const result = await postTweet(tweet, imageBuffer);
+    const result = await postTweet(tweet); // ← TEXT ONLY
 
     if (result.success) {
       await markPosted(section, briefingUrl);
