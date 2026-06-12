@@ -13,7 +13,6 @@ export const tickerItems: TickerItem[] = [
   { symbol: 'EUR/USD', value: '1.0842', change: '-0.12%', direction: 'neg' },
   { symbol: 'GBP/USD', value: '1.2714', change: '+0.08%', direction: 'pos' },
   { symbol: 'USD/JPY', value: '151.32', change: '+0.44%', direction: 'pos' },
-  { symbol: 'BTC/USD', value: '67,440', change: '+2.31%', direction: 'pos' },
   { symbol: 'GOLD', value: '$2,183', change: '+0.19%', direction: 'pos' },
   { symbol: 'CRUDE OIL', value: '$81.42', change: '-0.67%', direction: 'neg' },
 ];
@@ -25,7 +24,6 @@ export const marketRows: MarketRow[] = [
   { name: 'GOLD', value: '$2,183', change: '+0.19%', direction: 'pos' },
   { name: 'CRUDE OIL', value: '$81.42', change: '-0.67%', direction: 'neg' },
   { name: 'EUR/USD', value: '1.0842', change: '-0.12%', direction: 'neg' },
-  { name: 'BTC/USD', value: '$67,440', change: '+2.31%', direction: 'pos' },
   { name: '10Y Treasury', value: '4.312%', change: '+3bps', direction: 'pos' },
 ];
 
@@ -108,7 +106,7 @@ export function toId(input: string): string {
 
 export function detectCategory(text: string): NewsCategory {
   const t = text.toLowerCase();
-  if (/bitcoin|btc|ethereum|eth|crypto|defi|nft|blockchain|altcoin/.test(t)) return 'Crypto';
+  if (/bitcoin|ethereum|eth|crypto|defi|nft|blockchain|altcoin/.test(t)) return 'Crypto';
   if (/oil|gas|energy|opec|crude|refin|lithium|lng|pipeline/.test(t)) return 'Energy';
   if (/tech|ai|chip|software|amazon|google|apple|microsoft|meta|nvidia|semiconductor/.test(t)) return 'Tech';
   if (/forex|fx|currency|dollar|euro|yen|pound|yuan|sterling|exchange rate|dxy/.test(t)) return 'Forex';

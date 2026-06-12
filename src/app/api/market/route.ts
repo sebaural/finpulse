@@ -20,7 +20,6 @@ let marketCache: CacheEntry | null = null;
 
 // Finnhub symbol → display label
 // Note: Free tier Finnhub does NOT support crypto symbols (BINANCE:*, CRYPTO:*, etc.)
-// BTC/USD will display static fallback when Finnhub returns 403; upgrade to paid tier for live crypto
 const TICKER_SYMBOLS: Array<{ symbol: string; label: string; prefix?: string }> = [
   { symbol: 'SPY', label: 'S&P 500' },
   { symbol: 'QQQ', label: 'NASDAQ' },
@@ -30,7 +29,6 @@ const TICKER_SYMBOLS: Array<{ symbol: string; label: string; prefix?: string }> 
   { symbol: 'FOREXCOM:USDJPY', label: 'USD/JPY' },
   { symbol: 'OANDA:XAUUSD', label: 'GOLD', prefix: '$' },
   { symbol: 'NYMEX:CL1!', label: 'CRUDE OIL', prefix: '$' },
-  { symbol: 'BINANCE:BTCUSDT', label: 'BTC/USD' }, // Free tier: falls back to static
 ];
 
 const SNAPSHOT_SYMBOLS: Array<{ symbol: string; name: string; prefix?: string; suffix?: string }> = [
@@ -40,7 +38,6 @@ const SNAPSHOT_SYMBOLS: Array<{ symbol: string; name: string; prefix?: string; s
   { symbol: 'OANDA:XAUUSD', name: 'GOLD', prefix: '$' },
   { symbol: 'NYMEX:CL1!', name: 'CRUDE OIL', prefix: '$' },
   { symbol: 'FOREXCOM:EURUSD', name: 'EUR/USD' },
-  { symbol: 'BINANCE:BTCUSDT', name: 'BTC/USD', prefix: '$' }, // Free tier: falls back to static
 ];
 
 interface FinnhubQuote {
@@ -90,7 +87,6 @@ const STATIC_TICKER: TickerItem[] = [
   { symbol: 'EUR/USD', value: '1.0842', change: '-0.12%', direction: 'neg' },
   { symbol: 'GBP/USD', value: '1.2714', change: '+0.08%', direction: 'pos' },
   { symbol: 'USD/JPY', value: '151.32', change: '+0.44%', direction: 'pos' },
-  { symbol: 'BTC/USD', value: '67,440', change: '+2.31%', direction: 'pos' },
   { symbol: 'GOLD', value: '$2,183', change: '+0.19%', direction: 'pos' },
   { symbol: 'CRUDE OIL', value: '$81.42', change: '-0.67%', direction: 'neg' },
 ];
@@ -102,7 +98,6 @@ const STATIC_ROWS: MarketRow[] = [
   { name: 'GOLD', value: '$2,183', change: '+0.19%', direction: 'pos' },
   { name: 'CRUDE OIL', value: '$81.42', change: '-0.67%', direction: 'neg' },
   { name: 'EUR/USD', value: '1.0842', change: '-0.12%', direction: 'neg' },
-  { name: 'BTC/USD', value: '$67,440', change: '+2.31%', direction: 'pos' },
 ];
 
 export async function GET() {
