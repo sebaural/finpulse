@@ -19,6 +19,8 @@ interface CacheEntry {
 let marketCache: CacheEntry | null = null;
 
 // Finnhub symbol → display label
+// Note: Free tier Finnhub does NOT support crypto symbols (BINANCE:*, CRYPTO:*, etc.)
+// BTC/USD will display static fallback when Finnhub returns 403; upgrade to paid tier for live crypto
 const TICKER_SYMBOLS: Array<{ symbol: string; label: string; prefix?: string }> = [
   { symbol: 'SPY', label: 'S&P 500' },
   { symbol: 'QQQ', label: 'NASDAQ' },
@@ -26,9 +28,9 @@ const TICKER_SYMBOLS: Array<{ symbol: string; label: string; prefix?: string }> 
   { symbol: 'FOREXCOM:EURUSD', label: 'EUR/USD' },
   { symbol: 'FOREXCOM:GBPUSD', label: 'GBP/USD' },
   { symbol: 'FOREXCOM:USDJPY', label: 'USD/JPY' },
-  { symbol: 'BINANCE:BTCUSDT', label: 'BTC/USD' },
   { symbol: 'OANDA:XAUUSD', label: 'GOLD', prefix: '$' },
   { symbol: 'NYMEX:CL1!', label: 'CRUDE OIL', prefix: '$' },
+  { symbol: 'BINANCE:BTCUSDT', label: 'BTC/USD' }, // Free tier: falls back to static
 ];
 
 const SNAPSHOT_SYMBOLS: Array<{ symbol: string; name: string; prefix?: string; suffix?: string }> = [
@@ -38,7 +40,7 @@ const SNAPSHOT_SYMBOLS: Array<{ symbol: string; name: string; prefix?: string; s
   { symbol: 'OANDA:XAUUSD', name: 'GOLD', prefix: '$' },
   { symbol: 'NYMEX:CL1!', name: 'CRUDE OIL', prefix: '$' },
   { symbol: 'FOREXCOM:EURUSD', name: 'EUR/USD' },
-  { symbol: 'BINANCE:BTCUSDT', name: 'BTC/USD', prefix: '$' },
+  { symbol: 'BINANCE:BTCUSDT', name: 'BTC/USD', prefix: '$' }, // Free tier: falls back to static
 ];
 
 interface FinnhubQuote {
@@ -140,7 +142,9 @@ export async function GET() {
   );
 
   const totalFetched = results.filter((r) => r.status === 'fulfilled').length;
-  const anyLive = quoteMap.size >= 3;
+  // Check if we have at least SOME live data (lowered threshold from 3 to 2)
+  // This makes the system more resilient to transient API failures
+  const anyLive = quoteMap.size >= 2;
 
   if (!anyLive) {
     const fallback: MarketResponse = {
@@ -190,8 +194,6 @@ export async function GET() {
   };
 
   marketCache = { data, timestamp: now };
-
-  console.info(`[market] Fetched ${quoteMap.size}/${uniqueSymbols.length} quotes. totalFetched=${totalFetched}`);
 
   return NextResponse.json(data, {
     headers: { 'Cache-Control': 'public, max-age=60', 'X-Cache': 'MISS' },
