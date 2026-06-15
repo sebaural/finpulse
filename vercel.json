@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/geopolitics/generate",
+      "path": "/api/cron/generate",
       "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/markets/generate",
-      "schedule": "15 15 * * *"
-    },
-    {
-      "path": "/api/tech/generate",
-      "schedule": "30 15 * * *"
     },
     {
       "path": "/api/cron/x-poster",

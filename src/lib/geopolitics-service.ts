@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { canonicalizeSlug, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
+import { canonicalizeSlug, parseClaudeJson, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -233,7 +233,7 @@ export async function generateSummaryArticle(
     throw new Error('Unexpected response type from Claude');
   }
 
-  const parsed = JSON.parse(firstContent.text.trim()) as ClaudeGeopoliticsResponse;
+  const parsed = parseClaudeJson<ClaudeGeopoliticsResponse>(firstContent.text);
 
   const today = new Date().toISOString().split('T')[0];
 

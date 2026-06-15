@@ -28,6 +28,20 @@ export function toSlug(title: string): string {
   return canonicalizeSlug(title);
 }
 
+// Claude sometimes wraps JSON output in markdown code fences (```json ... ```)
+// despite being told not to. Strip any surrounding fence before parsing so the
+// generation pipelines don't fail on an otherwise-valid response.
+export function parseClaudeJson<T>(text: string): T {
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned
+      .replace(/^```(?:json)?\s*\n?/i, '')
+      .replace(/\n?```\s*$/, '')
+      .trim();
+  }
+  return JSON.parse(cleaned) as T;
+}
+
 export function selectImportantArticles<T extends SourceArticleLike>(
   articles: T[],
   detectImportance: (text: string) => number,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMarketsSummaryArticles } from '@/lib/markets-service';
-import { getSummaryArticles as getGeopoliticsArticles } from '@/lib/geopolitics-service';
-import { getTechSummaryArticles } from '@/lib/tech-service';
+import { getMarketsSummaryArticles, runDailyMarketsPipeline } from '@/lib/markets-service';
+import { getSummaryArticles as getGeopoliticsArticles, runDailyGeopoliticsPipeline } from '@/lib/geopolitics-service';
+import { getTechSummaryArticles, runDailyTechPipeline } from '@/lib/tech-service';
 import { hasPosted, markPosted } from '@/lib/dedup';
 import { generateTweet } from '@/lib/claude';
 import { postTweet } from '@/lib/twitter';
@@ -27,6 +27,48 @@ export async function runCronPipeline<T>(
     const details = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Unified daily content generation pipeline
+// ---------------------------------------------------------------------------
+//
+// Runs all three summary-generation pipelines sequentially (one at a time) so a
+// single cron job replaces the three previously-separate ones. Each section is
+// fault-isolated: if one throws, the others still run and a partial result is
+// returned. The three pipelines each return their own SummaryArticle shape, so
+// the article type is a union of their return types.
+
+type ContentSection = 'geopolitics' | 'markets' | 'tech';
+
+type GeneratedArticle =
+  | Awaited<ReturnType<typeof runDailyGeopoliticsPipeline>>
+  | Awaited<ReturnType<typeof runDailyMarketsPipeline>>
+  | Awaited<ReturnType<typeof runDailyTechPipeline>>;
+
+export type ContentCronResult =
+  | { section: ContentSection; success: true; article: GeneratedArticle }
+  | { section: ContentSection; success: false; error: string };
+
+export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
+  const pipelines: { section: ContentSection; run: () => Promise<GeneratedArticle> }[] = [
+    { section: 'geopolitics', run: runDailyGeopoliticsPipeline },
+    { section: 'markets',     run: runDailyMarketsPipeline },
+    { section: 'tech',        run: runDailyTechPipeline },
+  ];
+
+  const results: ContentCronResult[] = [];
+  for (const { section, run } of pipelines) {
+    try {
+      const article = await run(); // sequential — one section at a time
+      results.push({ section, success: true, article });
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      console.error(`[content-cron] [${section}] ${error}`);
+      results.push({ section, success: false, error });
+    }
+  }
+  return results;
 }
 
 // ---------------------------------------------------------------------------
