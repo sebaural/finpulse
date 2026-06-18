@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/x-poster",
-      "schedule": "0 20 * * *"
+      "schedule": "0 17 * * *"
     }
   ]
 }
