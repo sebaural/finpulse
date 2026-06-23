@@ -5,12 +5,13 @@ import type { Metadata } from 'next';
 import { getMarketsSummaryArticles } from '@/lib/markets-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import MarketsPageClient from '@/components/markets/MarketsPageClient';
+import RelatedBriefings from '@/components/related/RelatedBriefings';
+import AuthorBioCard from '@/components/author/AuthorBioCard';
 import {
   jsonLd,
   breadcrumbSchema,
   canonicalUrl,
-  publisherRef,
-  websiteRef,
+  newsArticleSchema,
   SITE_URL,
 } from '@/lib/seo';
 import { truncateDescription } from '@/lib/stripMarkdown';
@@ -38,6 +39,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: article.title,
     summary: article.summary,
     slug: article.slug,
+    publishedTime: article.createdAt.toISOString(),
+    tags: article.tags,
   });
 }
 
@@ -62,29 +65,15 @@ export default async function MarketsArticlePage({ params }: Props) {
   // Use the same image as defined in generateArticleMetadata
   const articleImage = `${SITE_URL}/macrostance_X.png`;
 
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
-    headline: article.title.slice(0, 110),
+  const articleSchema = newsArticleSchema({
+    title: article.title,
     description: truncateDescription(article.summary, 300),
     url: articleUrl,
     image: [articleImage],
     datePublished: article.createdAt.toISOString(),
-    dateModified: article.createdAt.toISOString(),
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': articleUrl,
-    },
-    isPartOf: websiteRef(),
-    author: {
-      '@type': 'Person',
-      name: 'MacroStance Editorial Desk',
-      url: `${SITE_URL}/about`,
-    },
-    publisher: publisherRef(),
-    keywords: article.tags.join(', '),
-    articleSection: 'Markets',
-  };
+    section: 'Markets',
+    tags: article.tags,
+  });
 
   return (
     <>
@@ -97,6 +86,8 @@ export default async function MarketsArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
       <MarketsPageClient articles={articles} initialArticleId={article.id} />
+      <AuthorBioCard />
+      <RelatedBriefings currentSlug={article.slug} currentTags={article.tags} />
     </>
   );
 }

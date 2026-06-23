@@ -52,9 +52,9 @@ function renderSummary(summary: string): ReactElement[] {
     );
     if (header) {
       const rest = trimmed.slice(header.length).replace(/^[\s\u2014\-]+/, '').trim();
-      if (!rest) return [<h4 key={bi}>{trimmed.slice(0, header.length)}</h4>];
+      if (!rest) return [<h2 key={bi}>{trimmed.slice(0, header.length)}</h2>];
       return [
-        <h4 key={`${bi}h`}>{trimmed.slice(0, header.length)}</h4>,
+        <h2 key={`${bi}h`}>{trimmed.slice(0, header.length)}</h2>,
         <p key={`${bi}p`}>{rest}</p>,
       ];
     }
@@ -122,9 +122,11 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
 
         {/* ── Page Header ── */}
         <header className="geo-header">
-          <h1 className="geo-masthead">
+          {/* Section wordmark, NOT the page heading — kept out of the heading
+              outline so each briefing's title owns the unique <h1>. */}
+          <div className="geo-masthead">
             Geopolitics <em>of the Day</em>
-          </h1>
+          </div>
           <div className="geo-statusbar">
             {/* <span className="geo-statusbar-item">
               <strong>Updated</strong> daily at 15:00 UTC
@@ -162,7 +164,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
                     onClick={() => handleArticleSelect(a)}
                   >
                     <div className="geo-sidebar-date">{formatShortDate(a.date)}</div>
-                    <h3 className="geo-sidebar-title">{a.title}</h3>
+                    <div className="geo-sidebar-title">{a.title}</div>
                     <div className="geo-sidebar-region">{a.region}</div>
                   </Link>
                 ))}
@@ -175,7 +177,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
             {!selected ? (
               <div className="geo-empty">
                 <span className="geo-empty-globe">🌐</span>
-                <h2 className="geo-empty-heading">No summaries yet</h2>
+                <h1 className="geo-empty-heading">No summaries yet</h1>
                 <p className="geo-empty-text">
                   Daily geopolitical briefings will appear here once the pipeline has run. Trigger
                   the cron job or call the generate endpoint to create the first briefing.
@@ -188,7 +190,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
                   <span className="geo-article-date">{formatFullDate(selected.date)}</span>
                 </div>
 
-                <h2 className="geo-headline">{selected.title}</h2>
+                <h1 className="geo-headline">{selected.title}</h1>
                 <hr className="geo-rule" />
 
                 <div className="geo-body">
@@ -196,11 +198,11 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
                 </div>
 
                 <section className="geo-takeaways">
-                  <p className="geo-takeaways-title">Key Takeaways</p>
+                  <h2 className="geo-takeaways-title">Key Takeaways</h2>
                   {selected.keyPoints.map((point, i) => (
                     <div key={i} className="geo-takeaway-item">
                       <span className="geo-takeaway-arrow" aria-hidden="true">▸</span>
-                      <h3>{point}</h3>
+                      <p>{point}</p>
                     </div>
                   ))}
                 </section>
@@ -212,7 +214,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
                 </div>
 
                 <section>
-                  <p className="geo-sources-title">Source Articles</p>
+                  <h2 className="geo-sources-title">Source Articles</h2>
                   <div className="geo-sources-grid">
                     {selected.sourceArticles.filter((src) => !src.url.includes('rt.com')).map((src, i) => (
                       <div key={i} className="geo-source-card">

@@ -310,6 +310,14 @@
   font-weight: 600;
   color: var(--text);
 }
+.about-team-namelink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.about-team-namelink:hover {
+  color: var(--accent);
+}
 
 .about-team-title {
   font-size: 11px;

@@ -10,7 +10,11 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'SemrushBot', crawlDelay: 10 },
       { userAgent: 'MJ12bot',    disallow: '/' },
     ],
-    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-dynamic.xml`],
+    sitemap: [
+      `${SITE_URL}/sitemap.xml`,
+      `${SITE_URL}/sitemap-dynamic.xml`,
+      `${SITE_URL}/sitemap-news.xml`,
+    ],
     host: SITE_URL,
   };
 }

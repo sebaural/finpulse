@@ -7,6 +7,7 @@ import {
   breadcrumbSchema,
   canonicalUrl,
   sebastianPereiraSchema,
+  SEBASTIAN_PEREIRA,
   SEBASTIAN_PEREIRA_LINKEDIN,
 } from '@/lib/seo';
 import './about.css';
@@ -206,8 +207,14 @@ export default function AboutPage() {
                 itemType="https://schema.org/Person"
               >
                 {/* <div className="about-team-avatar" aria-hidden="true">SP</div> */}
-                <div className="about-team-name" itemProp="name">
-                  Sebastian Pereira
+                <div className="about-team-name">
+                  <Link
+                    className="about-team-namelink"
+                    href={`/authors/${SEBASTIAN_PEREIRA.slug}`}
+                    itemProp="url"
+                  >
+                    <span itemProp="name">Sebastian Pereira</span>
+                  </Link>
                 </div>
                 <div className="about-team-title" itemProp="jobTitle">
                   Founder &amp; Editor-in-Chief

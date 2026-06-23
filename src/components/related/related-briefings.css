@@ -1,0 +1,104 @@
+/* src/components/related/related-briefings.css
+   Scoped theme tokens redefined here because this band renders outside
+   .geo-root (which is where the section palette is otherwise scoped). */
+
+.related-root {
+  --bg: #0a0c0f;
+  --surface: #111418;
+  --surface2: #181c22;
+  --border: #1e2530;
+  --text: #e8eaf0;
+  --muted: #6b7385;
+  --accent: #e8b84b;
+
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 48px 24px 64px;
+  font-family: 'Fira Sans', sans-serif;
+}
+
+.related-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.related-heading {
+  font-family: 'Inconsolata', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.related-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 18px 20px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.related-card:hover {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+
+.related-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.related-badge {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+}
+
+.related-date {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.related-card-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+  text-decoration: none;
+  margin-bottom: 8px;
+  transition: color 0.15s;
+}
+
+.related-card-title:hover {
+  color: var(--accent);
+}
+
+.related-card-excerpt {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .related-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -248,8 +248,12 @@
   margin-bottom: 40px;
 }
 
-.geo-body > h4 {
+/* In-article section headers (INTRODUCTION, FUTURE PROJECTIONS, …) are now
+   semantic <h2> elements. Pin font-size to 1em so they keep the original h4
+   visual scale instead of inheriting the larger UA <h2> default. */
+.geo-body > h2 {
   color: var(--accent2);
+  font-size: 1em;
 }
 
 .geo-body p {
@@ -290,7 +294,10 @@
   line-height: 1.55;
   color: var(--text);
 }
-.geo-takeaway-item h3 {
+/* Takeaway points are content paragraphs, not headings. Re-declare the
+   heading font here since <p> doesn't get it from the global heading rule. */
+.geo-takeaway-item p {
+  font-family: 'Gideon Roman', serif;
   font-size: 16px;
   font-weight: 400;
 }
