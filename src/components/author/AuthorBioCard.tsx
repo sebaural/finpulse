@@ -55,7 +55,7 @@ function LinkedInIcon() {
 export default function AuthorBioCard({ author = SEBASTIAN_PEREIRA }: AuthorBioCardProps) {
   return (
     <div className="author-card-wrap">
-      <hr className="author-card-rule" />
+      {/* <hr className="author-card-rule" /> */}
       <aside className="author-card" aria-label={`About the author, ${author.name}`}>
         <div className="author-card-avatar">
           {author.avatarUrl ? (
