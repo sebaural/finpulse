@@ -22,12 +22,6 @@
   margin-right: auto;
 }
 
-.author-card-rule {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 8px auto 8px;
-}
-
 .author-card {
   display: flex;
   gap: 18px;
