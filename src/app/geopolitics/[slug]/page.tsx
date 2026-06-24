@@ -72,6 +72,7 @@ export default async function GeopoliticsArticlePage({ params }: Props) {
     datePublished: article.createdAt.toISOString(),
     section: 'Geopolitics',
     tags: article.tags,
+    backstory: article.keyPoints?.[0],
   });
 
   return (

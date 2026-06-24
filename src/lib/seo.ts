@@ -300,34 +300,93 @@ export function profilePageSchema(author: AuthorProfile, personNode: object) {
 // three section page-clients import.
 export const ARTICLE_SPEAKABLE_SELECTORS = ['.geo-headline', '.geo-body'];
 
-// Lightweight tag → schema.org entity classification for the `about` field.
-// Exact (case-insensitive) match only; anything unrecognised stays a `Thing`.
-const KNOWN_COUNTRIES = new Set(
-  [
-    'United States', 'USA', 'US', 'China', 'Russia', 'Ukraine', 'Israel',
-    'Iran', 'India', 'Japan', 'Germany', 'France', 'United Kingdom', 'UK',
-    'Saudi Arabia', 'North Korea', 'South Korea', 'Taiwan', 'Turkey', 'Egypt',
-    'Syria', 'Palestine', 'Italy', 'Spain', 'Canada', 'Mexico', 'Brazil',
-    'Australia', 'Pakistan', 'Venezuela', 'Poland', 'Yemen', 'Lebanon',
-  ].map((c) => c.toLowerCase()),
-);
+// Tag → schema.org entity classification for the `about` field, with Wikipedia
+// `sameAs` linking for knowledge-graph / AI-crawler disambiguation.
+//
+// Each recognised entity carries its canonical display `name`, a schema.org
+// `type`, and a Wikipedia article slug. Aliases (case-insensitive) resolve to
+// the same canonical entity, so "US", "USA" and "United States" all link to
+// https://en.wikipedia.org/wiki/United_States. Slugs are real Wikipedia article
+// targets (redirects resolve fine) — never fabricate a slug for an arbitrary
+// tag, which would 404. Anything unrecognised stays a bare `Thing` with no
+// `sameAs`.
+const WIKIPEDIA_BASE = 'https://en.wikipedia.org/wiki/';
 
-const KNOWN_ORGANIZATIONS = new Set(
-  [
-    'Federal Reserve', 'The Fed', 'ECB', 'European Central Bank', 'IMF',
-    'World Bank', 'NATO', 'OPEC', 'OPEC+', 'United Nations', 'UN',
-    'Bank of Japan', 'BOJ', 'PBOC', "People's Bank of China",
-    'Bank of England', 'SWIFT', 'European Union', 'EU', 'WTO', 'BRICS', 'G7',
-    'G20',
-  ].map((o) => o.toLowerCase()),
+interface WikiEntity {
+  aliases: string[];
+  name: string;
+  type: 'Country' | 'Organization';
+  slug: string;
+}
+
+const WIKI_ENTITIES: WikiEntity[] = [
+  // --- Countries / geographic entities (schema.org Country ⊂ Place) -------
+  { aliases: ['United States', 'USA', 'US'], name: 'United States', type: 'Country', slug: 'United_States' },
+  { aliases: ['China'], name: 'China', type: 'Country', slug: 'China' },
+  { aliases: ['Russia'], name: 'Russia', type: 'Country', slug: 'Russia' },
+  { aliases: ['Ukraine'], name: 'Ukraine', type: 'Country', slug: 'Ukraine' },
+  { aliases: ['Israel'], name: 'Israel', type: 'Country', slug: 'Israel' },
+  { aliases: ['Iran'], name: 'Iran', type: 'Country', slug: 'Iran' },
+  { aliases: ['India'], name: 'India', type: 'Country', slug: 'India' },
+  { aliases: ['Japan'], name: 'Japan', type: 'Country', slug: 'Japan' },
+  { aliases: ['Germany'], name: 'Germany', type: 'Country', slug: 'Germany' },
+  { aliases: ['France'], name: 'France', type: 'Country', slug: 'France' },
+  { aliases: ['United Kingdom', 'UK'], name: 'United Kingdom', type: 'Country', slug: 'United_Kingdom' },
+  { aliases: ['Saudi Arabia'], name: 'Saudi Arabia', type: 'Country', slug: 'Saudi_Arabia' },
+  { aliases: ['North Korea'], name: 'North Korea', type: 'Country', slug: 'North_Korea' },
+  { aliases: ['South Korea'], name: 'South Korea', type: 'Country', slug: 'South_Korea' },
+  { aliases: ['Taiwan'], name: 'Taiwan', type: 'Country', slug: 'Taiwan' },
+  { aliases: ['Turkey'], name: 'Turkey', type: 'Country', slug: 'Turkey' },
+  { aliases: ['Egypt'], name: 'Egypt', type: 'Country', slug: 'Egypt' },
+  { aliases: ['Syria'], name: 'Syria', type: 'Country', slug: 'Syria' },
+  { aliases: ['Palestine'], name: 'Palestine', type: 'Country', slug: 'State_of_Palestine' },
+  { aliases: ['Italy'], name: 'Italy', type: 'Country', slug: 'Italy' },
+  { aliases: ['Spain'], name: 'Spain', type: 'Country', slug: 'Spain' },
+  { aliases: ['Canada'], name: 'Canada', type: 'Country', slug: 'Canada' },
+  { aliases: ['Mexico'], name: 'Mexico', type: 'Country', slug: 'Mexico' },
+  { aliases: ['Brazil'], name: 'Brazil', type: 'Country', slug: 'Brazil' },
+  { aliases: ['Australia'], name: 'Australia', type: 'Country', slug: 'Australia' },
+  { aliases: ['Pakistan'], name: 'Pakistan', type: 'Country', slug: 'Pakistan' },
+  { aliases: ['Venezuela'], name: 'Venezuela', type: 'Country', slug: 'Venezuela' },
+  { aliases: ['Poland'], name: 'Poland', type: 'Country', slug: 'Poland' },
+  { aliases: ['Yemen'], name: 'Yemen', type: 'Country', slug: 'Yemen' },
+  { aliases: ['Lebanon'], name: 'Lebanon', type: 'Country', slug: 'Lebanon' },
+  // --- Organizations ------------------------------------------------------
+  { aliases: ['Federal Reserve', 'The Fed'], name: 'Federal Reserve', type: 'Organization', slug: 'Federal_Reserve' },
+  { aliases: ['ECB', 'European Central Bank'], name: 'European Central Bank', type: 'Organization', slug: 'European_Central_Bank' },
+  { aliases: ['IMF'], name: 'International Monetary Fund', type: 'Organization', slug: 'International_Monetary_Fund' },
+  { aliases: ['World Bank'], name: 'World Bank', type: 'Organization', slug: 'World_Bank' },
+  { aliases: ['NATO'], name: 'NATO', type: 'Organization', slug: 'NATO' },
+  { aliases: ['OPEC'], name: 'OPEC', type: 'Organization', slug: 'OPEC' },
+  { aliases: ['OPEC+'], name: 'OPEC+', type: 'Organization', slug: 'OPEC%2B' },
+  { aliases: ['United Nations', 'UN'], name: 'United Nations', type: 'Organization', slug: 'United_Nations' },
+  { aliases: ['Bank of Japan', 'BOJ'], name: 'Bank of Japan', type: 'Organization', slug: 'Bank_of_Japan' },
+  { aliases: ['PBOC', "People's Bank of China"], name: "People's Bank of China", type: 'Organization', slug: 'People%27s_Bank_of_China' },
+  { aliases: ['Bank of England'], name: 'Bank of England', type: 'Organization', slug: 'Bank_of_England' },
+  { aliases: ['SWIFT'], name: 'SWIFT', type: 'Organization', slug: 'SWIFT' },
+  { aliases: ['European Union', 'EU'], name: 'European Union', type: 'Organization', slug: 'European_Union' },
+  { aliases: ['WTO'], name: 'World Trade Organization', type: 'Organization', slug: 'World_Trade_Organization' },
+  { aliases: ['BRICS'], name: 'BRICS', type: 'Organization', slug: 'BRICS' },
+  { aliases: ['G7'], name: 'G7', type: 'Organization', slug: 'Group_of_Seven' },
+  { aliases: ['G20'], name: 'G20', type: 'Organization', slug: 'G20' },
+];
+
+const WIKI_ENTITY_BY_ALIAS = new Map<string, WikiEntity>(
+  WIKI_ENTITIES.flatMap((entity) =>
+    entity.aliases.map((alias) => [alias.toLowerCase(), entity] as const),
+  ),
 );
 
 function tagToEntity(tag: string) {
-  const key = tag.trim().toLowerCase();
-  let type: 'Country' | 'Organization' | 'Thing' = 'Thing';
-  if (KNOWN_COUNTRIES.has(key)) type = 'Country';
-  else if (KNOWN_ORGANIZATIONS.has(key)) type = 'Organization';
-  return { '@type': type, name: tag };
+  const entity = WIKI_ENTITY_BY_ALIAS.get(tag.trim().toLowerCase());
+  if (!entity) {
+    return { '@type': 'Thing', name: tag };
+  }
+  return {
+    '@type': entity.type,
+    name: entity.name,
+    sameAs: `${WIKIPEDIA_BASE}${entity.slug}`,
+  };
 }
 
 interface NewsArticleSchemaInput {
@@ -339,6 +398,8 @@ interface NewsArticleSchemaInput {
   dateModified?: string; // ISO 8601, defaults to datePublished
   section: string; // e.g. "Geopolitics" | "Markets" | "Technology"
   tags: string[];
+  /** 1–3 sentence "why this matters now" context. Emitted as schema.org `backstory`. */
+  backstory?: string;
 }
 
 /**
@@ -374,6 +435,7 @@ export function newsArticleSchema(input: NewsArticleSchemaInput) {
       url: SEBASTIAN_PEREIRA.profileUrl,
     },
     publisher: publisherRef(),
+    ...(input.backstory ? { backstory: input.backstory } : {}),
     keywords: input.tags.join(', '),
     about: input.tags.map(tagToEntity),
     articleSection: input.section,

@@ -73,6 +73,7 @@ export default async function MarketsArticlePage({ params }: Props) {
     datePublished: article.createdAt.toISOString(),
     section: 'Markets',
     tags: article.tags,
+    backstory: article.keyPoints?.[0],
   });
 
   return (

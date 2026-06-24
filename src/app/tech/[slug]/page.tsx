@@ -72,6 +72,7 @@ export default async function TechArticlePage({ params }: Props) {
     datePublished: article.createdAt.toISOString(),
     section: 'Technology',
     tags: article.tags,
+    backstory: article.keyPoints?.[0],
   });
 
   return (
