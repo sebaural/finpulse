@@ -186,6 +186,18 @@ export async function generateSummaryArticle(
     `${articlesText}\n\n` +
     `Based on these articles, produce a comprehensive geopolitical intelligence report.\n` +
     `Respond with PURE JSON only — no markdown fences, no explanation text, just the JSON object.\n\n` +
+    `ANALYTICAL DIRECTIVES (apply throughout the entire report):\n` +
+    `1. CONTEXTUALIZE WITH THE "STATE OF THE WORLD": Inject broader macro-context into your\n` +
+    `   synthesis — such as current oil prices, geopolitical friction points (e.g. ongoing\n` +
+    `   conflicts, the status of the Strait of Hormuz), and recent structural shifts like OPEC\n` +
+    `   exits — rather than relying solely on today's immediate headlines.\n` +
+    `2. EXPLICIT RECENCY & BASELINE VERIFICATION: Execute a rigorous validation step whenever\n` +
+    `   generating relative or historical comparisons. If a draft states a crisis is "the most\n` +
+    `   severe since X," explicitly check the timeline to ensure a more recent event (Y) has not\n` +
+    `   overtaken it.\n` +
+    `3. GROUNDED SCENARIO MODELING: For BASE CASE and WORST CASE projections, anchor scenarios\n` +
+    `   dynamically to the current price floor and active geopolitical risk factors, rather than\n` +
+    `   defaulting to generic, template-driven analogies like the 2020 crash.\n\n` +
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
     `  second-order effects, and strategic paradoxes. No filler — every sentence must add depth.\n` +
