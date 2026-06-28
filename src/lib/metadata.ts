@@ -11,6 +11,12 @@ interface GenerateArticleMetadataParams {
   publishedTime?: string; // ISO 8601
   modifiedTime?: string; // ISO 8601, defaults to publishedTime
   tags?: string[];
+  /**
+   * Absolute canonical URL override. Topic-linked articles pass their
+   * /topics/[topicSlug]/[slug] URL so crawlers consolidate to the hub home
+   * without a hard redirect. Defaults to the legacy /{section}/{slug} URL.
+   */
+  canonicalUrl?: string;
 }
 
 const SITE_URL = 'https://macrostance.com';
@@ -40,17 +46,20 @@ export function generateArticleMetadata({
   publishedTime,
   modifiedTime,
   tags,
+  canonicalUrl,
 }: GenerateArticleMetadataParams): Metadata {
   const url = `${SITE_URL}/${section}/${slug}`;
+  const canonical = canonicalUrl ?? url;
   const sectionLabel = SECTION_LABEL[section];
   const readingMinutes = estimateReadingMinutes(summary);
 
   return {
     title,
     description: summary,
+    alternates: { canonical },
     openGraph: {
       type: 'article',
-      url,
+      url: canonical,
       siteName: 'MacroStance',
       locale: 'en_US',
       title,

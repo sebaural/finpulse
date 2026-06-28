@@ -3,6 +3,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getSummaryArticles } from '@/lib/geopolitics-service';
+import { fetchArticleBySlug } from '@/lib/topics-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import GeopoliticsPageClient from '@/components/geopolitics/GeopoliticsPageClient';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
@@ -34,6 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Article not found' };
   }
 
+  // Topic-linked articles canonicalize to their /topics/ hub home.
+  const linked = await fetchArticleBySlug(article.slug, 'geopolitics');
+  const topicSlug = linked?.data.topic?.slug;
+
   return generateArticleMetadata({
     section: 'geopolitics',
     title: article.title,
@@ -41,6 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     slug: article.slug,
     publishedTime: article.createdAt.toISOString(),
     tags: article.tags,
+    canonicalUrl: topicSlug
+      ? canonicalUrl(`/topics/${topicSlug}/${article.slug}`)
+      : undefined,
   });
 }
 
@@ -54,7 +62,12 @@ export default async function GeopoliticsArticlePage({ params }: Props) {
     notFound();
   }
 
-  const articleUrl = canonicalUrl(`/geopolitics/${article.slug}`);
+  // Topic-linked articles point their canonical/JSON-LD URL at the /topics/ hub.
+  const linked = await fetchArticleBySlug(article.slug, 'geopolitics');
+  const topicSlug = linked?.data.topic?.slug;
+  const articleUrl = topicSlug
+    ? canonicalUrl(`/topics/${topicSlug}/${article.slug}`)
+    : canonicalUrl(`/geopolitics/${article.slug}`);
 
   const breadcrumbs = breadcrumbSchema([
     { name: 'Home', url: canonicalUrl('/') },

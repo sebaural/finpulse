@@ -374,6 +374,23 @@ export default function HomeClient({
               <HeroCard article={hero} onRead={speech.readById} relativeTime={relativeTimeFor(hero)} />
             )}
 
+            {topicAnalysis.length > 0 && (
+              <section className="widget">
+                <h2 className="widget-title">Deep-Dive Analysis</h2>
+                {topicAnalysis.map((item) => (
+                  <a
+                    key={item.id}
+                    className="side-story"
+                    href={`/topics/${item.topic!.slug}/${item.slug}`}
+                    style={{ display: 'block', textDecoration: 'none' }}
+                  >
+                    <div className="side-story-source">{item.topic!.name}</div>
+                    <div className="side-story-title">{item.title}</div>
+                  </a>
+                ))}
+              </section>
+            )}
+
             <div className="data-status-row" aria-live="polite">
               {showFallbackBanner ? (
                 <>
@@ -414,22 +431,6 @@ export default function HomeClient({
                 onAdd={handleAddSymbol}
                 onRemove={handleRemoveSymbol}
               />
-
-            {topicAnalysis.length > 0 && (
-              <section className="widget">
-                <h2 className="widget-title">Deep-Dive Analysis</h2>
-                {topicAnalysis.map((item) => (
-                  <a
-                    key={item.id}
-                    className="topic-analysis-link"
-                    href={`/topics/${item.topic!.slug}/${item.slug}`}
-                  >
-                    <span className="topic-analysis-tag">{item.topic!.name}</span>
-                    <span className="topic-analysis-title">{item.title}</span>
-                  </a>
-                ))}
-              </section>
-            )}
 
             <section className="widget">
               <h2 className="widget-title">Most Read</h2>
