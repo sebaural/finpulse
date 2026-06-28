@@ -82,12 +82,34 @@ function clientRelativeTime(publishedAt: string | undefined, fallback: string): 
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+// Structural shape of a topic-linked article passed from the server shell.
+// Kept local (not imported from the generated Prisma client) so this client
+// component stays decoupled from the DB layer — the server passes the richer
+// Prisma rows, which are assignable to this.
+interface TopicAnalysisItem {
+  id: string;
+  slug: string;
+  title: string;
+  topic: { slug: string; name: string } | null;
+}
+
 interface HomeClientProps {
   initialArticles: NewsArticle[];
   initialUsingFallback: boolean;
+  geoAnalysis: TopicAnalysisItem[];
+  marketAnalysis: TopicAnalysisItem[];
 }
 
-export default function HomeClient({ initialArticles, initialUsingFallback }: HomeClientProps) {
+export default function HomeClient({
+  initialArticles,
+  initialUsingFallback,
+  geoAnalysis,
+  marketAnalysis,
+}: HomeClientProps) {
+  // Editorial deep-dive grid: topic-linked briefings route to
+  // /topics/[topicSlug]/[articleSlug]. Empty (renders nothing) until the
+  // pipeline assigns topicId to articles.
+  const topicAnalysis = [...geoAnalysis, ...marketAnalysis].filter((a) => a.topic);
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
   const [loading, setLoading] = useState(false);
   const [showFallbackBanner, setShowFallbackBanner] = useState(initialUsingFallback);
@@ -392,6 +414,22 @@ export default function HomeClient({ initialArticles, initialUsingFallback }: Ho
                 onAdd={handleAddSymbol}
                 onRemove={handleRemoveSymbol}
               />
+
+            {topicAnalysis.length > 0 && (
+              <section className="widget">
+                <h2 className="widget-title">Deep-Dive Analysis</h2>
+                {topicAnalysis.map((item) => (
+                  <a
+                    key={item.id}
+                    className="topic-analysis-link"
+                    href={`/topics/${item.topic!.slug}/${item.slug}`}
+                  >
+                    <span className="topic-analysis-tag">{item.topic!.name}</span>
+                    <span className="topic-analysis-title">{item.title}</span>
+                  </a>
+                ))}
+              </section>
+            )}
 
             <section className="widget">
               <h2 className="widget-title">Most Read</h2>

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { canonicalizeSlug, parseClaudeJson, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -49,6 +49,7 @@ interface ClaudeGeopoliticsResponse {
   keyPoints: string[];
   region: string;
   tags: string[];
+  topic?: { name: string; slug: string };
 }
 
 function mapDbToSummary(row: {
@@ -170,6 +171,8 @@ export async function generateSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
+  const topicChoices = await getTopicChoices('geopolitics');
+
   const articlesText = articles
     .map(
       (a, i) =>
@@ -217,6 +220,7 @@ export async function generateSummaryArticle(
     `    markets, currency stability, trade blocs, or financial systems. Reference specific\n` +
     `    economic figures, indices, or market sectors where possible.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +
     `  "title": "engaging, professional headline capturing the gravity of today's events",\n` +
@@ -224,7 +228,8 @@ export async function generateSummaryArticle(
     `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise intelligence takeaways from the report"],\n` +
     `  "region": "primary world region (Middle East / Europe / Asia-Pacific / Global / etc.)",\n` +
-    `  "tags": ["4-6 country names, topics, or organizations"]\n` +
+    `  "tags": ["4-6 country names, topics, or organizations"],\n` +
+    `  "topic": { "name": "broad evergreen topic hub name", "slug": "hub-slug" }\n` +
     `}`;
 
   const response = await client.messages.create({
@@ -258,6 +263,7 @@ export async function generateSummaryArticle(
     region: parsed.region,
     tags: parsed.tags,
     date: today,
+    topic: parsed.topic ? { name: parsed.topic.name, slug: parsed.topic.slug } : null,
   };
 }
 
@@ -268,6 +274,10 @@ export async function saveSummaryArticle(
   const existing = await prisma.geopoliticsArticle.findFirst({
     where: { date: data.date },
   });
+
+  // Resolve the topic hub to a FK. Null on absence or failure — topicId is
+  // nullable, so a topic hiccup never blocks the article from saving.
+  const topicId = data.topic ? await upsertTopic(data.topic, 'geopolitics') : null;
 
   const payload = {
     title: data.title,
@@ -280,6 +290,7 @@ export async function saveSummaryArticle(
     region: data.region,
     tags: data.tags,
     date: data.date,
+    topicId,
   };
 
   let row: Awaited<ReturnType<typeof prisma.geopoliticsArticle.create>>;
@@ -290,7 +301,16 @@ export async function saveSummaryArticle(
       data: payload,
     });
   } else {
-    row = await prisma.geopoliticsArticle.create({ data: payload });
+    // Cross-vertical slug collision guard. Disambiguate rather than drop the
+    // article so the day's content is never silently lost.
+    let slug = payload.slug;
+    if (await isSlugTakenAcrossVerticals(slug, 'geopolitics')) {
+      console.warn(
+        `[pipeline] Cross-vertical slug collision: "${slug}" — disambiguating as "${slug}-geopolitics"`,
+      );
+      slug = `${slug}-geopolitics`;
+    }
+    row = await prisma.geopoliticsArticle.create({ data: { ...payload, slug } });
   }
 
   return mapDbToSummary(row);

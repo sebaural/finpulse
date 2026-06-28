@@ -54,7 +54,8 @@ export const ModelName = {
   GeopoliticsArticle: 'GeopoliticsArticle',
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle',
-  User: 'User'
+  User: 'User',
+  Topic: 'Topic'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -84,7 +85,8 @@ export const GeopoliticsArticleScalarFieldEnum = {
   tags: 'tags',
   date: 'date',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  topicId: 'topicId'
 } as const
 
 export type GeopoliticsArticleScalarFieldEnum = (typeof GeopoliticsArticleScalarFieldEnum)[keyof typeof GeopoliticsArticleScalarFieldEnum]
@@ -101,7 +103,8 @@ export const MarketsArticleScalarFieldEnum = {
   tags: 'tags',
   date: 'date',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  topicId: 'topicId'
 } as const
 
 export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnum)[keyof typeof MarketsArticleScalarFieldEnum]
@@ -118,7 +121,8 @@ export const TechArticleScalarFieldEnum = {
   tags: 'tags',
   date: 'date',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  topicId: 'topicId'
 } as const
 
 export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]
@@ -135,6 +139,19 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const TopicScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  parentVertical: 'parentVertical',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TopicScalarFieldEnum = (typeof TopicScalarFieldEnum)[keyof typeof TopicScalarFieldEnum]
 
 
 export const SortOrder = {

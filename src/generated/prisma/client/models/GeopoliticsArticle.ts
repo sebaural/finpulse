@@ -33,6 +33,7 @@ export type GeopoliticsArticleMinAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type GeopoliticsArticleMaxAggregateOutputType = {
@@ -44,6 +45,7 @@ export type GeopoliticsArticleMaxAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type GeopoliticsArticleCountAggregateOutputType = {
@@ -58,6 +60,7 @@ export type GeopoliticsArticleCountAggregateOutputType = {
   date: number
   createdAt: number
   updatedAt: number
+  topicId: number
   _all: number
 }
 
@@ -71,6 +74,7 @@ export type GeopoliticsArticleMinAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type GeopoliticsArticleMaxAggregateInputType = {
@@ -82,6 +86,7 @@ export type GeopoliticsArticleMaxAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type GeopoliticsArticleCountAggregateInputType = {
@@ -96,6 +101,7 @@ export type GeopoliticsArticleCountAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
   _all?: true
 }
 
@@ -183,6 +189,7 @@ export type GeopoliticsArticleGroupByOutputType = {
   date: string
   createdAt: Date
   updatedAt: Date
+  topicId: string | null
   _count: GeopoliticsArticleCountAggregateOutputType | null
   _min: GeopoliticsArticleMinAggregateOutputType | null
   _max: GeopoliticsArticleMaxAggregateOutputType | null
@@ -218,6 +225,8 @@ export type GeopoliticsArticleWhereInput = {
   date?: Prisma.StringFilter<"GeopoliticsArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"GeopoliticsArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }
 
 export type GeopoliticsArticleOrderByWithRelationInput = {
@@ -232,6 +241,8 @@ export type GeopoliticsArticleOrderByWithRelationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  topic?: Prisma.TopicOrderByWithRelationInput
 }
 
 export type GeopoliticsArticleWhereUniqueInput = Prisma.AtLeast<{
@@ -249,6 +260,8 @@ export type GeopoliticsArticleWhereUniqueInput = Prisma.AtLeast<{
   date?: Prisma.StringFilter<"GeopoliticsArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"GeopoliticsArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }, "id" | "title">
 
 export type GeopoliticsArticleOrderByWithAggregationInput = {
@@ -263,6 +276,7 @@ export type GeopoliticsArticleOrderByWithAggregationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.GeopoliticsArticleCountOrderByAggregateInput
   _max?: Prisma.GeopoliticsArticleMaxOrderByAggregateInput
   _min?: Prisma.GeopoliticsArticleMinOrderByAggregateInput
@@ -283,6 +297,7 @@ export type GeopoliticsArticleScalarWhereWithAggregatesInput = {
   date?: Prisma.StringWithAggregatesFilter<"GeopoliticsArticle"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GeopoliticsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GeopoliticsArticle"> | Date | string
+  topicId?: Prisma.StringNullableWithAggregatesFilter<"GeopoliticsArticle"> | string | null
 }
 
 export type GeopoliticsArticleCreateInput = {
@@ -297,6 +312,7 @@ export type GeopoliticsArticleCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topic?: Prisma.TopicCreateNestedOneWithoutGeopoliticsArticlesInput
 }
 
 export type GeopoliticsArticleUncheckedCreateInput = {
@@ -311,6 +327,7 @@ export type GeopoliticsArticleUncheckedCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type GeopoliticsArticleUpdateInput = {
@@ -325,6 +342,7 @@ export type GeopoliticsArticleUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topic?: Prisma.TopicUpdateOneWithoutGeopoliticsArticlesNestedInput
 }
 
 export type GeopoliticsArticleUncheckedUpdateInput = {
@@ -339,6 +357,7 @@ export type GeopoliticsArticleUncheckedUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type GeopoliticsArticleCreateManyInput = {
@@ -353,6 +372,7 @@ export type GeopoliticsArticleCreateManyInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type GeopoliticsArticleUpdateManyMutationInput = {
@@ -381,6 +401,7 @@ export type GeopoliticsArticleUncheckedUpdateManyInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type GeopoliticsArticleCountOrderByAggregateInput = {
@@ -395,6 +416,7 @@ export type GeopoliticsArticleCountOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type GeopoliticsArticleMaxOrderByAggregateInput = {
@@ -406,6 +428,7 @@ export type GeopoliticsArticleMaxOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type GeopoliticsArticleMinOrderByAggregateInput = {
@@ -417,6 +440,17 @@ export type GeopoliticsArticleMinOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+}
+
+export type GeopoliticsArticleListRelationFilter = {
+  every?: Prisma.GeopoliticsArticleWhereInput
+  some?: Prisma.GeopoliticsArticleWhereInput
+  none?: Prisma.GeopoliticsArticleWhereInput
+}
+
+export type GeopoliticsArticleOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -425,6 +459,180 @@ export type StringFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type GeopoliticsArticleCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput> | Prisma.GeopoliticsArticleCreateWithoutTopicInput[] | Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput | Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.GeopoliticsArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+}
+
+export type GeopoliticsArticleUncheckedCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput> | Prisma.GeopoliticsArticleCreateWithoutTopicInput[] | Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput | Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.GeopoliticsArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+}
+
+export type GeopoliticsArticleUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput> | Prisma.GeopoliticsArticleCreateWithoutTopicInput[] | Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput | Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.GeopoliticsArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.GeopoliticsArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.GeopoliticsArticleCreateManyTopicInputEnvelope
+  set?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  disconnect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  delete?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  connect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  update?: Prisma.GeopoliticsArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.GeopoliticsArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.GeopoliticsArticleUpdateManyWithWhereWithoutTopicInput | Prisma.GeopoliticsArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.GeopoliticsArticleScalarWhereInput | Prisma.GeopoliticsArticleScalarWhereInput[]
+}
+
+export type GeopoliticsArticleUncheckedUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput> | Prisma.GeopoliticsArticleCreateWithoutTopicInput[] | Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput | Prisma.GeopoliticsArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.GeopoliticsArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.GeopoliticsArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.GeopoliticsArticleCreateManyTopicInputEnvelope
+  set?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  disconnect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  delete?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  connect?: Prisma.GeopoliticsArticleWhereUniqueInput | Prisma.GeopoliticsArticleWhereUniqueInput[]
+  update?: Prisma.GeopoliticsArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.GeopoliticsArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.GeopoliticsArticleUpdateManyWithWhereWithoutTopicInput | Prisma.GeopoliticsArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.GeopoliticsArticleScalarWhereInput | Prisma.GeopoliticsArticleScalarWhereInput[]
+}
+
+export type GeopoliticsArticleCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GeopoliticsArticleUncheckedCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GeopoliticsArticleCreateOrConnectWithoutTopicInput = {
+  where: Prisma.GeopoliticsArticleWhereUniqueInput
+  create: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type GeopoliticsArticleCreateManyTopicInputEnvelope = {
+  data: Prisma.GeopoliticsArticleCreateManyTopicInput | Prisma.GeopoliticsArticleCreateManyTopicInput[]
+  skipDuplicates?: boolean
+}
+
+export type GeopoliticsArticleUpsertWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.GeopoliticsArticleWhereUniqueInput
+  update: Prisma.XOR<Prisma.GeopoliticsArticleUpdateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedUpdateWithoutTopicInput>
+  create: Prisma.XOR<Prisma.GeopoliticsArticleCreateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type GeopoliticsArticleUpdateWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.GeopoliticsArticleWhereUniqueInput
+  data: Prisma.XOR<Prisma.GeopoliticsArticleUpdateWithoutTopicInput, Prisma.GeopoliticsArticleUncheckedUpdateWithoutTopicInput>
+}
+
+export type GeopoliticsArticleUpdateManyWithWhereWithoutTopicInput = {
+  where: Prisma.GeopoliticsArticleScalarWhereInput
+  data: Prisma.XOR<Prisma.GeopoliticsArticleUpdateManyMutationInput, Prisma.GeopoliticsArticleUncheckedUpdateManyWithoutTopicInput>
+}
+
+export type GeopoliticsArticleScalarWhereInput = {
+  AND?: Prisma.GeopoliticsArticleScalarWhereInput | Prisma.GeopoliticsArticleScalarWhereInput[]
+  OR?: Prisma.GeopoliticsArticleScalarWhereInput[]
+  NOT?: Prisma.GeopoliticsArticleScalarWhereInput | Prisma.GeopoliticsArticleScalarWhereInput[]
+  id?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  title?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  slug?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  summary?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  keyPoints?: Prisma.JsonFilter<"GeopoliticsArticle">
+  sourceArticles?: Prisma.JsonFilter<"GeopoliticsArticle">
+  region?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  tags?: Prisma.JsonFilter<"GeopoliticsArticle">
+  date?: Prisma.StringFilter<"GeopoliticsArticle"> | string
+  createdAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"GeopoliticsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"GeopoliticsArticle"> | string | null
+}
+
+export type GeopoliticsArticleCreateManyTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type GeopoliticsArticleUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GeopoliticsArticleUncheckedUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type GeopoliticsArticleUncheckedUpdateManyWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -441,6 +649,8 @@ export type GeopoliticsArticleSelect<ExtArgs extends runtime.Types.Extensions.In
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["geopoliticsArticle"]>
 
 export type GeopoliticsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -455,6 +665,8 @@ export type GeopoliticsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["geopoliticsArticle"]>
 
 export type GeopoliticsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -469,6 +681,8 @@ export type GeopoliticsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["geopoliticsArticle"]>
 
 export type GeopoliticsArticleSelectScalar = {
@@ -483,13 +697,25 @@ export type GeopoliticsArticleSelectScalar = {
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
 }
 
-export type GeopoliticsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["geopoliticsArticle"]>
+export type GeopoliticsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt" | "topicId", ExtArgs["result"]["geopoliticsArticle"]>
+export type GeopoliticsArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
+}
+export type GeopoliticsArticleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
+}
+export type GeopoliticsArticleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.GeopoliticsArticle$topicArgs<ExtArgs>
+}
 
 export type $GeopoliticsArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "GeopoliticsArticle"
-  objects: {}
+  objects: {
+    topic: Prisma.$TopicPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
@@ -502,6 +728,7 @@ export type $GeopoliticsArticlePayload<ExtArgs extends runtime.Types.Extensions.
     date: string
     createdAt: Date
     updatedAt: Date
+    topicId: string | null
   }, ExtArgs["result"]["geopoliticsArticle"]>
   composites: {}
 }
@@ -896,6 +1123,7 @@ readonly fields: GeopoliticsArticleFieldRefs;
  */
 export interface Prisma__GeopoliticsArticleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  topic<T extends Prisma.GeopoliticsArticle$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GeopoliticsArticle$topicArgs<ExtArgs>>): Prisma.Prisma__TopicClient<runtime.Types.Result.GetResult<Prisma.$TopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -936,6 +1164,7 @@ export interface GeopoliticsArticleFieldRefs {
   readonly date: Prisma.FieldRef<"GeopoliticsArticle", 'String'>
   readonly createdAt: Prisma.FieldRef<"GeopoliticsArticle", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"GeopoliticsArticle", 'DateTime'>
+  readonly topicId: Prisma.FieldRef<"GeopoliticsArticle", 'String'>
 }
     
 
@@ -952,6 +1181,10 @@ export type GeopoliticsArticleFindUniqueArgs<ExtArgs extends runtime.Types.Exten
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
   /**
    * Filter, which GeopoliticsArticle to fetch.
    */
@@ -971,6 +1204,10 @@ export type GeopoliticsArticleFindUniqueOrThrowArgs<ExtArgs extends runtime.Type
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
+  /**
    * Filter, which GeopoliticsArticle to fetch.
    */
   where: Prisma.GeopoliticsArticleWhereUniqueInput
@@ -988,6 +1225,10 @@ export type GeopoliticsArticleFindFirstArgs<ExtArgs extends runtime.Types.Extens
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
   /**
    * Filter, which GeopoliticsArticle to fetch.
    */
@@ -1037,6 +1278,10 @@ export type GeopoliticsArticleFindFirstOrThrowArgs<ExtArgs extends runtime.Types
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
+  /**
    * Filter, which GeopoliticsArticle to fetch.
    */
   where?: Prisma.GeopoliticsArticleWhereInput
@@ -1084,6 +1329,10 @@ export type GeopoliticsArticleFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
   /**
    * Filter, which GeopoliticsArticles to fetch.
    */
@@ -1133,6 +1382,10 @@ export type GeopoliticsArticleCreateArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
+  /**
    * The data needed to create a GeopoliticsArticle.
    */
   data: Prisma.XOR<Prisma.GeopoliticsArticleCreateInput, Prisma.GeopoliticsArticleUncheckedCreateInput>
@@ -1166,6 +1419,10 @@ export type GeopoliticsArticleCreateManyAndReturnArgs<ExtArgs extends runtime.Ty
    */
   data: Prisma.GeopoliticsArticleCreateManyInput | Prisma.GeopoliticsArticleCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1180,6 +1437,10 @@ export type GeopoliticsArticleUpdateArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
   /**
    * The data needed to update a GeopoliticsArticle.
    */
@@ -1232,6 +1493,10 @@ export type GeopoliticsArticleUpdateManyAndReturnArgs<ExtArgs extends runtime.Ty
    * Limit how many GeopoliticsArticles to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1246,6 +1511,10 @@ export type GeopoliticsArticleUpsertArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
   /**
    * The filter to search for the GeopoliticsArticle to update in case it exists.
    */
@@ -1273,6 +1542,10 @@ export type GeopoliticsArticleDeleteArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
+  /**
    * Filter which GeopoliticsArticle to delete.
    */
   where: Prisma.GeopoliticsArticleWhereUniqueInput
@@ -1293,6 +1566,25 @@ export type GeopoliticsArticleDeleteManyArgs<ExtArgs extends runtime.Types.Exten
 }
 
 /**
+ * GeopoliticsArticle.topic
+ */
+export type GeopoliticsArticle$topicArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Topic
+   */
+  select?: Prisma.TopicSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Topic
+   */
+  omit?: Prisma.TopicOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TopicInclude<ExtArgs> | null
+  where?: Prisma.TopicWhereInput
+}
+
+/**
  * GeopoliticsArticle without action
  */
 export type GeopoliticsArticleDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1304,4 +1596,8 @@ export type GeopoliticsArticleDefaultArgs<ExtArgs extends runtime.Types.Extensio
    * Omit specific fields from the GeopoliticsArticle
    */
   omit?: Prisma.GeopoliticsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GeopoliticsArticleInclude<ExtArgs> | null
 }

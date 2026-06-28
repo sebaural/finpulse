@@ -33,6 +33,7 @@ export type MarketsArticleMinAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type MarketsArticleMaxAggregateOutputType = {
@@ -44,6 +45,7 @@ export type MarketsArticleMaxAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type MarketsArticleCountAggregateOutputType = {
@@ -58,6 +60,7 @@ export type MarketsArticleCountAggregateOutputType = {
   date: number
   createdAt: number
   updatedAt: number
+  topicId: number
   _all: number
 }
 
@@ -71,6 +74,7 @@ export type MarketsArticleMinAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type MarketsArticleMaxAggregateInputType = {
@@ -82,6 +86,7 @@ export type MarketsArticleMaxAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type MarketsArticleCountAggregateInputType = {
@@ -96,6 +101,7 @@ export type MarketsArticleCountAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
   _all?: true
 }
 
@@ -183,6 +189,7 @@ export type MarketsArticleGroupByOutputType = {
   date: string
   createdAt: Date
   updatedAt: Date
+  topicId: string | null
   _count: MarketsArticleCountAggregateOutputType | null
   _min: MarketsArticleMinAggregateOutputType | null
   _max: MarketsArticleMaxAggregateOutputType | null
@@ -218,6 +225,8 @@ export type MarketsArticleWhereInput = {
   date?: Prisma.StringFilter<"MarketsArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"MarketsArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }
 
 export type MarketsArticleOrderByWithRelationInput = {
@@ -232,6 +241,8 @@ export type MarketsArticleOrderByWithRelationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  topic?: Prisma.TopicOrderByWithRelationInput
 }
 
 export type MarketsArticleWhereUniqueInput = Prisma.AtLeast<{
@@ -249,6 +260,8 @@ export type MarketsArticleWhereUniqueInput = Prisma.AtLeast<{
   date?: Prisma.StringFilter<"MarketsArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"MarketsArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }, "id" | "title">
 
 export type MarketsArticleOrderByWithAggregationInput = {
@@ -263,6 +276,7 @@ export type MarketsArticleOrderByWithAggregationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.MarketsArticleCountOrderByAggregateInput
   _max?: Prisma.MarketsArticleMaxOrderByAggregateInput
   _min?: Prisma.MarketsArticleMinOrderByAggregateInput
@@ -283,6 +297,7 @@ export type MarketsArticleScalarWhereWithAggregatesInput = {
   date?: Prisma.StringWithAggregatesFilter<"MarketsArticle"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MarketsArticle"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MarketsArticle"> | Date | string
+  topicId?: Prisma.StringNullableWithAggregatesFilter<"MarketsArticle"> | string | null
 }
 
 export type MarketsArticleCreateInput = {
@@ -297,6 +312,7 @@ export type MarketsArticleCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topic?: Prisma.TopicCreateNestedOneWithoutMarketsArticlesInput
 }
 
 export type MarketsArticleUncheckedCreateInput = {
@@ -311,6 +327,7 @@ export type MarketsArticleUncheckedCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type MarketsArticleUpdateInput = {
@@ -325,6 +342,7 @@ export type MarketsArticleUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topic?: Prisma.TopicUpdateOneWithoutMarketsArticlesNestedInput
 }
 
 export type MarketsArticleUncheckedUpdateInput = {
@@ -339,6 +357,7 @@ export type MarketsArticleUncheckedUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MarketsArticleCreateManyInput = {
@@ -353,6 +372,7 @@ export type MarketsArticleCreateManyInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type MarketsArticleUpdateManyMutationInput = {
@@ -381,6 +401,7 @@ export type MarketsArticleUncheckedUpdateManyInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MarketsArticleCountOrderByAggregateInput = {
@@ -395,6 +416,7 @@ export type MarketsArticleCountOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type MarketsArticleMaxOrderByAggregateInput = {
@@ -406,6 +428,7 @@ export type MarketsArticleMaxOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type MarketsArticleMinOrderByAggregateInput = {
@@ -417,6 +440,187 @@ export type MarketsArticleMinOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+}
+
+export type MarketsArticleListRelationFilter = {
+  every?: Prisma.MarketsArticleWhereInput
+  some?: Prisma.MarketsArticleWhereInput
+  none?: Prisma.MarketsArticleWhereInput
+}
+
+export type MarketsArticleOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type MarketsArticleCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput> | Prisma.MarketsArticleCreateWithoutTopicInput[] | Prisma.MarketsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.MarketsArticleCreateOrConnectWithoutTopicInput | Prisma.MarketsArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.MarketsArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+}
+
+export type MarketsArticleUncheckedCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput> | Prisma.MarketsArticleCreateWithoutTopicInput[] | Prisma.MarketsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.MarketsArticleCreateOrConnectWithoutTopicInput | Prisma.MarketsArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.MarketsArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+}
+
+export type MarketsArticleUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput> | Prisma.MarketsArticleCreateWithoutTopicInput[] | Prisma.MarketsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.MarketsArticleCreateOrConnectWithoutTopicInput | Prisma.MarketsArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.MarketsArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.MarketsArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.MarketsArticleCreateManyTopicInputEnvelope
+  set?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  disconnect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  delete?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  connect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  update?: Prisma.MarketsArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.MarketsArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.MarketsArticleUpdateManyWithWhereWithoutTopicInput | Prisma.MarketsArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.MarketsArticleScalarWhereInput | Prisma.MarketsArticleScalarWhereInput[]
+}
+
+export type MarketsArticleUncheckedUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput> | Prisma.MarketsArticleCreateWithoutTopicInput[] | Prisma.MarketsArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.MarketsArticleCreateOrConnectWithoutTopicInput | Prisma.MarketsArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.MarketsArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.MarketsArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.MarketsArticleCreateManyTopicInputEnvelope
+  set?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  disconnect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  delete?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  connect?: Prisma.MarketsArticleWhereUniqueInput | Prisma.MarketsArticleWhereUniqueInput[]
+  update?: Prisma.MarketsArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.MarketsArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.MarketsArticleUpdateManyWithWhereWithoutTopicInput | Prisma.MarketsArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.MarketsArticleScalarWhereInput | Prisma.MarketsArticleScalarWhereInput[]
+}
+
+export type MarketsArticleCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MarketsArticleUncheckedCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MarketsArticleCreateOrConnectWithoutTopicInput = {
+  where: Prisma.MarketsArticleWhereUniqueInput
+  create: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type MarketsArticleCreateManyTopicInputEnvelope = {
+  data: Prisma.MarketsArticleCreateManyTopicInput | Prisma.MarketsArticleCreateManyTopicInput[]
+  skipDuplicates?: boolean
+}
+
+export type MarketsArticleUpsertWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.MarketsArticleWhereUniqueInput
+  update: Prisma.XOR<Prisma.MarketsArticleUpdateWithoutTopicInput, Prisma.MarketsArticleUncheckedUpdateWithoutTopicInput>
+  create: Prisma.XOR<Prisma.MarketsArticleCreateWithoutTopicInput, Prisma.MarketsArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type MarketsArticleUpdateWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.MarketsArticleWhereUniqueInput
+  data: Prisma.XOR<Prisma.MarketsArticleUpdateWithoutTopicInput, Prisma.MarketsArticleUncheckedUpdateWithoutTopicInput>
+}
+
+export type MarketsArticleUpdateManyWithWhereWithoutTopicInput = {
+  where: Prisma.MarketsArticleScalarWhereInput
+  data: Prisma.XOR<Prisma.MarketsArticleUpdateManyMutationInput, Prisma.MarketsArticleUncheckedUpdateManyWithoutTopicInput>
+}
+
+export type MarketsArticleScalarWhereInput = {
+  AND?: Prisma.MarketsArticleScalarWhereInput | Prisma.MarketsArticleScalarWhereInput[]
+  OR?: Prisma.MarketsArticleScalarWhereInput[]
+  NOT?: Prisma.MarketsArticleScalarWhereInput | Prisma.MarketsArticleScalarWhereInput[]
+  id?: Prisma.StringFilter<"MarketsArticle"> | string
+  title?: Prisma.StringFilter<"MarketsArticle"> | string
+  slug?: Prisma.StringFilter<"MarketsArticle"> | string
+  summary?: Prisma.StringFilter<"MarketsArticle"> | string
+  keyPoints?: Prisma.JsonFilter<"MarketsArticle">
+  sourceArticles?: Prisma.JsonFilter<"MarketsArticle">
+  region?: Prisma.StringFilter<"MarketsArticle"> | string
+  tags?: Prisma.JsonFilter<"MarketsArticle">
+  date?: Prisma.StringFilter<"MarketsArticle"> | string
+  createdAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"MarketsArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"MarketsArticle"> | string | null
+}
+
+export type MarketsArticleCreateManyTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MarketsArticleUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MarketsArticleUncheckedUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MarketsArticleUncheckedUpdateManyWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -433,6 +637,8 @@ export type MarketsArticleSelect<ExtArgs extends runtime.Types.Extensions.Intern
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["marketsArticle"]>
 
 export type MarketsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -447,6 +653,8 @@ export type MarketsArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["marketsArticle"]>
 
 export type MarketsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -461,6 +669,8 @@ export type MarketsArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["marketsArticle"]>
 
 export type MarketsArticleSelectScalar = {
@@ -475,13 +685,25 @@ export type MarketsArticleSelectScalar = {
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
 }
 
-export type MarketsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["marketsArticle"]>
+export type MarketsArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt" | "topicId", ExtArgs["result"]["marketsArticle"]>
+export type MarketsArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
+}
+export type MarketsArticleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
+}
+export type MarketsArticleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.MarketsArticle$topicArgs<ExtArgs>
+}
 
 export type $MarketsArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MarketsArticle"
-  objects: {}
+  objects: {
+    topic: Prisma.$TopicPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
@@ -494,6 +716,7 @@ export type $MarketsArticlePayload<ExtArgs extends runtime.Types.Extensions.Inte
     date: string
     createdAt: Date
     updatedAt: Date
+    topicId: string | null
   }, ExtArgs["result"]["marketsArticle"]>
   composites: {}
 }
@@ -888,6 +1111,7 @@ readonly fields: MarketsArticleFieldRefs;
  */
 export interface Prisma__MarketsArticleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  topic<T extends Prisma.MarketsArticle$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MarketsArticle$topicArgs<ExtArgs>>): Prisma.Prisma__TopicClient<runtime.Types.Result.GetResult<Prisma.$TopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -928,6 +1152,7 @@ export interface MarketsArticleFieldRefs {
   readonly date: Prisma.FieldRef<"MarketsArticle", 'String'>
   readonly createdAt: Prisma.FieldRef<"MarketsArticle", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"MarketsArticle", 'DateTime'>
+  readonly topicId: Prisma.FieldRef<"MarketsArticle", 'String'>
 }
     
 
@@ -944,6 +1169,10 @@ export type MarketsArticleFindUniqueArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
   /**
    * Filter, which MarketsArticle to fetch.
    */
@@ -963,6 +1192,10 @@ export type MarketsArticleFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ex
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
+  /**
    * Filter, which MarketsArticle to fetch.
    */
   where: Prisma.MarketsArticleWhereUniqueInput
@@ -980,6 +1213,10 @@ export type MarketsArticleFindFirstArgs<ExtArgs extends runtime.Types.Extensions
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
   /**
    * Filter, which MarketsArticle to fetch.
    */
@@ -1029,6 +1266,10 @@ export type MarketsArticleFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
+  /**
    * Filter, which MarketsArticle to fetch.
    */
   where?: Prisma.MarketsArticleWhereInput
@@ -1076,6 +1317,10 @@ export type MarketsArticleFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
   /**
    * Filter, which MarketsArticles to fetch.
    */
@@ -1125,6 +1370,10 @@ export type MarketsArticleCreateArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
+  /**
    * The data needed to create a MarketsArticle.
    */
   data: Prisma.XOR<Prisma.MarketsArticleCreateInput, Prisma.MarketsArticleUncheckedCreateInput>
@@ -1158,6 +1407,10 @@ export type MarketsArticleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.
    */
   data: Prisma.MarketsArticleCreateManyInput | Prisma.MarketsArticleCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1172,6 +1425,10 @@ export type MarketsArticleUpdateArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
   /**
    * The data needed to update a MarketsArticle.
    */
@@ -1224,6 +1481,10 @@ export type MarketsArticleUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.
    * Limit how many MarketsArticles to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1238,6 +1499,10 @@ export type MarketsArticleUpsertArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
   /**
    * The filter to search for the MarketsArticle to update in case it exists.
    */
@@ -1265,6 +1530,10 @@ export type MarketsArticleDeleteArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
+  /**
    * Filter which MarketsArticle to delete.
    */
   where: Prisma.MarketsArticleWhereUniqueInput
@@ -1285,6 +1554,25 @@ export type MarketsArticleDeleteManyArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
+ * MarketsArticle.topic
+ */
+export type MarketsArticle$topicArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Topic
+   */
+  select?: Prisma.TopicSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Topic
+   */
+  omit?: Prisma.TopicOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TopicInclude<ExtArgs> | null
+  where?: Prisma.TopicWhereInput
+}
+
+/**
  * MarketsArticle without action
  */
 export type MarketsArticleDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1296,4 +1584,8 @@ export type MarketsArticleDefaultArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the MarketsArticle
    */
   omit?: Prisma.MarketsArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MarketsArticleInclude<ExtArgs> | null
 }

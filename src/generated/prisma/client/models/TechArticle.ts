@@ -33,6 +33,7 @@ export type TechArticleMinAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type TechArticleMaxAggregateOutputType = {
@@ -44,6 +45,7 @@ export type TechArticleMaxAggregateOutputType = {
   date: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  topicId: string | null
 }
 
 export type TechArticleCountAggregateOutputType = {
@@ -58,6 +60,7 @@ export type TechArticleCountAggregateOutputType = {
   date: number
   createdAt: number
   updatedAt: number
+  topicId: number
   _all: number
 }
 
@@ -71,6 +74,7 @@ export type TechArticleMinAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type TechArticleMaxAggregateInputType = {
@@ -82,6 +86,7 @@ export type TechArticleMaxAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
 }
 
 export type TechArticleCountAggregateInputType = {
@@ -96,6 +101,7 @@ export type TechArticleCountAggregateInputType = {
   date?: true
   createdAt?: true
   updatedAt?: true
+  topicId?: true
   _all?: true
 }
 
@@ -183,6 +189,7 @@ export type TechArticleGroupByOutputType = {
   date: string
   createdAt: Date
   updatedAt: Date
+  topicId: string | null
   _count: TechArticleCountAggregateOutputType | null
   _min: TechArticleMinAggregateOutputType | null
   _max: TechArticleMaxAggregateOutputType | null
@@ -218,6 +225,8 @@ export type TechArticleWhereInput = {
   date?: Prisma.StringFilter<"TechArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }
 
 export type TechArticleOrderByWithRelationInput = {
@@ -232,6 +241,8 @@ export type TechArticleOrderByWithRelationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  topic?: Prisma.TopicOrderByWithRelationInput
 }
 
 export type TechArticleWhereUniqueInput = Prisma.AtLeast<{
@@ -249,6 +260,8 @@ export type TechArticleWhereUniqueInput = Prisma.AtLeast<{
   date?: Prisma.StringFilter<"TechArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }, "id" | "title">
 
 export type TechArticleOrderByWithAggregationInput = {
@@ -263,6 +276,7 @@ export type TechArticleOrderByWithAggregationInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TechArticleCountOrderByAggregateInput
   _max?: Prisma.TechArticleMaxOrderByAggregateInput
   _min?: Prisma.TechArticleMinOrderByAggregateInput
@@ -283,6 +297,7 @@ export type TechArticleScalarWhereWithAggregatesInput = {
   date?: Prisma.StringWithAggregatesFilter<"TechArticle"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TechArticle"> | Date | string
+  topicId?: Prisma.StringNullableWithAggregatesFilter<"TechArticle"> | string | null
 }
 
 export type TechArticleCreateInput = {
@@ -297,6 +312,7 @@ export type TechArticleCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topic?: Prisma.TopicCreateNestedOneWithoutTechArticlesInput
 }
 
 export type TechArticleUncheckedCreateInput = {
@@ -311,6 +327,7 @@ export type TechArticleUncheckedCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type TechArticleUpdateInput = {
@@ -325,6 +342,7 @@ export type TechArticleUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topic?: Prisma.TopicUpdateOneWithoutTechArticlesNestedInput
 }
 
 export type TechArticleUncheckedUpdateInput = {
@@ -339,6 +357,7 @@ export type TechArticleUncheckedUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TechArticleCreateManyInput = {
@@ -353,6 +372,7 @@ export type TechArticleCreateManyInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicId?: string | null
 }
 
 export type TechArticleUpdateManyMutationInput = {
@@ -381,6 +401,7 @@ export type TechArticleUncheckedUpdateManyInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TechArticleCountOrderByAggregateInput = {
@@ -395,6 +416,7 @@ export type TechArticleCountOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type TechArticleMaxOrderByAggregateInput = {
@@ -406,6 +428,7 @@ export type TechArticleMaxOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
 }
 
 export type TechArticleMinOrderByAggregateInput = {
@@ -417,6 +440,187 @@ export type TechArticleMinOrderByAggregateInput = {
   date?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+}
+
+export type TechArticleListRelationFilter = {
+  every?: Prisma.TechArticleWhereInput
+  some?: Prisma.TechArticleWhereInput
+  none?: Prisma.TechArticleWhereInput
+}
+
+export type TechArticleOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type TechArticleCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput> | Prisma.TechArticleCreateWithoutTopicInput[] | Prisma.TechArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.TechArticleCreateOrConnectWithoutTopicInput | Prisma.TechArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.TechArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+}
+
+export type TechArticleUncheckedCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput> | Prisma.TechArticleCreateWithoutTopicInput[] | Prisma.TechArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.TechArticleCreateOrConnectWithoutTopicInput | Prisma.TechArticleCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.TechArticleCreateManyTopicInputEnvelope
+  connect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+}
+
+export type TechArticleUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput> | Prisma.TechArticleCreateWithoutTopicInput[] | Prisma.TechArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.TechArticleCreateOrConnectWithoutTopicInput | Prisma.TechArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.TechArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.TechArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.TechArticleCreateManyTopicInputEnvelope
+  set?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  disconnect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  delete?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  connect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  update?: Prisma.TechArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.TechArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.TechArticleUpdateManyWithWhereWithoutTopicInput | Prisma.TechArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.TechArticleScalarWhereInput | Prisma.TechArticleScalarWhereInput[]
+}
+
+export type TechArticleUncheckedUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput> | Prisma.TechArticleCreateWithoutTopicInput[] | Prisma.TechArticleUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.TechArticleCreateOrConnectWithoutTopicInput | Prisma.TechArticleCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.TechArticleUpsertWithWhereUniqueWithoutTopicInput | Prisma.TechArticleUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.TechArticleCreateManyTopicInputEnvelope
+  set?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  disconnect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  delete?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  connect?: Prisma.TechArticleWhereUniqueInput | Prisma.TechArticleWhereUniqueInput[]
+  update?: Prisma.TechArticleUpdateWithWhereUniqueWithoutTopicInput | Prisma.TechArticleUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.TechArticleUpdateManyWithWhereWithoutTopicInput | Prisma.TechArticleUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.TechArticleScalarWhereInput | Prisma.TechArticleScalarWhereInput[]
+}
+
+export type TechArticleCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TechArticleUncheckedCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TechArticleCreateOrConnectWithoutTopicInput = {
+  where: Prisma.TechArticleWhereUniqueInput
+  create: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type TechArticleCreateManyTopicInputEnvelope = {
+  data: Prisma.TechArticleCreateManyTopicInput | Prisma.TechArticleCreateManyTopicInput[]
+  skipDuplicates?: boolean
+}
+
+export type TechArticleUpsertWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.TechArticleWhereUniqueInput
+  update: Prisma.XOR<Prisma.TechArticleUpdateWithoutTopicInput, Prisma.TechArticleUncheckedUpdateWithoutTopicInput>
+  create: Prisma.XOR<Prisma.TechArticleCreateWithoutTopicInput, Prisma.TechArticleUncheckedCreateWithoutTopicInput>
+}
+
+export type TechArticleUpdateWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.TechArticleWhereUniqueInput
+  data: Prisma.XOR<Prisma.TechArticleUpdateWithoutTopicInput, Prisma.TechArticleUncheckedUpdateWithoutTopicInput>
+}
+
+export type TechArticleUpdateManyWithWhereWithoutTopicInput = {
+  where: Prisma.TechArticleScalarWhereInput
+  data: Prisma.XOR<Prisma.TechArticleUpdateManyMutationInput, Prisma.TechArticleUncheckedUpdateManyWithoutTopicInput>
+}
+
+export type TechArticleScalarWhereInput = {
+  AND?: Prisma.TechArticleScalarWhereInput | Prisma.TechArticleScalarWhereInput[]
+  OR?: Prisma.TechArticleScalarWhereInput[]
+  NOT?: Prisma.TechArticleScalarWhereInput | Prisma.TechArticleScalarWhereInput[]
+  id?: Prisma.StringFilter<"TechArticle"> | string
+  title?: Prisma.StringFilter<"TechArticle"> | string
+  slug?: Prisma.StringFilter<"TechArticle"> | string
+  summary?: Prisma.StringFilter<"TechArticle"> | string
+  keyPoints?: Prisma.JsonFilter<"TechArticle">
+  sourceArticles?: Prisma.JsonFilter<"TechArticle">
+  region?: Prisma.StringFilter<"TechArticle"> | string
+  tags?: Prisma.JsonFilter<"TechArticle">
+  date?: Prisma.StringFilter<"TechArticle"> | string
+  createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
+  topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+}
+
+export type TechArticleCreateManyTopicInput = {
+  id?: string
+  title: string
+  slug?: string
+  summary: string
+  keyPoints: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region: string
+  tags: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type TechArticleUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TechArticleUncheckedUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type TechArticleUncheckedUpdateManyWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  keyPoints?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sourceArticles?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  date?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -433,6 +637,8 @@ export type TechArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
 export type TechArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -447,6 +653,8 @@ export type TechArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
 export type TechArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -461,6 +669,8 @@ export type TechArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
 export type TechArticleSelectScalar = {
@@ -475,13 +685,25 @@ export type TechArticleSelectScalar = {
   date?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  topicId?: boolean
 }
 
-export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt", ExtArgs["result"]["techArticle"]>
+export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt" | "topicId", ExtArgs["result"]["techArticle"]>
+export type TechArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
+}
+export type TechArticleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
+}
+export type TechArticleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
+}
 
 export type $TechArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TechArticle"
-  objects: {}
+  objects: {
+    topic: Prisma.$TopicPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     title: string
@@ -494,6 +716,7 @@ export type $TechArticlePayload<ExtArgs extends runtime.Types.Extensions.Interna
     date: string
     createdAt: Date
     updatedAt: Date
+    topicId: string | null
   }, ExtArgs["result"]["techArticle"]>
   composites: {}
 }
@@ -888,6 +1111,7 @@ readonly fields: TechArticleFieldRefs;
  */
 export interface Prisma__TechArticleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  topic<T extends Prisma.TechArticle$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TechArticle$topicArgs<ExtArgs>>): Prisma.Prisma__TopicClient<runtime.Types.Result.GetResult<Prisma.$TopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -928,6 +1152,7 @@ export interface TechArticleFieldRefs {
   readonly date: Prisma.FieldRef<"TechArticle", 'String'>
   readonly createdAt: Prisma.FieldRef<"TechArticle", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TechArticle", 'DateTime'>
+  readonly topicId: Prisma.FieldRef<"TechArticle", 'String'>
 }
     
 
@@ -944,6 +1169,10 @@ export type TechArticleFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
   /**
    * Filter, which TechArticle to fetch.
    */
@@ -963,6 +1192,10 @@ export type TechArticleFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
+  /**
    * Filter, which TechArticle to fetch.
    */
   where: Prisma.TechArticleWhereUniqueInput
@@ -980,6 +1213,10 @@ export type TechArticleFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
   /**
    * Filter, which TechArticle to fetch.
    */
@@ -1029,6 +1266,10 @@ export type TechArticleFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
+  /**
    * Filter, which TechArticle to fetch.
    */
   where?: Prisma.TechArticleWhereInput
@@ -1076,6 +1317,10 @@ export type TechArticleFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
   /**
    * Filter, which TechArticles to fetch.
    */
@@ -1125,6 +1370,10 @@ export type TechArticleCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
+  /**
    * The data needed to create a TechArticle.
    */
   data: Prisma.XOR<Prisma.TechArticleCreateInput, Prisma.TechArticleUncheckedCreateInput>
@@ -1158,6 +1407,10 @@ export type TechArticleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.TechArticleCreateManyInput | Prisma.TechArticleCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1172,6 +1425,10 @@ export type TechArticleUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
   /**
    * The data needed to update a TechArticle.
    */
@@ -1224,6 +1481,10 @@ export type TechArticleUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many TechArticles to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1238,6 +1499,10 @@ export type TechArticleUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
   /**
    * The filter to search for the TechArticle to update in case it exists.
    */
@@ -1265,6 +1530,10 @@ export type TechArticleDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
+  /**
    * Filter which TechArticle to delete.
    */
   where: Prisma.TechArticleWhereUniqueInput
@@ -1285,6 +1554,25 @@ export type TechArticleDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
+ * TechArticle.topic
+ */
+export type TechArticle$topicArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Topic
+   */
+  select?: Prisma.TopicSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Topic
+   */
+  omit?: Prisma.TopicOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TopicInclude<ExtArgs> | null
+  where?: Prisma.TopicWhereInput
+}
+
+/**
  * TechArticle without action
  */
 export type TechArticleDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1296,4 +1584,8 @@ export type TechArticleDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the TechArticle
    */
   omit?: Prisma.TechArticleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TechArticleInclude<ExtArgs> | null
 }

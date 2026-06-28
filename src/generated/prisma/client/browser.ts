@@ -37,3 +37,8 @@ export type TechArticle = Prisma.TechArticleModel
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model Topic
+ * 
+ */
+export type Topic = Prisma.TopicModel

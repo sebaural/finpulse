@@ -25,22 +25,50 @@ function buildEntry(
   );
 }
 
+type TopicArticleRow = { slug: string; updatedAt: Date; topic: { slug: string } | null };
+
+function buildTopicEntry(row: TopicArticleRow): string {
+  if (!row.topic || !row.slug) return '';
+  const loc = `${SITE_URL}/topics/${row.topic.slug}/${row.slug}`;
+  const mod = row.updatedAt.toISOString();
+  return (
+    `  <url>\n` +
+    `    <loc>${loc}</loc>\n` +
+    `    <lastmod>${mod}</lastmod>\n` +
+    `    <changefreq>weekly</changefreq>\n` +
+    `    <priority>0.8</priority>\n` +
+    `  </url>\n`
+  );
+}
+
 export async function GET() {
   try {
     const prisma = getPrisma();
     const select = { slug: true, title: true, updatedAt: true } as const;
 
-    const [geopolitics, markets, tech] = await Promise.all([
-      prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
-      prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
-      prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
-    ]);
+    const topicSelect = {
+      slug: true,
+      updatedAt: true,
+      topic: { select: { slug: true } },
+    } as const;
+    const topicWhere = { NOT: { topicId: null } } as const;
+
+    const [geopolitics, markets, tech, geoTopics, marketTopics, techTopics] =
+      await Promise.all([
+        prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.geopoliticsArticle.findMany({ where: topicWhere, select: topicSelect }),
+        prisma.marketsArticle.findMany({ where: topicWhere, select: topicSelect }),
+        prisma.techArticle.findMany({ where: topicWhere, select: topicSelect }),
+      ]);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
     xml += geopolitics.map((r) => buildEntry('geopolitics', r)).join('');
     xml += markets.map((r) => buildEntry('markets', r)).join('');
     xml += tech.map((r) => buildEntry('tech', r)).join('');
+    xml += [...geoTopics, ...marketTopics, ...techTopics].map(buildTopicEntry).join('');
     xml += `</urlset>`;
 
     return new NextResponse(xml, {

@@ -8,6 +8,11 @@ export interface SourceArticle {
   description?: string;
 }
 
+export interface TopicRef {
+  name: string;
+  slug: string;
+}
+
 export interface SummaryArticle {
   id: string;
   title: string;
@@ -20,6 +25,8 @@ export interface SummaryArticle {
   createdAt: Date;
   /** YYYY-MM-DD */
   date: string;
+  /** Broad evergreen topic hub this briefing is assigned to, if any. */
+  topic?: TopicRef | null;
 }
 
 export interface DailyTechPage {

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/tech';
-import { canonicalizeSlug, parseClaudeJson, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -37,6 +37,7 @@ interface ClaudeTechResponse {
   keyPoints: string[];
   region: string;
   tags: string[];
+  topic?: { name: string; slug: string };
 }
 
 function mapDbToSummary(row: {
@@ -158,6 +159,8 @@ export async function generateTechSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
+  const topicChoices = await getTopicChoices('tech');
+
   const articlesText = articles
     .map(
       (a, i) =>
@@ -192,6 +195,7 @@ export async function generateTechSummaryArticle(
     `    semiconductor supply chains, equity multiples, and incumbent moats. Reference\n` +
     `    specific companies, models, chip families, or product lines where possible.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +
     `  "title": "engaging, professional headline capturing today's tech signal",\n` +
@@ -199,7 +203,8 @@ export async function generateTechSummaryArticle(
     `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise tech takeaways from the report"],\n` +
     `  "region": "primary tech region (US / Europe / Asia-Pacific / Global / China / etc.)",\n` +
-    `  "tags": ["4-6 companies, technologies, or product categories"]\n` +
+    `  "tags": ["4-6 companies, technologies, or product categories"],\n` +
+    `  "topic": { "name": "broad evergreen topic hub name", "slug": "hub-slug" }\n` +
     `}`;
 
   const response = await client.messages.create({
@@ -232,6 +237,7 @@ export async function generateTechSummaryArticle(
     region: parsed.region,
     tags: parsed.tags,
     date: today,
+    topic: parsed.topic ? { name: parsed.topic.name, slug: parsed.topic.slug } : null,
   };
 }
 
@@ -242,6 +248,10 @@ export async function saveTechSummaryArticle(
   const existing = await prisma.techArticle.findFirst({
     where: { date: data.date },
   });
+
+  // Resolve the topic hub to a FK. Null on absence or failure — topicId is
+  // nullable, so a topic hiccup never blocks the article from saving.
+  const topicId = data.topic ? await upsertTopic(data.topic, 'tech') : null;
 
   const payload = {
     title: data.title,
@@ -254,6 +264,7 @@ export async function saveTechSummaryArticle(
     region: data.region,
     tags: data.tags,
     date: data.date,
+    topicId,
   };
 
   let row: Awaited<ReturnType<typeof prisma.techArticle.create>>;
@@ -264,7 +275,16 @@ export async function saveTechSummaryArticle(
       data: payload,
     });
   } else {
-    row = await prisma.techArticle.create({ data: payload });
+    // Cross-vertical slug collision guard. Disambiguate rather than drop the
+    // article so the day's content is never silently lost.
+    let slug = payload.slug;
+    if (await isSlugTakenAcrossVerticals(slug, 'tech')) {
+      console.warn(
+        `[pipeline] Cross-vertical slug collision: "${slug}" — disambiguating as "${slug}-tech"`,
+      );
+      slug = `${slug}-tech`;
+    }
+    row = await prisma.techArticle.create({ data: { ...payload, slug } });
   }
 
   return mapDbToSummary(row);

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
-import { canonicalizeSlug, parseClaudeJson, selectImportantArticles, toSlug } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -37,6 +37,7 @@ interface ClaudeMarketsResponse {
   keyPoints: string[];
   region: string;
   tags: string[];
+  topic?: { name: string; slug: string };
 }
 
 function mapDbToSummary(row: {
@@ -158,6 +159,8 @@ export async function generateMarketsSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
+  const topicChoices = await getTopicChoices('markets');
+
   const articlesText = articles
     .map(
       (a, i) =>
@@ -191,6 +194,7 @@ export async function generateMarketsSummaryArticle(
     `  ECONOMIC IMPLICATIONS — Evaluate impacts on equities, fixed income, FX, commodities,\n` +
     `    credit spreads, and volatility surfaces. Reference specific indices, yields, or sectors.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +
     `  "title": "engaging, professional headline capturing the day's market signal",\n` +
@@ -198,7 +202,8 @@ export async function generateMarketsSummaryArticle(
     `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
     `  "keyPoints": ["5-7 concise market takeaways from the report"],\n` +
     `  "region": "primary market region (US / Europe / Asia-Pacific / Global / EM / etc.)",\n` +
-    `  "tags": ["4-6 asset classes, sectors, indices, or instruments"]\n` +
+    `  "tags": ["4-6 asset classes, sectors, indices, or instruments"],\n` +
+    `  "topic": { "name": "broad evergreen topic hub name", "slug": "hub-slug" }\n` +
     `}`;
 
   const response = await client.messages.create({
@@ -231,6 +236,7 @@ export async function generateMarketsSummaryArticle(
     region: parsed.region,
     tags: parsed.tags,
     date: today,
+    topic: parsed.topic ? { name: parsed.topic.name, slug: parsed.topic.slug } : null,
   };
 }
 
@@ -241,6 +247,10 @@ export async function saveMarketsSummaryArticle(
   const existing = await prisma.marketsArticle.findFirst({
     where: { date: data.date },
   });
+
+  // Resolve the topic hub to a FK. Null on absence or failure — topicId is
+  // nullable, so a topic hiccup never blocks the article from saving.
+  const topicId = data.topic ? await upsertTopic(data.topic, 'markets') : null;
 
   const payload = {
     title: data.title,
@@ -253,6 +263,7 @@ export async function saveMarketsSummaryArticle(
     region: data.region,
     tags: data.tags,
     date: data.date,
+    topicId,
   };
 
   let row: Awaited<ReturnType<typeof prisma.marketsArticle.create>>;
@@ -263,7 +274,16 @@ export async function saveMarketsSummaryArticle(
       data: payload,
     });
   } else {
-    row = await prisma.marketsArticle.create({ data: payload });
+    // Cross-vertical slug collision guard. Disambiguate rather than drop the
+    // article so the day's content is never silently lost.
+    let slug = payload.slug;
+    if (await isSlugTakenAcrossVerticals(slug, 'markets')) {
+      console.warn(
+        `[pipeline] Cross-vertical slug collision: "${slug}" — disambiguating as "${slug}-markets"`,
+      );
+      slug = `${slug}-markets`;
+    }
+    row = await prisma.marketsArticle.create({ data: { ...payload, slug } });
   }
 
   return mapDbToSummary(row);
