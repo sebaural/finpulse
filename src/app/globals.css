@@ -319,8 +319,8 @@ nav {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
-  min-height: 28px;
+  margin: 20px 0;
+  height: 15px;
 }
 
 .data-status-badge {
@@ -900,10 +900,15 @@ nav {
   text-align: right;
 }
 
+.topic-analysis h2 {
+  font-size: 22px;
+}
+
 .side-story {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  color: var(--accent2);
 }
 
 .side-story:last-child {

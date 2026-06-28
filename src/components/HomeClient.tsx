@@ -375,7 +375,7 @@ export default function HomeClient({
             )}
 
             {topicAnalysis.length > 0 && (
-              <section className="widget">
+              <section className="widget topic-analysis">
                 <h2 className="widget-title">Deep-Dive Analysis</h2>
                 {topicAnalysis.map((item) => (
                   <a
