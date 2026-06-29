@@ -1,0 +1,26 @@
+.topcis-article {
+    width: 75vw;
+    margin: 0 auto;
+}
+
+.topcis-article .geo-region-badge {
+    font-weight: bold;
+}
+
+.topcis-article .geo-region-badge:hover, 
+.topcis-article .geo-region-badge:focus {
+    background-color: var(--accent);
+    color: #000;
+}
+
+.topcis-article .geo-article-date   {
+    color: var(--text);
+} 
+
+/* // Mobile responsiveness */
+
+@media (max-width: 768px) {
+    .topcis-article {
+        width: 90vw;
+    }
+}

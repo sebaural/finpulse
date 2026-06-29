@@ -211,7 +211,9 @@
   text-transform: uppercase;
   color: var(--accent);
   border: 1px solid var(--accent);
-  padding: 3px 10px;
+  padding: 6px 10px;
+  text-decoration: none;
+  border-radius: 4px;
 }
 .geo-article-date {
   font-family: 'Inconsolata', monospace;
@@ -324,7 +326,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   border: 1px solid var(--border);
-  color: var(--muted);
+  color: var(--text);
   padding: 4px 10px;
   background: transparent;
 }

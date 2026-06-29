@@ -8,6 +8,7 @@ import RelatedBriefings from '@/components/related/RelatedBriefings';
 import NavMenu from '@/components/topNav/NavMenu';
 import { SITE_URL } from '@/lib/seo';
 import '@/components/geopolitics/geopolitics.css';
+import './topics.css';
 
 // Next.js 16: params is async and must be awaited.
 type Props = { params: Promise<{ topicSlug: string; articleSlug: string }> };
@@ -162,7 +163,7 @@ export default async function ArticleSpokePage({ params }: Props) {
         </div>
 
         <main className="geo-main">
-          <article>
+          <article className="topcis-article">
             <div className="geo-article-meta">
               <Link href={`/topics/${topicSlug}`} className="geo-region-badge">
                 {topic.name}
