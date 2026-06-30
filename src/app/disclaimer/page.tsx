@@ -4,7 +4,7 @@ import { buildMetadata } from '@/lib/seo';
 import './disclaimer.css';
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Disclaimer — Informational Use Only | MacroStance',
+  title: 'Disclaimer — Informational Use Only',
   description:
     'All MacroStance content is informational only and is not financial, investment, legal, or tax advice. Read the full disclaimer covering accuracy, market data delays, and external links.',
   path: '/disclaimer',

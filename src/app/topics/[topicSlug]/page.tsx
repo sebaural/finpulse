@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!topic) return {};
 
   return {
-    title: `${topic.name} | MacroStance Analysis`,
+    title: `${topic.name}`,
     description:
       topic.description ??
       `Institutional macro analysis and deep-dive briefings on ${topic.name}.`,

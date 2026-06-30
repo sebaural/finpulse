@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!article || !article.data.topic) return {};
 
   return {
-    title: `${article.data.title} | MacroStance Analysis`,
+    title: `${article.data.title}`,
     description: `Institutional macro analysis covering structural trends inside ${article.data.topic.name}.`,
     alternates: {
       canonical: `${SITE_URL}/topics/${topicSlug}/${articleSlug}`,
