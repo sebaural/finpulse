@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchArticleBySlug } from '@/lib/topics-service';
+import AuthorBioCard from '@/components/author/AuthorBioCard';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
 import NavMenu from '@/components/topNav/NavMenu';
 import { SITE_URL } from '@/lib/seo';
@@ -131,7 +132,7 @@ export default async function ArticleSpokePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="geo-root">
+      <div className="geo-root topics-root">
         {/* Geopolitics-style dark top nav (kept inside geo-root for the theme). */}
         <div
           className="geo-top-nav"
@@ -221,6 +222,8 @@ export default async function ArticleSpokePage({ params }: Props) {
           </article>
         </main>
       </div>
+
+      <AuthorBioCard />
 
       {/* Cross-article internal linking. Rendered OUTSIDE .geo-root so it carries
           its own theme tokens via .related-root (same as the vertical pages). */}
