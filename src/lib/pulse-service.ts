@@ -206,8 +206,8 @@ async function generatePulseArticleFromSource(
     title: parsed.title || source.title,
     slug,
     summary: parsed.summary || source.summaryHint || source.title,
-    body: parsed.body || null,
-    sourceUrl: parsed.sourceUrl || source.sourceUrl || null,
+    body: parsed.body || undefined,
+    sourceUrl: parsed.sourceUrl || source.sourceUrl || undefined,
   };
 }
 
