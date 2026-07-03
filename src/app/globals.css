@@ -902,17 +902,20 @@ nav {
 
 .topic-analysis h2 {
   font-size: 22px;
+  border-bottom: none;
 }
 
 .side-story {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 12px;
+  border: 1px solid var(--border);
   cursor: pointer;
   color: var(--accent2);
+  border-radius: 5px;
+  margin: 0 0 12px;
 }
 
-.side-story:last-child {
-  border-bottom: none;
+.side-story:hover {
+  background: #141b24;
 }
 
 .side-story-source {

@@ -1,3 +1,11 @@
+.pulse-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
 .pulse-page {
   --pulse-bg: #0f1319;
   --pulse-surface: #171d24;
@@ -183,6 +191,11 @@
 
 .pulse-highlights {
   margin: 20px 0;
+}
+
+.pulse-highlights .widget-title {
+  font-size: 23px;
+  border-bottom: none;
 }
 
 .pulse-highlights-grid {
