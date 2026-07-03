@@ -24,7 +24,9 @@ import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import NavMenu from '@/components/topNav/NavMenu';
+import { PulseHighlights } from '@/components/pulse/PulseHighlights';
 import { VoicePlayer } from '@/modules/VoicePlayer';
+import type { PulseArticle, PulseSlug } from '@/types/pulse';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -98,6 +100,7 @@ interface HomeClientProps {
   initialUsingFallback: boolean;
   geoAnalysis: TopicAnalysisItem[];
   marketAnalysis: TopicAnalysisItem[];
+  pulseLatest: Record<PulseSlug, PulseArticle | null>;
 }
 
 export default function HomeClient({
@@ -105,6 +108,7 @@ export default function HomeClient({
   initialUsingFallback,
   geoAnalysis,
   marketAnalysis,
+  pulseLatest,
 }: HomeClientProps) {
   // Editorial deep-dive grid: topic-linked briefings route to
   // /topics/[topicSlug]/[articleSlug]. Empty (renders nothing) until the
@@ -390,6 +394,8 @@ export default function HomeClient({
                 ))}
               </section>
             )}
+
+            <PulseHighlights latestByCategory={pulseLatest} />
 
             <div className="data-status-row" aria-live="polite">
               {showFallbackBanner ? (

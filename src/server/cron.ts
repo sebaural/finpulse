@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarketsSummaryArticles, runDailyMarketsPipeline } from '@/lib/markets-service';
+import { runDailyPulsePipeline } from '@/lib/pulse-service';
 import { getSummaryArticles as getGeopoliticsArticles, runDailyGeopoliticsPipeline } from '@/lib/geopolitics-service';
 import { getTechSummaryArticles, runDailyTechPipeline } from '@/lib/tech-service';
 import { hasPosted, markPosted } from '@/lib/dedup';
@@ -39,12 +40,13 @@ export async function runCronPipeline<T>(
 // returned. The three pipelines each return their own SummaryArticle shape, so
 // the article type is a union of their return types.
 
-type ContentSection = 'geopolitics' | 'markets' | 'tech';
+type ContentSection = 'geopolitics' | 'markets' | 'tech' | 'pulse';
 
 type GeneratedArticle =
   | Awaited<ReturnType<typeof runDailyGeopoliticsPipeline>>
   | Awaited<ReturnType<typeof runDailyMarketsPipeline>>
-  | Awaited<ReturnType<typeof runDailyTechPipeline>>;
+  | Awaited<ReturnType<typeof runDailyTechPipeline>>
+  | Awaited<ReturnType<typeof runDailyPulsePipeline>>;
 
 export type ContentCronResult =
   | { section: ContentSection; success: true; article: GeneratedArticle }
@@ -55,6 +57,7 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     { section: 'geopolitics', run: runDailyGeopoliticsPipeline },
     { section: 'markets',     run: runDailyMarketsPipeline },
     { section: 'tech',        run: runDailyTechPipeline },
+    { section: 'pulse',       run: runDailyPulsePipeline },
   ];
 
   const results: ContentCronResult[] = [];

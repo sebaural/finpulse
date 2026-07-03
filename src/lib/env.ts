@@ -123,3 +123,29 @@ function getXPosterEnv(): XPosterEnv {
 }
 
 export const xPosterEnv = getXPosterEnv();
+
+interface PulseEnv {
+  gdeltApiKey: string;
+}
+
+function readPulseKey(name: 'GDELT_API_KEY'): string {
+  return (process.env[name] ?? '').trim();
+}
+
+function getPulseEnv(): PulseEnv {
+  const env: PulseEnv = {
+    gdeltApiKey: readPulseKey('GDELT_API_KEY'),
+  };
+
+  if (!env.gdeltApiKey && process.env.NODE_ENV !== 'production') {
+    console.info('[pulse-env] Missing GDELT_API_KEY. Pulse generation will not run.');
+  }
+
+  if (!env.gdeltApiKey && process.env.NODE_ENV === 'production') {
+    console.warn('[pulse-env] Missing production key: GDELT_API_KEY.');
+  }
+
+  return env;
+}
+
+export const pulseEnv = getPulseEnv();

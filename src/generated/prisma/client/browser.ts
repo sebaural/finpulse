@@ -33,6 +33,11 @@ export type MarketsArticle = Prisma.MarketsArticleModel
  */
 export type TechArticle = Prisma.TechArticleModel
 /**
+ * Model PulseArticle
+ * 
+ */
+export type PulseArticle = Prisma.PulseArticleModel
+/**
  * Model User
  * 
  */

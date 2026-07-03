@@ -27,6 +27,8 @@ function buildEntry(
 
 type TopicArticleRow = { slug: string; updatedAt: Date; topic: { slug: string } | null };
 
+type PulseRow = { pulseSlug: string; articleSlug: string; updatedAt: Date };
+
 function buildTopicEntry(row: TopicArticleRow): string {
   if (!row.topic || !row.slug) return '';
   const loc = `${SITE_URL}/topics/${row.topic.slug}/${row.slug}`;
@@ -53,11 +55,18 @@ export async function GET() {
     } as const;
     const topicWhere = { NOT: { topicId: null } } as const;
 
-    const [geopolitics, markets, tech, geoTopics, marketTopics, techTopics] =
+    const pulseSelect = {
+      pulseSlug: true,
+      articleSlug: true,
+      updatedAt: true,
+    } as const;
+
+    const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics] =
       await Promise.all([
         prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
         prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
         prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.pulseArticle.findMany({ select: pulseSelect, orderBy: { updatedAt: 'desc' } }),
         prisma.geopoliticsArticle.findMany({ where: topicWhere, select: topicSelect }),
         prisma.marketsArticle.findMany({ where: topicWhere, select: topicSelect }),
         prisma.techArticle.findMany({ where: topicWhere, select: topicSelect }),
@@ -68,6 +77,20 @@ export async function GET() {
     xml += geopolitics.map((r) => buildEntry('geopolitics', r)).join('');
     xml += markets.map((r) => buildEntry('markets', r)).join('');
     xml += tech.map((r) => buildEntry('tech', r)).join('');
+    xml += pulse
+      .map((row: PulseRow) => {
+        const loc = `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`;
+        const mod = row.updatedAt.toISOString();
+        return (
+          `  <url>\n` +
+          `    <loc>${loc}</loc>\n` +
+          `    <lastmod>${mod}</lastmod>\n` +
+          `    <changefreq>daily</changefreq>\n` +
+          `    <priority>0.7</priority>\n` +
+          `  </url>\n`
+        );
+      })
+      .join('');
     xml += [...geoTopics, ...marketTopics, ...techTopics].map(buildTopicEntry).join('');
     xml += `</urlset>`;
 

@@ -13,6 +13,13 @@ const NEWS_WINDOW_MS = 2 * 24 * 60 * 60 * 1000; // last 2 days
 const MAX_URLS = 1000; // Google News sitemap hard limit
 
 type NewsRow = { slug: string; title: string; tags: unknown; createdAt: Date };
+type PulseNewsRow = {
+  pulseSlug: string;
+  articleSlug: string;
+  title: string;
+  category: string;
+  createdAt: Date;
+};
 
 function xmlEscape(value: string): string {
   return value
@@ -57,16 +64,44 @@ export async function GET() {
     const where = { createdAt: { gte: cutoff } };
     const orderBy = { createdAt: 'desc' as const };
 
-    const [geopolitics, markets, tech] = await Promise.all([
+    const pulseSelect = {
+      pulseSlug: true,
+      articleSlug: true,
+      title: true,
+      category: true,
+      createdAt: true,
+    } as const;
+
+    const [geopolitics, markets, tech, pulse] = await Promise.all([
       prisma.geopoliticsArticle.findMany({ select, where, orderBy }),
       prisma.marketsArticle.findMany({ select, where, orderBy }),
       prisma.techArticle.findMany({ select, where, orderBy }),
+      prisma.pulseArticle.findMany({ select: pulseSelect, where, orderBy }),
     ]);
 
     const entries = [
       ...geopolitics.map((r) => buildEntry('geopolitics', r)),
       ...markets.map((r) => buildEntry('markets', r)),
       ...tech.map((r) => buildEntry('tech', r)),
+      ...pulse.map((r: PulseNewsRow) => {
+        const loc = `${SITE_URL}/pulse/${r.pulseSlug}/${r.articleSlug}`;
+        const publicationDate = r.createdAt.toISOString();
+        const keywords = xmlEscape([r.category, r.pulseSlug].join(', '));
+        return (
+          `  <url>\n` +
+          `    <loc>${loc}</loc>\n` +
+          `    <news:news>\n` +
+          `      <news:publication>\n` +
+          `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
+          `        <news:language>${PUBLICATION_LANGUAGE}</news:language>\n` +
+          `      </news:publication>\n` +
+          `      <news:publication_date>${publicationDate}</news:publication_date>\n` +
+          `      <news:title>${xmlEscape(r.title)}</news:title>\n` +
+          `      <news:keywords>${keywords}</news:keywords>\n` +
+          `    </news:news>\n` +
+          `  </url>\n`
+        );
+      }),
     ].slice(0, MAX_URLS);
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

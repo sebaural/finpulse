@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from 'rea
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { PULSE_CATEGORIES } from '@/lib/pulse-categories';
 import './navmenu.css';
 
 // ── Edit nav links here ────────────────────────────────────────────────────
@@ -23,6 +24,14 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Markets', href: '/markets' },
       { label: 'Tech', href: '/tech' },
     ],
+  },
+  {
+    kind: 'group',
+    label: 'News Pulse',
+    children: Object.values(PULSE_CATEGORIES).map((config) => ({
+      label: config.label.toUpperCase(),
+      href: `/pulse/${config.pulseSlug}`,
+    })),
   },
 ];
 
@@ -49,10 +58,15 @@ function getServerSnapshot() {
 export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const pathname = usePathname();
   const [openPath, setOpenPath] = useState<string | null>(null);
+  const [isPulseMenuOpen, setIsPulseMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const pulseMenuRef = useRef<HTMLLIElement>(null);
   const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
   const open = openPath === pathname;
-  const closeMenu = () => setOpenPath(null);
+  const closeMenu = () => {
+    setOpenPath(null);
+    setIsPulseMenuOpen(false);
+  };
   const toggleMenu = () => setOpenPath((current) => (current === pathname ? null : pathname));
 
   // Hide the link for the current exact home route
@@ -60,15 +74,13 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     (item) => !(item.kind === 'link' && item.href === '/' && pathname === '/'),
   );
 
-  // Flattened list for the mobile drawer (groups are expanded inline).
-  const drawerLinks: NavLink[] = visibleItems.flatMap((item) =>
-    item.kind === 'link' ? [{ label: item.label, href: item.href }] : item.children,
-  );
-
   // Close on Escape
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpenPath(null);
+      if (e.key === 'Escape') {
+        setOpenPath(null);
+        setIsPulseMenuOpen(false);
+      }
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -80,10 +92,18 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
       if (open && drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
         setOpenPath(null);
       }
+
+      if (
+        isPulseMenuOpen &&
+        pulseMenuRef.current &&
+        !pulseMenuRef.current.contains(e.target as Node)
+      ) {
+        setIsPulseMenuOpen(false);
+      }
     }
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open]);
+  }, [open, isPulseMenuOpen]);
 
   return (
     <>
@@ -106,23 +126,70 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
             }
 
             return (
-              <Fragment key={item.label}>
-                {item.children.map((child, idx) => (
-                  <Fragment key={child.href}>
-                    {idx > 0 && <li className="nav-desktop-sep" role="none" aria-hidden="true" />}
-                    <li role="none">
-                      <Link
-                        role="menuitem"
-                        href={child.href}
-                        className={`nav-desktop-link${isActive(child.href, pathname) ? ' active' : ''}`}
-                      >
-                        <span className="nav-dot" aria-hidden="true" />
-                        {child.label}
-                      </Link>
-                    </li>
-                  </Fragment>
-                ))}
-              </Fragment>
+              item.label === 'News Pulse' ? (
+                <Fragment key={item.label}>
+                  <li className="nav-desktop-sep" role="none" />
+                  <li
+                    className="pulse-desktop-dropdown"
+                    ref={pulseMenuRef}
+                    onMouseEnter={() => setIsPulseMenuOpen(true)}
+                    onFocus={() => setIsPulseMenuOpen(true)}
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                        setIsPulseMenuOpen(false);
+                      }
+                    }}
+                  >
+                    <button
+                      className={`nav-desktop-link nav-dropdown-trigger${
+                        isPulseMenuOpen || item.children.some((child) => isActive(child.href, pathname))
+                          ? ' active'
+                          : ''
+                      }`}
+                      aria-haspopup="true"
+                      aria-expanded={isPulseMenuOpen}
+                    >
+                      News Pulse
+                    </button>
+                    {isPulseMenuOpen ? (
+                      <ul className="nav-desktop-dropdown-menu" role="menu" aria-label="News Pulse">
+                        {item.children.map((child) => (
+                          <li key={child.href} role="none">
+                            <Link
+                              role="menuitem"
+                              href={child.href}
+                              className={`nav-desktop-dropdown-link${
+                                isActive(child.href, pathname) ? ' active' : ''
+                              }`}
+                              onClick={() => setIsPulseMenuOpen(false)}
+                            >
+                              {child.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                </Fragment>
+              ) : (
+                <Fragment key={item.label}>
+                  {item.children.map((child, idx) => (
+                    <Fragment key={child.href}>
+                      {idx > 0 && <li className="nav-desktop-sep" role="none" />}
+                      <li role="none">
+                        <Link
+                          role="menuitem"
+                          href={child.href}
+                          className={`nav-desktop-link${isActive(child.href, pathname) ? ' active' : ''}`}
+                        >
+                          <span className="nav-dot" aria-hidden="true" />
+                          {child.label}
+                        </Link>
+                      </li>
+                    </Fragment>
+                  ))}
+                </Fragment>
+              )
             );
           })}
         </ul>
@@ -174,17 +241,35 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
             </div>
 
             <ul className="nav-drawer-links">
-              {drawerLinks.map(({ label, href }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className={`nav-drawer-link${isActive(href, pathname) ? ' active' : ''}`}
-                    onClick={closeMenu}
-                  >
-                    {SUMMARY_HREFS.has(href) && <span className="nav-dot" aria-hidden="true" />}
-                    {label}
-                  </Link>
-                </li>
+              {visibleItems.map((item) => (
+                item.kind === 'link' ? (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`nav-drawer-link${isActive(item.href, pathname) ? ' active' : ''}`}
+                      onClick={closeMenu}
+                    >
+                      {SUMMARY_HREFS.has(item.href) && <span className="nav-dot" aria-hidden="true" />}
+                      {item.label}
+                    </Link>
+                  </li>
+                ) : (
+                  <Fragment key={item.label}>
+                    <li className="nav-drawer-group-label">{item.label}</li>
+                    {item.children.map(({ label, href }) => (
+                      <li key={href}>
+                        <Link
+                          href={href}
+                          className={`nav-drawer-link${isActive(href, pathname) ? ' active' : ''}`}
+                          onClick={closeMenu}
+                        >
+                          {SUMMARY_HREFS.has(href) && <span className="nav-dot" aria-hidden="true" />}
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </Fragment>
+                )
               ))}
             </ul>
 

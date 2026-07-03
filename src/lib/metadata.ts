@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AUTHOR_SEBASTIAN_SLUG } from '@/lib/seo';
 
-type Section = 'markets' | 'geopolitics' | 'tech';
+type Section = 'markets' | 'geopolitics' | 'tech' | 'pulse';
 
 interface GenerateArticleMetadataParams {
   section: Section;
@@ -30,6 +30,7 @@ const SECTION_LABEL: Record<Section, string> = {
   geopolitics: 'Geopolitics',
   markets: 'Markets',
   tech: 'Technology',
+  pulse: 'Pulse',
 };
 
 // Rough reading-time estimate (~200 wpm) for the Twitter summary card.

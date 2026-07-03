@@ -387,6 +387,7 @@ export const ModelName = {
   GeopoliticsArticle: 'GeopoliticsArticle',
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle',
+  PulseArticle: 'PulseArticle',
   User: 'User',
   Topic: 'Topic'
 } as const
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "user" | "topic"
+    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "user" | "topic"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -627,6 +628,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TechArticleCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TechArticleCountAggregateOutputType> | number
+        }
+      }
+    }
+    PulseArticle: {
+      payload: Prisma.$PulseArticlePayload<ExtArgs>
+      fields: Prisma.PulseArticleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PulseArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PulseArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        findFirst: {
+          args: Prisma.PulseArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PulseArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        findMany: {
+          args: Prisma.PulseArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>[]
+        }
+        create: {
+          args: Prisma.PulseArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        createMany: {
+          args: Prisma.PulseArticleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PulseArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>[]
+        }
+        delete: {
+          args: Prisma.PulseArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        update: {
+          args: Prisma.PulseArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        deleteMany: {
+          args: Prisma.PulseArticleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PulseArticleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PulseArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>[]
+        }
+        upsert: {
+          args: Prisma.PulseArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PulseArticlePayload>
+        }
+        aggregate: {
+          args: Prisma.PulseArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePulseArticle>
+        }
+        groupBy: {
+          args: Prisma.PulseArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PulseArticleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PulseArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PulseArticleCountAggregateOutputType> | number
         }
       }
     }
@@ -871,6 +946,26 @@ export const TechArticleScalarFieldEnum = {
 export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]
 
 
+export const PulseArticleScalarFieldEnum = {
+  id: 'id',
+  pulseSlug: 'pulseSlug',
+  articleSlug: 'articleSlug',
+  title: 'title',
+  summary: 'summary',
+  body: 'body',
+  sourceUrl: 'sourceUrl',
+  category: 'category',
+  observedStart: 'observedStart',
+  observedEnd: 'observedEnd',
+  publishedAt: 'publishedAt',
+  raw: 'raw',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PulseArticleScalarFieldEnum = (typeof PulseArticleScalarFieldEnum)[keyof typeof PulseArticleScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -910,6 +1005,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1111,6 +1214,7 @@ export type GlobalOmitConfig = {
   geopoliticsArticle?: Prisma.GeopoliticsArticleOmit
   marketsArticle?: Prisma.MarketsArticleOmit
   techArticle?: Prisma.TechArticleOmit
+  pulseArticle?: Prisma.PulseArticleOmit
   user?: Prisma.UserOmit
   topic?: Prisma.TopicOmit
 }

@@ -34,7 +34,7 @@
   transition: border-color 0.15s, color 0.15s;
 }
 
-.nav-desktop li:not(:last-child) { margin-right: 14px; }
+.nav-desktop > li:not(:last-child) { margin-right: 14px; }
 
 .nav-desktop-link:hover,
 .nav-desktop-link.active {
@@ -46,6 +46,59 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link:hover,
 nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   color: var(--accent2);
   border-bottom-color: var(--accent2);
+}
+
+.pulse-desktop-dropdown {
+  position: relative;
+  z-index: 1200 !important;
+}
+
+.nav-dropdown-trigger {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-desktop-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 210px;
+  list-style: none;
+  border: 1px solid #1e2530 !important;
+  background-color: #111418 !important;
+  border-radius: 6px;
+  overflow: visible !important;
+  z-index: 1201 !important;
+}
+
+.nav-desktop-dropdown-menu li {
+  margin-right: 0;
+}
+
+.nav-desktop-dropdown-link {
+  display: block;
+  text-decoration: none;
+  font-family: 'Inconsolata', monospace;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e8eaf0 !important;
+  background-color: #111418 !important;
+  white-space: nowrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1e2530 !important;
+}
+
+.nav-desktop-dropdown-link:hover,
+.nav-desktop-dropdown-link.active {
+  color: #e8b84b;
+  background-color: #181c22;
+}
+
+.nav-desktop-dropdown-menu li:last-child .nav-desktop-dropdown-link {
+  border-bottom: 0;
 }
 .nav-dot {
   display: inline-block;
@@ -190,6 +243,15 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   border-left-color: var(--accent);
   color: var(--accent);
   background: var(--surface2);
+}
+
+.nav-drawer-group-label {
+  padding: 14px 24px 8px;
+  color: var(--muted);
+  font-family: 'Inconsolata', monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 10px;
 }
 
 /* ── Responsive breakpoint ── */

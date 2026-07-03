@@ -1,6 +1,6 @@
 // src/app/api/cron/generate/route.ts
 //
-// Unified daily content generation cron (geopolitics + markets + tech, sequential).
+// Unified daily content generation cron (geopolitics + markets + tech + pulse, sequential).
 // Replaces the three separate /api/{geopolitics,markets,tech}/generate crons.
 //
 // Called by:
@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronAuthorized, runDailyContentPipelines } from '@/server/cron';
 
-// Three pipelines run back-to-back; give the function the full duration budget.
+// Four pipelines run back-to-back; give the function the full duration budget.
 export const maxDuration = 300;
 
 // Vercel Cron always uses GET.

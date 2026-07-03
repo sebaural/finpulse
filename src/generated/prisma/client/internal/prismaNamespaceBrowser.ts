@@ -54,6 +54,7 @@ export const ModelName = {
   GeopoliticsArticle: 'GeopoliticsArticle',
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle',
+  PulseArticle: 'PulseArticle',
   User: 'User',
   Topic: 'Topic'
 } as const
@@ -128,6 +129,26 @@ export const TechArticleScalarFieldEnum = {
 export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]
 
 
+export const PulseArticleScalarFieldEnum = {
+  id: 'id',
+  pulseSlug: 'pulseSlug',
+  articleSlug: 'articleSlug',
+  title: 'title',
+  summary: 'summary',
+  body: 'body',
+  sourceUrl: 'sourceUrl',
+  category: 'category',
+  observedStart: 'observedStart',
+  observedEnd: 'observedEnd',
+  publishedAt: 'publishedAt',
+  raw: 'raw',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PulseArticleScalarFieldEnum = (typeof PulseArticleScalarFieldEnum)[keyof typeof PulseArticleScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -167,6 +188,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {

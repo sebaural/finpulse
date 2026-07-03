@@ -2,6 +2,7 @@ export type { ImpactLabel, NewsArticle, NewsCategory, SourceClass } from './news
 export type { MarketRow, TickerItem } from './market';
 export type { InterruptPolicy, SpeechRules, TraderProfile, VoiceSettings } from './speech';
 export type { Topic } from './topic';
+export * from './pulse';
 
 export interface FeedSource {
   id: string;

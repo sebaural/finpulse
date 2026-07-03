@@ -1,6 +1,6 @@
 import { getPrisma } from '@/lib/db';
 
-type Vertical = 'geopolitics' | 'markets' | 'tech';
+type Vertical = 'geopolitics' | 'markets' | 'tech' | 'pulse';
 
 /**
  * Cross-vertical slug uniqueness guard.
@@ -16,7 +16,7 @@ export async function isSlugTakenAcrossVerticals(
   exclude?: Vertical,
 ): Promise<boolean> {
   const prisma = getPrisma();
-  const [geo, mkt, tech] = await Promise.all([
+  const [geo, mkt, tech, pulse] = await Promise.all([
     exclude === 'geopolitics'
       ? null
       : prisma.geopoliticsArticle.findFirst({ where: { slug }, select: { id: true } }),
@@ -26,8 +26,11 @@ export async function isSlugTakenAcrossVerticals(
     exclude === 'tech'
       ? null
       : prisma.techArticle.findFirst({ where: { slug }, select: { id: true } }),
+    exclude === 'pulse'
+      ? null
+      : prisma.pulseArticle.findFirst({ where: { articleSlug: slug }, select: { id: true } }),
   ]);
-  return !!(geo || mkt || tech);
+  return !!(geo || mkt || tech || pulse);
 }
 
 // ---------------------------------------------------------------------------

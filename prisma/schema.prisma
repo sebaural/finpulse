@@ -75,6 +75,28 @@ model TechArticle {
   @@map("tech_articles")
 }
 
+model PulseArticle {
+  id            String    @id @default(cuid())
+  pulseSlug     String
+  articleSlug   String
+  title         String
+  summary       String?
+  body          String?
+  sourceUrl     String?
+  category      String
+  observedStart DateTime?
+  observedEnd   DateTime?
+  publishedAt   DateTime?
+  raw           Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([pulseSlug, articleSlug])
+  @@index([pulseSlug])
+  @@index([observedStart])
+  @@map("pulse_articles")
+}
+
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
