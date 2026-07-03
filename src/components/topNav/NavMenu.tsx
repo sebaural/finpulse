@@ -58,15 +58,10 @@ function getServerSnapshot() {
 export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const pathname = usePathname();
   const [openPath, setOpenPath] = useState<string | null>(null);
-  const [isPulseMenuOpen, setIsPulseMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const pulseMenuRef = useRef<HTMLLIElement>(null);
   const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
   const open = openPath === pathname;
-  const closeMenu = () => {
-    setOpenPath(null);
-    setIsPulseMenuOpen(false);
-  };
+  const closeMenu = () => setOpenPath(null);
   const toggleMenu = () => setOpenPath((current) => (current === pathname ? null : pathname));
 
   // Hide the link for the current exact home route
@@ -79,7 +74,6 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setOpenPath(null);
-        setIsPulseMenuOpen(false);
       }
     }
     document.addEventListener('keydown', onKeyDown);
@@ -92,18 +86,10 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
       if (open && drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
         setOpenPath(null);
       }
-
-      if (
-        isPulseMenuOpen &&
-        pulseMenuRef.current &&
-        !pulseMenuRef.current.contains(e.target as Node)
-      ) {
-        setIsPulseMenuOpen(false);
-      }
     }
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open, isPulseMenuOpen]);
+  }, [open]);
 
   return (
     <>
@@ -131,44 +117,30 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
                   <li className="nav-desktop-sep" role="none" />
                   <li
                     className="pulse-desktop-dropdown"
-                    ref={pulseMenuRef}
-                    onMouseEnter={() => setIsPulseMenuOpen(true)}
-                    onFocus={() => setIsPulseMenuOpen(true)}
-                    onBlur={(event) => {
-                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                        setIsPulseMenuOpen(false);
-                      }
-                    }}
                   >
                     <button
                       className={`nav-desktop-link nav-dropdown-trigger${
-                        isPulseMenuOpen || item.children.some((child) => isActive(child.href, pathname))
-                          ? ' active'
-                          : ''
+                        item.children.some((child) => isActive(child.href, pathname)) ? ' active' : ''
                       }`}
                       aria-haspopup="true"
-                      aria-expanded={isPulseMenuOpen}
                     >
                       News Pulse
                     </button>
-                    {isPulseMenuOpen ? (
-                      <ul className="nav-desktop-dropdown-menu" role="menu" aria-label="News Pulse">
-                        {item.children.map((child) => (
-                          <li key={child.href} role="none">
-                            <Link
-                              role="menuitem"
-                              href={child.href}
-                              className={`nav-desktop-dropdown-link${
-                                isActive(child.href, pathname) ? ' active' : ''
-                              }`}
-                              onClick={() => setIsPulseMenuOpen(false)}
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
+                    <ul className="nav-desktop-dropdown-menu" role="menu" aria-label="News Pulse">
+                      {item.children.map((child) => (
+                        <li key={child.href} role="none">
+                          <Link
+                            role="menuitem"
+                            href={child.href}
+                            className={`nav-desktop-dropdown-link${
+                              isActive(child.href, pathname) ? ' active' : ''
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 </Fragment>
               ) : (

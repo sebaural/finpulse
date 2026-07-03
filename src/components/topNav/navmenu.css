@@ -61,7 +61,7 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
 
 .nav-desktop-dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   right: 0;
   min-width: 210px;
   list-style: none;
@@ -70,6 +70,18 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   border-radius: 6px;
   overflow: visible !important;
   z-index: 1201 !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(0);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+}
+
+.pulse-desktop-dropdown:hover .nav-desktop-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .nav-desktop-dropdown-menu li {
