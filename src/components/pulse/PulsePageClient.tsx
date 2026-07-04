@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useMemo } from 'react';
 import PulseHeader from '@/components/pulse/PulseHeader';
-import { PulseArticleModal } from '@/components/pulse/PulseArticleModal';
 import type { PulseArticle, PulseCategoryConfig } from '@/types/pulse';
 import './pulse.css';
 
@@ -28,7 +28,6 @@ function formatTime(value?: string | null): string {
 
 export function PulsePageClient({ config, articles }: PulsePageClientProps) {
   const title = useMemo(() => `${config.label} Pulse`, [config.label]);
-  const [selectedArticle, setSelectedArticle] = useState<PulseArticle | null>(null);
 
   return (
     <>
@@ -49,34 +48,19 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
           ) : (
             <ul className="pulse-article-list">
               {articles.map((article) => (
-                <li
-                  key={article.articleSlug}
-                  className="pulse-article-item"
-                  onClick={() => setSelectedArticle(article)}
-                >
-                  <div
+                <li key={article.articleSlug} className="pulse-article-item">
+                  <Link
                     className="pulse-article-link"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setSelectedArticle(article);
-                      }
-                    }}
+                    href={`/pulse/${config.pulseSlug}/${article.articleSlug}`}
                   >
                     <span className="pulse-article-title">{article.title}</span>
                     <span className="pulse-article-meta">{formatTime(article.observedStart ?? article.publishedAt)}</span>
                     {article.summary ? <span className="pulse-article-summary">{article.summary}</span> : null}
-                  </div>
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
-
-          {selectedArticle ? (
-            <PulseArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
-          ) : null}
         </div>
       </main>
     </>

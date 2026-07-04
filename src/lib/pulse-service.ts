@@ -12,9 +12,29 @@ import { SITE_URL } from '@/lib/seo';
 import type { GdeltSummaryRow, PulseArticle, PulseSlug } from '@/types/pulse';
 
 interface PulseArticleDelegateLike {
-  findMany: (...args: any[]) => Promise<any[]>;
-  findUnique: (...args: any[]) => Promise<any | null>;
-  upsert: (...args: any[]) => Promise<any>;
+  findMany: <T = unknown>(...args: unknown[]) => Promise<T[]>;
+  findUnique: <T = unknown>(...args: unknown[]) => Promise<T | null>;
+  create: <T = unknown>(...args: unknown[]) => Promise<T>;
+}
+
+interface PulseArticleRow {
+  pulseSlug: string;
+  articleSlug: string;
+  title: string;
+  summary: string | null;
+  body: string | null;
+  sourceUrl: string | null;
+  category: string;
+  observedStart: Date | null;
+  observedEnd: Date | null;
+  publishedAt: Date | null;
+  raw: unknown;
+}
+
+interface PulseExistingRow {
+  articleSlug: string;
+  sourceUrl: string | null;
+  raw: unknown;
 }
 
 function getPulseDelegate(): PulseArticleDelegateLike | null {
@@ -50,19 +70,16 @@ function toDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function toPulseArticle(row: {
-  pulseSlug: string;
-  articleSlug: string;
-  title: string;
-  summary: string | null;
-  body: string | null;
-  sourceUrl: string | null;
-  category: string;
-  observedStart: Date | null;
-  observedEnd: Date | null;
-  publishedAt: Date | null;
-  raw: unknown;
-}): PulseArticle {
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === 'P2002'
+  );
+}
+
+function toPulseArticle(row: PulseArticleRow): PulseArticle {
   return {
     pulseSlug: row.pulseSlug as PulseSlug,
     articleSlug: row.articleSlug,
@@ -216,7 +233,7 @@ export async function getPulseArticles(pulseSlug: PulseSlug): Promise<PulseArtic
     const pulseArticle = getPulseDelegate();
     if (!pulseArticle) return [];
 
-    const rows = await pulseArticle.findMany({
+    const rows = await pulseArticle.findMany<PulseArticleRow>({
       where: { pulseSlug },
       orderBy: [{ observedStart: 'desc' }, { createdAt: 'desc' }],
     });
@@ -235,7 +252,7 @@ export async function getPulseArticleBySlug(
     const pulseArticle = getPulseDelegate();
     if (!pulseArticle) return null;
 
-    const row = await pulseArticle.findUnique({
+    const row = await pulseArticle.findUnique<PulseArticleRow>({
       where: { pulseSlug_articleSlug: { pulseSlug, articleSlug } },
     });
     return row ? toPulseArticle(row) : null;
@@ -267,7 +284,7 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
     return { created: 0 };
   }
 
-  const existing = await pulseArticle.findMany({
+  const existing = await pulseArticle.findMany<PulseExistingRow>({
     where: { pulseSlug },
     select: { articleSlug: true, sourceUrl: true, raw: true },
   });
@@ -310,42 +327,36 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
       articleSlug = `${generated.slug}-${pulseSlug}`;
     }
 
-    const upserted = await pulseArticle.upsert({
-      where: { pulseSlug_articleSlug: { pulseSlug, articleSlug } },
-      create: {
-        pulseSlug,
-        articleSlug,
-        title: generated.title,
-        summary: generated.summary,
-        body: generated.body,
-        sourceUrl: generated.sourceUrl,
-        category: config.gdeltCategory,
-        observedStart: normalized.observedStart,
-        observedEnd: normalized.observedEnd,
-        publishedAt: new Date(),
-        raw: {
-          sourceId: sourceKey,
-          row: rawRow,
+    try {
+      await pulseArticle.create({
+        data: {
+          pulseSlug,
+          articleSlug,
+          title: generated.title,
+          summary: generated.summary,
+          body: generated.body,
+          category: config.gdeltCategory,
+          observedStart: normalized.observedStart,
+          observedEnd: normalized.observedEnd,
+          publishedAt: new Date(),
+          raw: {
+            sourceId: sourceKey,
+            row: rawRow,
+          },
         },
-      },
-      update: {
-        title: generated.title,
-        summary: generated.summary,
-        body: generated.body,
-        sourceUrl: generated.sourceUrl,
-        raw: {
-          sourceId: sourceKey,
-          row: rawRow,
-        },
-      },
-    });
+      });
 
-    existingSlugs.add(articleSlug);
-    existingSourceKeys.add(sourceKey);
-    if (upserted.articleSlug) {
-      newUrls.push(`${SITE_URL}/pulse/${pulseSlug}/${upserted.articleSlug}`);
+      existingSlugs.add(articleSlug);
+      existingSourceKeys.add(sourceKey);
+      newUrls.push(`${SITE_URL}/pulse/${pulseSlug}/${articleSlug}`);
+      created += 1;
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        existingSourceKeys.add(sourceKey);
+        continue;
+      }
+      throw err;
     }
-    created += 1;
   }
 
   if (newUrls.length > 0) {
@@ -355,14 +366,11 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
   return { created };
 }
 
-export async function syncAllPulseCategories(): Promise<Record<PulseSlug, { created: number }>> {
-  const results = await Promise.all(PULSE_SLUGS.map((slug) => syncPulseCategory(slug)));
-  return Object.fromEntries(PULSE_SLUGS.map((slug, i) => [slug, results[i]])) as Record<
+export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
+  const slugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
+  const results = await Promise.all(slugs.map((slug) => syncPulseCategory(slug)));
+  return Object.fromEntries(slugs.map((slug, i) => [slug, results[i]])) as Record<
     PulseSlug,
     { created: number }
   >;
-}
-
-export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
-  return syncAllPulseCategories();
 }

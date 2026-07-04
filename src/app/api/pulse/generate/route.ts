@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { syncAllPulseCategories } from '@/lib/pulse-service';
+import { runDailyPulsePipeline } from '@/lib/pulse-service';
 import { isCronAuthorized, runCronPipeline } from '@/server/cron';
 
 export async function GET(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return runCronPipeline(syncAllPulseCategories);
+  return runCronPipeline(runDailyPulsePipeline);
 }
 
 export async function POST(req: NextRequest) {
@@ -15,5 +15,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return runCronPipeline(syncAllPulseCategories);
+  return runCronPipeline(runDailyPulsePipeline);
 }
