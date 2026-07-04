@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PulseHeader from '@/components/pulse/PulseHeader';
-import { resolvePulseSlug } from '@/lib/pulse-categories';
+import { PULSE_CATEGORIES, resolvePulseSlug } from '@/lib/pulse-categories';
 import { getPulseArticleBySlug } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
@@ -36,6 +36,7 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
   const { pulseSlug: rawPulseSlug, articleSlug } = await params;
   const pulseSlug = resolvePulseSlug(rawPulseSlug);
   if (!pulseSlug) notFound();
+  const config = PULSE_CATEGORIES[pulseSlug];
 
   const article = await getPulseArticleBySlug(pulseSlug, articleSlug);
   if (!article) notFound();
@@ -45,6 +46,11 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
       <PulseHeader />
       <main className="pulse-page pulse-article-page">
         <div className="pulse-container">
+          <div className="pulse-article-toolbar">
+            <Link href={`/pulse/${pulseSlug}`} className="pulse-back-button">
+              ← Back to {config.label}
+            </Link>
+          </div>
           <p className="pulse-crumbs">
             <Link href={`/pulse/${pulseSlug}`}>Pulse / {pulseSlug}</Link>
           </p>

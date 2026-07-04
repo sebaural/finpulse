@@ -114,6 +114,31 @@
   padding-top: 34px;
 }
 
+.pulse-article-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.pulse-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--pulse-border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: var(--pulse-text);
+  text-decoration: none;
+  font-family: 'Inconsolata', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.pulse-back-button:hover {
+  border-color: var(--pulse-accent);
+  color: var(--pulse-accent);
+}
+
 .pulse-crumbs {
   margin-bottom: 12px;
   font-size: 13px;
