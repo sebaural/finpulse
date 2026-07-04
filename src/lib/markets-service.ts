@@ -172,27 +172,50 @@ export async function generateMarketsSummaryArticle(
     )
     .join('\n---\n');
 
-  const prompt =
+const prompt =
     `You are analyzing today's top markets news. Here are ${articles.length} articles:\n\n` +
     `${articlesText}\n\n` +
     `Based on these articles, produce a comprehensive markets intelligence report.\n` +
     `Respond with PURE JSON only — no markdown fences, no explanation text, just the JSON object.\n\n` +
+    `GROUNDING RULES (apply to every fact, figure, and name in the report):\n` +
+    `- Every specific number — price level, rate, percentage, tonnage, date, yield — must come from\n` +
+    `  the source articles above. Do not supply a figure from general knowledge, even if it seems\n` +
+    `  reasonable. If the articles don't give the current level of something your scenario needs\n` +
+    `  (e.g. today's gold price, Brent price, Fed funds rate), state the direction and driver\n` +
+    `  qualitatively instead of inventing a number.\n` +
+    `- Before finalizing, re-check every number you've written against the source articles one more\n` +
+    `  time. A "worst case" or "best case" figure must be a plausible move FROM the current level\n` +
+    `  stated in the articles — if you're not sure what the current level is, don't state a target.\n` +
+    `- Never attribute a claim to an unnamed group ("economists say", "analysts believe"). Only cite\n` +
+    `  a source if the articles name a specific person, institution, or publication — otherwise drop\n` +
+    `  the attribution and state the claim plainly or omit it.\n` +
+    `- Only name a specific company or ticker if it appears in the source articles with a clear,\n` +
+    `  stated catalyst (earnings, guidance, a deal, a rating action). Tie the mention to that catalyst\n` +
+    `  in the same sentence. Do not add companies from general sector knowledge as illustrations.\n\n` +
     `CRITICAL REQUIREMENTS FOR THE "summary" FIELD:\n` +
     `- Maximum 800 words. Use the word count to explore nuanced causal relationships,\n` +
-    `  second-order effects, and cross-asset linkages. No filler — every sentence must add depth.\n` +
-    `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers):\n` +
+    `  second-order effects, and cross-asset linkages — but only ones the articles support.\n` +
+    `  No filler, and no padding a section just to fill space — a section with thin material\n` +
+    `  should be short; do not stretch it to match the others.\n` +
+    `- Structure the content using these EXACT section headers (plain text only — NO asterisks, NO markdown bold, NO ** around headers).\n` +
+    `  Include a section only if the articles give it real substance; if a section would be\n` +
+    `  speculative filler, compress it to 1-2 sentences rather than inventing content:\n` +
     `  INTRODUCTION — Establish today's market environment. Identify the immediate\n` +
-    `    catalyst (data print, central-bank decision, earnings shock, etc.).\n` +
-    `  FUTURE PROJECTIONS — Provide three scenarios:\n` +
+    `    catalyst (data print, central-bank decision, earnings shock, etc.), sourced to the articles.\n` +
+    `  FUTURE PROJECTIONS — Provide three scenarios, each grounded in a current level stated in\n` +
+    `    the articles (not memory):\n` +
     `    - BEST CASE: [scenario + logic-based justification]\n` +
     `    - BASE CASE: [scenario + logic-based justification]\n` +
     `    - WORST CASE: [scenario + logic-based justification]\n` +
-    `  HISTORICAL CONTEXT — Detail the multi-month or multi-cycle trends, prior policy\n` +
-    `    regimes, and structural forces (inflation regime, liquidity cycle) that led here.\n` +
-    `  PRIMARY STAKEHOLDERS — Analyze key actors: central banks, institutional investors,\n` +
-    `    corporate earners, retail flows. Cover their constraints, incentives, and positioning.\n` +
-    `  ECONOMIC IMPLICATIONS — Evaluate impacts on equities, fixed income, FX, commodities,\n` +
-    `    credit spreads, and volatility surfaces. Reference specific indices, yields, or sectors.\n` +
+    `    Mark each numeric target as a projection (e.g. "projected to reach X") so it reads\n` +
+    `    distinctly from the reported facts elsewhere in the report.\n` +
+    `  HISTORICAL CONTEXT — Detail multi-month or multi-cycle trends, prior policy regimes, and\n` +
+    `    structural forces that led here, drawn only from what the articles establish.\n` +
+    `  PRIMARY STAKEHOLDERS — Analyze key actors named in the articles: central banks, institutional\n` +
+    `    investors, corporate earners, retail flows. Cover their stated constraints and incentives.\n` +
+    `  ECONOMIC IMPLICATIONS — Evaluate impacts on equities, fixed income, FX, commodities, credit\n` +
+    `    spreads, and volatility, referencing specific indices, yields, or sectors named in the\n` +
+    `    articles rather than illustrative examples.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
     buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
@@ -200,7 +223,7 @@ export async function generateMarketsSummaryArticle(
     `  "title": "engaging, professional headline capturing the day's market signal",\n` +
     `  "slug": "url slug — exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only (no numbers, no underscores, no special chars); pick the 4-5 nouns/proper nouns that uniquely identify the article angle; drop stop words; verify hyphen count ≤ 4 before finalising",\n` +
     `  "summary": "<full structured report — max 800 words — following the sections above>",\n` +
-    `  "keyPoints": ["5-7 concise market takeaways from the report"],\n` +
+    `  "keyPoints": ["5-7 concise market takeaways, each traceable to a specific article"],\n` +
     `  "region": "primary market region (US / Europe / Asia-Pacific / Global / EM / etc.)",\n` +
     `  "tags": ["4-6 asset classes, sectors, indices, or instruments"],\n` +
     `  "topic": { "name": "broad evergreen topic hub name", "slug": "hub-slug" }\n` +
