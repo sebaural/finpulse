@@ -7,17 +7,17 @@
 }
 
 .pulse-page {
-  --pulse-bg: #0f1319;
-  --pulse-surface: #171d24;
-  --pulse-surface2: #1f2731;
-  --pulse-border: #2b3746;
-  --pulse-text: #e8eff8;
-  --pulse-muted: #8fa0b5;
-  --pulse-accent: #f5b948;
-  min-height: 100vh;
-  background: radial-gradient(circle at 10% -10%, #203b5a 0%, transparent 40%), var(--pulse-bg);
-  color: var(--pulse-text);
-  padding: 28px 20px 36px;
+    --pulse-bg: #0f1319;
+    --pulse-surface: #171d24;
+    --pulse-surface2: #1f2731;
+    --pulse-border: #2b3746;
+    --pulse-text: #e8eff8;
+    --pulse-muted: #8fa0b5;
+    --pulse-accent: #f5b948;
+    min-height: 100vh;
+    background: radial-gradient(circle at -3% 166%, #203b5a 4%, transparent 40%), var(--pulse-bg);
+    color: var(--pulse-text);
+    padding: 28px 20px 36px;
 }
 
 .pulse-container {
