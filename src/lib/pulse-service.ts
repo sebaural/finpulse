@@ -66,6 +66,128 @@ interface PulseSourceShape {
   metricsHint: string;
 }
 
+const MONTH_TOKENS = new Set([
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'sept',
+  'oct',
+  'nov',
+  'dec',
+]);
+
+const RELATIVE_TIME_TOKENS = new Set([
+  'today',
+  'daily',
+  'weekly',
+  'monthly',
+  'yearly',
+  'yesterday',
+  'tomorrow',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+]);
+
+const STOP_WORD_TOKENS = new Set([
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'for',
+  'with',
+  'from',
+  'into',
+  'onto',
+  'over',
+  'under',
+  'across',
+  'amid',
+  'after',
+  'before',
+  'during',
+  'through',
+  'about',
+  'this',
+  'that',
+  'these',
+  'those',
+  'update',
+  'updates',
+]);
+
+function isDateLikeSlugToken(token: string): boolean {
+  return (
+    /^(19|20)\d{2}$/.test(token) ||
+    /^q[1-4]$/i.test(token) ||
+    MONTH_TOKENS.has(token) ||
+    RELATIVE_TIME_TOKENS.has(token)
+  );
+}
+
+function stripDateTokensFromSlug(slug: string): string {
+  return canonicalizeSlug(slug)
+    .split('-')
+    .filter((token) => {
+      if (!token) return false;
+      if (!/^[a-z]+$/.test(token)) return false;
+      if (/[0-9]/.test(token)) return false;
+      if (isDateLikeSlugToken(token)) return false;
+      return true;
+    })
+    .join('-');
+}
+
+function regeneratePulseSlug(source: PulseSourceShape, pulseSlug: PulseSlug): string {
+  const tokens = canonicalizeSlug(
+    `${source.title} ${source.summaryHint} ${pulseSlug} ${source.metricsHint}`,
+  )
+    .split('-')
+    .filter((token) => {
+      if (!token) return false;
+      if (!/^[a-z]+$/.test(token)) return false;
+      if (token.length < 3) return false;
+      if (STOP_WORD_TOKENS.has(token)) return false;
+      if (isDateLikeSlugToken(token)) return false;
+      return true;
+    });
+
+  const deduped = [...new Set(tokens)];
+  const preferred = deduped.slice(0, 5);
+  const fallbackPad = ['macro', 'outlook', 'signal', 'briefing', pulseSlug].filter(
+    (token) => !preferred.includes(token) && !isDateLikeSlugToken(token),
+  );
+  const finalTokens = [...preferred, ...fallbackPad].slice(0, 5);
+
+  if (finalTokens.length < 4) {
+    return `macro-${pulseSlug}-signal-briefing`;
+  }
+
+  return finalTokens.join('-');
+}
+
 function toDateOrNull(value: unknown): Date | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   const d = new Date(value);
@@ -246,7 +368,7 @@ async function generatePulseArticleFromSource(
     `Respond with JSON only using this exact shape:\n` +
     `{\n` +
     `  "title": "...",\n` +
-    `  "slug": "4-5 word lowercase slug with hyphens",\n` +
+    `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
     `  "summary": "2-3 sentence concise summary",\n` +
     `  "body": "4-6 paragraph briefing with strategic context",\n` +
     `  "sourceUrl": "source URL if available"\n` +
@@ -275,7 +397,14 @@ async function generatePulseArticleFromSource(
   }
 
   const parsed = parseClaudeJson<ClaudePulseResponse>(first.text);
-  const slug = canonicalizeSlug(parsed.slug || parsed.title || source.title);
+  const modelSlug = parsed.slug || parsed.title || source.title;
+  const strippedSlug = stripDateTokensFromSlug(modelSlug);
+  if (strippedSlug !== canonicalizeSlug(modelSlug)) {
+    console.warn(`[pulse-service] removed date-like slug tokens: "${modelSlug}" -> "${strippedSlug}"`);
+  }
+
+  const slugTokens = strippedSlug.split('-').filter(Boolean);
+  const slug = slugTokens.length < 3 ? regeneratePulseSlug(source, pulseSlug) : strippedSlug;
 
   return {
     title: parsed.title || source.title,
