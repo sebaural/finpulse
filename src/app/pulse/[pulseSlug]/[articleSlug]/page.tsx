@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PulseHeader from '@/components/pulse/PulseHeader';
 import { PULSE_CATEGORIES, resolvePulseSlug } from '@/lib/pulse-categories';
+import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
 import { getPulseArticleBySlug } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
@@ -40,6 +41,7 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
 
   const article = await getPulseArticleBySlug(pulseSlug, articleSlug);
   if (!article) notFound();
+  const breadcrumbDate = formatPulseDisplayDate(getPulseDisplayDateSource(article));
 
   return (
     <>
@@ -53,6 +55,14 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
           </div>
           <p className="pulse-crumbs">
             <Link href={`/pulse/${pulseSlug}`}>Pulse / {pulseSlug}</Link>
+            {breadcrumbDate ? (
+              <>
+                <span className="pulse-crumb-sep" aria-hidden="true">
+                  {' / '}
+                </span>
+                <span className="pulse-crumb-date">{breadcrumbDate}</span>
+              </>
+            ) : null}
           </p>
           <h1>{article.title}</h1>
           {article.summary ? <p className="pulse-summary">{article.summary}</p> : null}

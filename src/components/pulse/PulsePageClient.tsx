@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import PulseHeader from '@/components/pulse/PulseHeader';
+import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
 import type { PulseArticle, PulseCategoryConfig } from '@/types/pulse';
 import './pulse.css';
 
@@ -22,19 +23,8 @@ function articleTimestamp(article: PulseArticle): number {
   return Number.isNaN(t) ? -Infinity : t;
 }
 
-function formatTime(value?: string | null): string {
-  if (!value) return 'No timestamp';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return 'No timestamp';
-  return d.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'UTC',
-    timeZoneName: 'short',
-  });
+function formatMetaDate(article: PulseArticle): string {
+  return formatPulseDisplayDate(getPulseDisplayDateSource(article)) ?? 'No timestamp';
 }
 
 export function PulsePageClient({ config, articles }: PulsePageClientProps) {
@@ -79,7 +69,7 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
                       href={`/pulse/${config.pulseSlug}/${article.articleSlug}`}
                     >
                       <span className="pulse-article-title">{article.title}</span>
-                      <span className="pulse-article-meta">{formatTime(article.observedStart ?? article.publishedAt)}</span>
+                      <span className="pulse-article-meta">{formatMetaDate(article)}</span>
                       {article.summary ? <span className="pulse-article-summary">{article.summary}</span> : null}
                     </Link>
                   </li>
