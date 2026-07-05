@@ -62,6 +62,8 @@ interface PulseSourceShape {
   summaryHint: string;
   observedStart: Date | null;
   observedEnd: Date | null;
+  bucketKey: string;
+  metricsHint: string;
 }
 
 function toDateOrNull(value: unknown): Date | null {
@@ -152,13 +154,58 @@ function inferSummaryHint(row: GdeltSummaryRow): string {
   return '';
 }
 
+// GDELT summary rows returned with `group_by: date` carry no explicit
+// timestamp field — the date bucket lives in `key` (e.g. "2026-07-02").
+function getBucketDate(row: GdeltSummaryRow): Date | null {
+  const candidates = [row.key, row.date, row.bucket, row.event_date];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (!trimmed) continue;
+    const iso = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T00:00:00Z` : trimmed;
+    const d = new Date(iso);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+// Compact, human-readable digest of the aggregate metrics on a date bucket so
+// Claude has real signal to differentiate one day's briefing from the next.
+function inferMetricsHint(row: GdeltSummaryRow): string {
+  const parts: string[] = [];
+  const metrics = (row.metrics ?? {}) as Record<string, { total?: unknown } | undefined>;
+  const push = (label: string, value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) parts.push(`${label}: ${value}`);
+  };
+
+  push('events', row.event_count);
+  push('articles', row.article_count ?? metrics.article_count?.total);
+  push('fatalities', row.fatalities);
+  push('avg significance', row.avg_significance);
+  push('avg confidence', row.avg_confidence);
+  push('avg market sensitivity', row.avg_market_sensitivity);
+  push('avg systemic importance', row.avg_systemic_importance);
+
+  return parts.join(', ');
+}
+
 function normalizePulseSource(row: GdeltSummaryRow, category: string): PulseSourceShape {
+  const bucketDate = getBucketDate(row);
+  const bucketKey =
+    typeof row.key === 'string' && row.key.trim()
+      ? row.key.trim()
+      : bucketDate
+        ? bucketDate.toISOString().slice(0, 10)
+        : '';
+
   return {
     title: inferTitle(row, category),
     sourceUrl: inferSourceUrl(row),
     summaryHint: inferSummaryHint(row),
-    observedStart: toDateOrNull(row.observed_start),
-    observedEnd: toDateOrNull(row.observed_end),
+    observedStart: toDateOrNull(row.observed_start) ?? bucketDate,
+    observedEnd: toDateOrNull(row.observed_end) ?? bucketDate,
+    bucketKey,
+    metricsHint: inferMetricsHint(row),
   };
 }
 
@@ -168,6 +215,15 @@ function stableSourceKey(row: GdeltSummaryRow, normalized: PulseSourceShape): st
   for (const id of idCandidates) {
     if (typeof id === 'string' && id.trim()) return id.trim().toLowerCase();
     if (typeof id === 'number') return String(id);
+  }
+
+  // Date-bucketed GDELT summaries have no per-event id or url, so keying on
+  // title+url collapses to a per-category constant — after the first run every
+  // row matches an existing key and nothing new is ever created. The date
+  // bucket (`key`) is the stable per-day identity; syncPulseCategory already
+  // scopes by category, so bucketKey alone is unique per (category, date).
+  if (normalized.bucketKey) {
+    return `${normalized.title.toLowerCase()}::${normalized.bucketKey.toLowerCase()}`;
   }
 
   return `${normalized.title.toLowerCase()}::${normalized.sourceUrl.toLowerCase()}`;
@@ -198,9 +254,11 @@ async function generatePulseArticleFromSource(
     `Input source data:\n` +
     `Pulse slug: ${pulseSlug}\n` +
     `Title: ${source.title}\n` +
+    `Date: ${source.bucketKey || 'N/A'}\n` +
     `Source URL: ${source.sourceUrl || 'N/A'}\n` +
     `Observed start: ${source.observedStart?.toISOString() ?? 'N/A'}\n` +
     `Observed end: ${source.observedEnd?.toISOString() ?? 'N/A'}\n` +
+    `Aggregate signal metrics: ${source.metricsHint || 'N/A'}\n` +
     `Summary hint: ${source.summaryHint || 'N/A'}\n`;
 
   const response = await client.messages.create({
@@ -262,11 +320,27 @@ export async function getPulseArticleBySlug(
   }
 }
 
+// Effective publish time for ordering: the observed date, falling back to the
+// stored publish time. Legacy rows have a null observedStart, so relying on the
+// DB's `observedStart desc` (NULLS FIRST in Postgres) would surface the oldest
+// row as "latest" — compute the max explicitly instead.
+function pulseArticleTime(article: PulseArticle): number {
+  const value = article.observedStart ?? article.publishedAt;
+  if (!value) return -Infinity;
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? -Infinity : t;
+}
+
 export async function getLatestArticlePerCategory(): Promise<Record<PulseSlug, PulseArticle | null>> {
   const entries = await Promise.all(
     PULSE_SLUGS.map(async (slug) => {
-      const [latest] = await getPulseArticles(slug);
-      return [slug, latest ?? null] as const;
+      const articles = await getPulseArticles(slug);
+      const latest = articles.reduce<PulseArticle | null>(
+        (best, current) =>
+          !best || pulseArticleTime(current) > pulseArticleTime(best) ? current : best,
+        null,
+      );
+      return [slug, latest] as const;
     }),
   );
   return Object.fromEntries(entries) as Record<PulseSlug, PulseArticle | null>;
@@ -281,6 +355,7 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
   const rawRows = Array.isArray(payload.data) ? payload.data : [];
 
   if (rawRows.length === 0) {
+    console.warn(`[pulse-service] ${pulseSlug}: GDELT returned no rows`);
     return { created: 0 };
   }
 
@@ -322,9 +397,15 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
       continue;
     }
 
-    let articleSlug = generated.slug;
+    // Date-suffix the slug so each day's briefing is a distinct, collision-free
+    // URL. Claude emits near-identical slugs day to day for these generic
+    // aggregate briefings; without the suffix the second day would hit the
+    // unique constraint and the new article would be silently dropped (P2002).
+    let articleSlug = normalized.bucketKey
+      ? `${generated.slug}-${normalized.bucketKey}`
+      : generated.slug;
     if (existingSlugs.has(articleSlug) || (await isSlugTakenAcrossVerticals(articleSlug))) {
-      articleSlug = `${generated.slug}-${pulseSlug}`;
+      articleSlug = `${articleSlug}-${pulseSlug}`;
     }
 
     try {
@@ -363,12 +444,24 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
     await notifyBing(newUrls);
   }
 
+  console.log(`[pulse-service] ${pulseSlug}: ${rawRows.length} source rows → ${created} created`);
+
   return { created };
 }
 
 export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
   const slugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
-  const results = await Promise.all(slugs.map((slug) => syncPulseCategory(slug)));
+
+  // Fault-isolate per category: a single category's GDELT/Claude failure must
+  // not reject the whole pulse pipeline and zero out the categories that would
+  // otherwise have succeeded.
+  const settled = await Promise.allSettled(slugs.map((slug) => syncPulseCategory(slug)));
+  const results = settled.map((outcome, i) => {
+    if (outcome.status === 'fulfilled') return outcome.value;
+    console.error(`[pulse-service] ${slugs[i]} pipeline failed`, outcome.reason);
+    return { created: 0 };
+  });
+
   return Object.fromEntries(slugs.map((slug, i) => [slug, results[i]])) as Record<
     PulseSlug,
     { created: number }
