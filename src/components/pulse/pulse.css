@@ -175,8 +175,10 @@
 }
 
 .pulse-crumbs a {
-  color: var(--pulse-muted);
+  color: var(--pulse-accent);
   text-decoration: none;
+  font-size: 20px;
+  font-weight: 500;
 }
 
 .pulse-crumbs a:hover {
@@ -188,7 +190,8 @@
 }
 
 .pulse-crumb-date {
-  color: var(--pulse-muted);
+  color: var(--text);
+  font-size: 20px
 }
 
 .pulse-summary {
@@ -330,6 +333,13 @@
   }
 
   .pulse-summary {
+    font-size: 16px;
+  }
+  .pulse-crumbs a {
+  font-size: 16px;
+}
+
+  .pulse-crumb-date {
     font-size: 16px;
   }
 }
