@@ -100,6 +100,7 @@ interface HomeClientProps {
   initialUsingFallback: boolean;
   geoAnalysis: TopicAnalysisItem[];
   marketAnalysis: TopicAnalysisItem[];
+  techAnalysis: TopicAnalysisItem[];
   pulseLatest: Record<PulseSlug, PulseArticle | null>;
 }
 
@@ -108,12 +109,13 @@ export default function HomeClient({
   initialUsingFallback,
   geoAnalysis,
   marketAnalysis,
+  techAnalysis,
   pulseLatest,
 }: HomeClientProps) {
   // Editorial deep-dive grid: topic-linked briefings route to
   // /topics/[topicSlug]/[articleSlug]. Empty (renders nothing) until the
   // pipeline assigns topicId to articles.
-  const topicAnalysis = [...geoAnalysis, ...marketAnalysis].filter((a) => a.topic);
+  const topicAnalysis = [...geoAnalysis, ...marketAnalysis, ...techAnalysis].filter((a) => a.topic);
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
   const [loading, setLoading] = useState(false);
   const [showFallbackBanner, setShowFallbackBanner] = useState(initialUsingFallback);

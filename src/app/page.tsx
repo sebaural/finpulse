@@ -6,7 +6,7 @@ import { getLatestArticlePerCategory } from '@/lib/pulse-service';
 export const revalidate = 30;
 
 export default async function Page() {
-  const [{ articles, usingFallback }, { geoAnalysis, marketAnalysis }, pulseLatest] = await Promise.all([
+  const [{ articles, usingFallback }, { geoAnalysis, marketAnalysis, techAnalysis }, pulseLatest] = await Promise.all([
     getAggregatedNews(),
     fetchTopicAnalysis(),
     getLatestArticlePerCategory(),
@@ -18,6 +18,7 @@ export default async function Page() {
       initialUsingFallback={usingFallback}
       geoAnalysis={geoAnalysis}
       marketAnalysis={marketAnalysis}
+      techAnalysis={techAnalysis}
       pulseLatest={pulseLatest}
     />
   );

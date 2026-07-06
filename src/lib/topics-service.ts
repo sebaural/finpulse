@@ -76,11 +76,11 @@ export const fetchTopicBySlug = cache(async (slug: string) => {
 
 /**
  * Fetch topic-linked articles for the homepage editorial grid.
- * Geopolitics and markets only — extend to include tech if added to homepage.
+ * Includes the latest topic-linked articles across all homepage verticals.
  */
 export async function fetchTopicAnalysis() {
   const prisma = getPrisma();
-  const [geoAnalysis, marketAnalysis] = await Promise.all([
+  const [geoAnalysis, marketAnalysis, techAnalysis] = await Promise.all([
     prisma.geopoliticsArticle.findMany({
       where: { NOT: { topicId: null } },
       take: 3,
@@ -93,6 +93,12 @@ export async function fetchTopicAnalysis() {
       include: { topic: true },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.techArticle.findMany({
+      where: { NOT: { topicId: null } },
+      take: 3,
+      include: { topic: true },
+      orderBy: { createdAt: 'desc' },
+    }),
   ]);
-  return { geoAnalysis, marketAnalysis };
+  return { geoAnalysis, marketAnalysis, techAnalysis };
 }
