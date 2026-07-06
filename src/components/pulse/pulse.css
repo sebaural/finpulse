@@ -194,17 +194,13 @@
   font-size: 20px
 }
 
-.pulse-summary {
-  margin: 12px 0 16px;
-  font-size: 18px;
-  line-height: 1.55;
-  color: #d6e1ef;
-}
-
 .pulse-article-page .pulse-summary {
+  margin: 12px 0 16px;
+  line-height: 1.55;
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 400;
   font-style: italic;
+  color: var(--pulse-muted);
 }
 
 .pulse-body {
