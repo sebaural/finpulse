@@ -5,6 +5,8 @@ import { PULSE_CATEGORIES, PULSE_SLUGS, resolvePulseSlug } from '@/lib/pulse-cat
 import { getPulseArticles } from '@/lib/pulse-service';
 import { buildMetadata } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 interface PulsePageProps {
   params: Promise<{ pulseSlug: string }>;
 }

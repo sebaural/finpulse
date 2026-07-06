@@ -9,6 +9,8 @@ import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
 import '@/components/pulse/pulse.css';
 
+export const dynamic = 'force-dynamic';
+
 interface ArticlePageProps {
   params: Promise<{ pulseSlug: string; articleSlug: string }>;
 }

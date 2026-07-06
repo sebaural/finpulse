@@ -37,12 +37,19 @@ interface PulseExistingRow {
   raw: unknown;
 }
 
+function shouldThrowPulseReadErrors(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
 function getPulseDelegate(): PulseArticleDelegateLike | null {
   const prisma = getPrisma() as unknown as { pulseArticle?: PulseArticleDelegateLike };
   if (!prisma.pulseArticle) {
-    console.error(
-      '[pulse-service] prisma.pulseArticle is unavailable. Regenerate Prisma client and restart the server.',
-    );
+    const message =
+      '[pulse-service] prisma.pulseArticle is unavailable. Regenerate Prisma client and restart the server.';
+    console.error(message);
+    if (shouldThrowPulseReadErrors()) {
+      throw new Error(message);
+    }
     return null;
   }
   return prisma.pulseArticle;
@@ -427,6 +434,9 @@ export async function getPulseArticles(pulseSlug: PulseSlug): Promise<PulseArtic
     return rows.map(toPulseArticle);
   } catch (error) {
     console.error('[pulse-service] failed to load pulse articles', error);
+    if (shouldThrowPulseReadErrors()) {
+      throw error;
+    }
     return [];
   }
 }
@@ -445,6 +455,9 @@ export async function getPulseArticleBySlug(
     return row ? toPulseArticle(row) : null;
   } catch (error) {
     console.error('[pulse-service] failed to load pulse article', error);
+    if (shouldThrowPulseReadErrors()) {
+      throw error;
+    }
     return null;
   }
 }
