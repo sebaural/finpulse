@@ -1,10 +1,11 @@
 .topcis-article {
     width: 75vw;
-    margin: 0 auto;
+    margin: 0 auto !important;
 }
 
 .topcis-article .geo-region-badge {
-    font-weight: bold;
+    font-weight: 900;
+    padding: 10px 20px;
 }
 
 .topcis-article .geo-region-badge:hover, 
@@ -15,12 +16,16 @@
 
 .topcis-article .geo-article-date   {
     color: var(--text);
+    font-size: 20px;
 } 
 
 /* // Mobile responsiveness */
 
 @media (max-width: 768px) {
     .topcis-article {
-        width: 90vw;
+        width: 90vw !important;
     }
+    .topcis-article .geo-article-date   {
+    font-size: 16px;
+} 
 }

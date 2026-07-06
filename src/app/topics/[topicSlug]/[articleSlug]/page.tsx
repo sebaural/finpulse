@@ -167,7 +167,7 @@ export default async function ArticleSpokePage({ params }: Props) {
           <article className="topcis-article">
             <div className="geo-article-meta">
               <Link href={`/topics/${topicSlug}`} className="geo-region-badge">
-                {topic.name}
+                {`See All ${topicSlug} Articles`}
               </Link>
               <span className="geo-article-date">{formatFullDate(data.date)}</span>
             </div>

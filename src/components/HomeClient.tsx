@@ -92,30 +92,26 @@ interface TopicAnalysisItem {
   id: string;
   slug: string;
   title: string;
-  topic: { slug: string; name: string } | null;
+  createdAt: Date;
+  topic: { slug: string; name: string };
 }
 
 interface HomeClientProps {
   initialArticles: NewsArticle[];
   initialUsingFallback: boolean;
-  geoAnalysis: TopicAnalysisItem[];
-  marketAnalysis: TopicAnalysisItem[];
-  techAnalysis: TopicAnalysisItem[];
+  topicAnalysis: TopicAnalysisItem[];
   pulseLatest: Record<PulseSlug, PulseArticle | null>;
 }
 
 export default function HomeClient({
   initialArticles,
   initialUsingFallback,
-  geoAnalysis,
-  marketAnalysis,
-  techAnalysis,
+  topicAnalysis,
   pulseLatest,
 }: HomeClientProps) {
   // Editorial deep-dive grid: topic-linked briefings route to
-  // /topics/[topicSlug]/[articleSlug]. Empty (renders nothing) until the
-  // pipeline assigns topicId to articles.
-  const topicAnalysis = [...geoAnalysis, ...marketAnalysis, ...techAnalysis].filter((a) => a.topic);
+  // /topics/[topicSlug]/[articleSlug]. One latest article is shown for each
+  // available topic, already sorted by recency on the server.
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
   const [loading, setLoading] = useState(false);
   const [showFallbackBanner, setShowFallbackBanner] = useState(initialUsingFallback);

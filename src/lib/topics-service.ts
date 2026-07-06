@@ -5,6 +5,14 @@ import { getPrisma } from '@/lib/db';
 
 type Vertical = 'geopolitics' | 'markets' | 'tech';
 
+interface TopicAnalysisItem {
+  id: string;
+  slug: string;
+  title: string;
+  createdAt: Date;
+  topic: { slug: string; name: string };
+}
+
 /**
  * Fetch a single article by slug, with optional vertical hint.
  *
@@ -76,29 +84,53 @@ export const fetchTopicBySlug = cache(async (slug: string) => {
 
 /**
  * Fetch topic-linked articles for the homepage editorial grid.
- * Includes the latest topic-linked articles across all homepage verticals.
+ * Returns one latest linked article per topic, sorted by recency.
  */
 export async function fetchTopicAnalysis() {
   const prisma = getPrisma();
-  const [geoAnalysis, marketAnalysis, techAnalysis] = await Promise.all([
-    prisma.geopoliticsArticle.findMany({
-      where: { NOT: { topicId: null } },
-      take: 3,
-      include: { topic: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.marketsArticle.findMany({
-      where: { NOT: { topicId: null } },
-      take: 3,
-      include: { topic: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.techArticle.findMany({
-      where: { NOT: { topicId: null } },
-      take: 3,
-      include: { topic: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-  ]);
-  return { geoAnalysis, marketAnalysis, techAnalysis };
+  const topics = await prisma.topic.findMany({
+    include: {
+      geopoliticsArticles: {
+        select: { id: true, slug: true, title: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+      marketsArticles: {
+        select: { id: true, slug: true, title: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+      techArticles: {
+        select: { id: true, slug: true, title: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
+  });
+
+  const topicAnalysis = topics
+    .map<TopicAnalysisItem | null>((topic) => {
+      const latest = [
+        ...topic.geopoliticsArticles,
+        ...topic.marketsArticles,
+        ...topic.techArticles,
+      ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+
+      if (!latest) return null;
+
+      return {
+        id: latest.id,
+        slug: latest.slug,
+        title: latest.title,
+        createdAt: latest.createdAt,
+        topic: {
+          slug: topic.slug,
+          name: topic.name,
+        },
+      };
+    })
+    .filter((item): item is TopicAnalysisItem => item !== null)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  return { topicAnalysis };
 }
