@@ -371,25 +371,13 @@ async function generatePulseArticleFromSource(
   const client = new Anthropic({ apiKey: anthropicKey });
 
   const prompt =
-    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now, and synthesize the discourse into two macro-summaries based on five distinct, opposing perspectives.\n\n` +
-    `Please execute this task using the following structured steps:\n\n` +
-    `### STEP 1: TOPIC IDENTIFICATION\n` +
-    `Identify the top U.S. political topic of today that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences.\n\n` +
-    `### STEP 2: THE 5 OPPOSING PERSPECTIVES\n` +
-    `Break down the global conversation into 5 distinct, prominent, and competing viewpoints driving the highest engagement. For each perspective, provide:\n` +
-    `1. A descriptive title for the faction/viewpoint.\n` +
-    `2. The core narrative or thesis statement.\n` +
-    `3. The specific arguments or rhetoric they are using to drive engagement.\n\n` +
-    `Ensure these 5 perspectives cover a diverse spectrum (e.g., domestic populist, traditional institutionalist, global realist, adversarial/anti-Western, or neutral bystander/Global South).\n\n` +
-    `### STEP 3: THE TWO META-SUMMARIES\n` +
-    `Synthesize those 5 perspectives into two distinct, overarching macro-narratives. These summaries should not just list the viewpoints, but seamlessly weave them into the two primary, competing realities currently clashing on the global stage.\n\n` +
-    `Maintain strict analytical objectivity. Do not favor any perspective; instead, focus on accurately capturing the emotional weight, logical frameworks, and geopolitical drivers behind each faction's engagement.\n\n` +
+    `Generate a concise macro intelligence briefing for the Pulse category "${categoryLabel}".\n` +
     `Respond with JSON only using this exact shape:\n` +
     `{\n` +
     `  "title": "...",\n` +
     `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
-    `  "summary": "2-3 sentence concise summary of the top topic and the two competing macro-narratives",\n` +
-    `  "body": "Full structured analysis formatted exactly as:\\n\\n<topic_analysis>\\n[Step 1 content]\\n</topic_analysis>\\n\\n<competing_perspectives>\\n[Step 2 content with all 5 perspectives, each with title, core thesis, and key rhetoric]\\n</competing_perspectives>\\n\\n<summary_one title=\\"[Theme/Name of First Macro-Narrative]\\">\\n[2-paragraph synthesis of aligned viewpoints, focusing on underlying ideology, motivations, and global implications]\\n</summary_one>\\n\\n<summary_two title=\\"[Theme/Name of Second Macro-Narrative]\\">\\n[2-paragraph synthesis of opposing worldviews, sharply contrasting with summary_one to reveal the core ideological fault line]\\n</summary_two>",\n` +
+    `  "summary": "2-3 sentence concise summary",\n` +
+    `  "body": "4-6 paragraph briefing with strategic context",\n` +
     `  "sourceUrl": "source URL if available"\n` +
     `}\n\n` +
     `Input source data:\n` +
@@ -404,9 +392,9 @@ async function generatePulseArticleFromSource(
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 3200,
+    max_tokens: 1600,
     system:
-      'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Maintain strict analytical objectivity and return valid JSON only.',
+      'You are a macro intelligence editor. Write neutral, high-signal briefings and return valid JSON only.',
     messages: [{ role: 'user', content: prompt }],
   });
 
