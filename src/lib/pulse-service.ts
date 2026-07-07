@@ -551,15 +551,17 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
       continue;
     }
 
-    // Date-suffix the slug so each day's briefing is a distinct, collision-free
-    // URL. Claude emits near-identical slugs day to day for these generic
-    // aggregate briefings; without the suffix the second day would hit the
-    // unique constraint and the new article would be silently dropped (P2002).
-    let articleSlug = normalized.bucketKey
-      ? `${generated.slug}-${normalized.bucketKey}`
-      : generated.slug;
+    // Keep pulse URLs date-free. If a slug collides, disambiguate with a
+    // non-date suffix so the URL shape remains /pulse/{pulseSlug}/{articleSlug}.
+    let articleSlug = generated.slug;
     if (existingSlugs.has(articleSlug) || (await isSlugTakenAcrossVerticals(articleSlug))) {
-      articleSlug = `${articleSlug}-${pulseSlug}`;
+      let nextSlug = `${articleSlug}-${pulseSlug}`;
+      let attempt = 2;
+      while (existingSlugs.has(nextSlug) || (await isSlugTakenAcrossVerticals(nextSlug))) {
+        nextSlug = `${articleSlug}-${pulseSlug}-${attempt}`;
+        attempt += 1;
+      }
+      articleSlug = nextSlug;
     }
 
     try {
