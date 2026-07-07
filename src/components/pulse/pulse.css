@@ -209,6 +209,39 @@
   white-space: pre-wrap;
 }
 
+.pulse-body--html {
+  white-space: normal;
+}
+
+.pulse-body--html h2 {
+  margin: 18px 0 10px;
+  color: #f5b948;
+  font-family: 'Gideon Roman', serif;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.1;
+}
+
+.pulse-body--html p {
+  margin: 0 0 14px;
+}
+
+.pulse-body--html ul,
+.pulse-body--html ol {
+  margin: 0 0 14px 22px;
+  padding: 0;
+}
+
+.pulse-body--html li + li {
+  margin-top: 8px;
+}
+
+.pulse-body--html blockquote {
+  margin: 0 0 14px;
+  padding-left: 16px;
+  border-left: 2px solid #2a3340;
+  color: #d6e0ee;
+}
+
 .pulse-source-link {
   display: inline-flex;
   margin-top: 16px;
