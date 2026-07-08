@@ -52,8 +52,7 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
             <p className="pulse-kicker">News Pulse</p>
             <h1>{title}</h1>
             <p className="pulse-subtitle">
-              Real-time signal digest generated from global event summaries and normalized into
-              editorial briefings.
+              Global events, distilled into real-time briefings.
             </p>
           </div>
 

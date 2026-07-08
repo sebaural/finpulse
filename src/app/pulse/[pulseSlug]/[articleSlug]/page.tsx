@@ -53,7 +53,7 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
         <div className="pulse-container">
           <div className="pulse-article-toolbar">
             <Link href={`/pulse/${pulseSlug}`} className="pulse-back-button">
-              ← Back to {config.label}
+              ← Back to {config.label} Pages
             </Link>
           </div>
           <p className="pulse-crumbs">

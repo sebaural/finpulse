@@ -15,7 +15,7 @@
     --pulse-muted: #8fa0b5;
     --pulse-accent: #f5b948;
     min-height: 100vh;
-    background: radial-gradient(circle at -3% 166%, #203b5a 4%, transparent 40%), var(--pulse-bg);
+    /* background: radial-gradient(circle at -3% 166%, #203b5a 4%, transparent 40%), var(--pulse-bg); */
     color: var(--pulse-text);
     padding: 28px 20px 36px;
 }
@@ -156,7 +156,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--pulse-border);
+  border: 1px solid var(--pulse-text);
   border-radius: 999px;
   padding: 8px 14px;
   color: var(--pulse-text);
@@ -194,7 +194,7 @@
 
 .pulse-crumb-date {
   color: var(--text);
-  font-size: 20px
+  font-size: 18px
 }
 
 .pulse-article-page .pulse-summary {
@@ -372,6 +372,6 @@
 }
 
   .pulse-crumb-date {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
