@@ -157,7 +157,7 @@
   align-items: center;
   gap: 8px;
   border: 1px solid var(--pulse-text);
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 8px 14px;
   color: var(--pulse-text);
   text-decoration: none;
