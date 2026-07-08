@@ -371,7 +371,7 @@ async function generatePulseArticleFromSource(
   const client = new Anthropic({ apiKey: anthropicKey });
 
   const prompt =
-    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now, and synthesize the discourse into two macro-summaries based on five distinct, opposing perspectives.\n\n` +
+    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
     `Please execute this task using the following structured steps:\n\n` +
     `### STEP 1: TOPIC IDENTIFICATION\n` +
     `Identify the top U.S. political topic of today that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences.\n\n` +
