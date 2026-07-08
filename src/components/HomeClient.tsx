@@ -372,10 +372,7 @@ export default function HomeClient({
                 />
               </div>
             </div>
-            {hero && (
-              <HeroCard article={hero} onRead={speech.readById} relativeTime={relativeTimeFor(hero)} />
-            )}
-
+            <PulseHighlights latestByCategory={pulseLatest} />
             {topicAnalysis.length > 0 && (
               <section className="widget topic-analysis">
                 <h2 className="widget-title">Deep-Dive Analysis</h2>
@@ -393,8 +390,9 @@ export default function HomeClient({
               </section>
             )}
 
-            <PulseHighlights latestByCategory={pulseLatest} />
-
+            {hero && (
+              <HeroCard article={hero} onRead={speech.readById} relativeTime={relativeTimeFor(hero)} />
+            )}
             <div className="data-status-row" aria-live="polite">
               {showFallbackBanner ? (
                 <>

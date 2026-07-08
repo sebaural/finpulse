@@ -10,7 +10,7 @@ interface PulseHighlightsProps {
 export function PulseHighlights({ latestByCategory }: PulseHighlightsProps) {
   return (
     <section aria-label="Latest Pulse Updates" className="pulse-highlights widget">
-      <h2 className="widget-title">Pulse</h2>
+      <h2 className="widget-title">News Pulse</h2>
       <div className="pulse-highlights-grid">
         {Object.values(PULSE_CATEGORIES).map((config) => {
           const article = latestByCategory[config.pulseSlug];
