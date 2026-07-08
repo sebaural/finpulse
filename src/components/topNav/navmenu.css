@@ -259,7 +259,7 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
 
 .nav-drawer-group-label {
   padding: 14px 24px 8px;
-  color: var(--muted);
+  color: var(--accent2);
   font-family: 'Inconsolata', monospace;
   letter-spacing: 0.18em;
   text-transform: uppercase;
