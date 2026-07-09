@@ -369,11 +369,12 @@ nav {
 
 .news-feed {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .news-card {
+  width: 49%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 2px;
@@ -1154,6 +1155,11 @@ nav {
   .page {
     padding: 20px 16px;
   }
+
+  .news-card {
+    width: 100%;
+  }
+
 }
 
 @media (max-width: 600px) {
