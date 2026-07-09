@@ -370,7 +370,7 @@ nav {
 .news-feed {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
 }
 
 .news-card {
@@ -1156,6 +1156,10 @@ nav {
   .page {
     padding: 20px 16px;
   }
+
+.news-feed {
+  gap: 8px;
+}
 
   .news-card {
     width: 100%;
