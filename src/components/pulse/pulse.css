@@ -63,7 +63,7 @@
 .pulse-article-item {
   border: 1px solid var(--pulse-border);
   background: linear-gradient(180deg, var(--pulse-surface), var(--pulse-surface2));
-  border-radius: 10px;
+  border-radius: 2px;
   padding: 16px;
   cursor: pointer;
 }
@@ -295,6 +295,7 @@
 
 .pulse-highlights {
   margin: 20px 0;
+  border-radius: 2px;
 }
 
 .pulse-highlights .widget-title {
