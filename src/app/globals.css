@@ -481,6 +481,7 @@ nav {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin: 0 0 10px;
 }
 
 .card-actions {
@@ -1309,12 +1310,12 @@ nav {
 }
 
 /* ---- Card action buttons ---- */
-.card-actions {
+.news-card .card-actions {
   display: flex;
   align-items: center;
-  justify-content: end;
+  justify-content: flex-end;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: auto;
   flex-wrap: wrap;
 }
 
