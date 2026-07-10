@@ -1,0 +1,102 @@
+/* src/components/macro/macro.css — "The Macro Landscape" single-item pager */
+
+.macro-landscape {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.macro-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent, #c9873a);
+}
+
+.macro-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.macro-date {
+  font-size: 13px;
+  color: var(--muted, #8a94a3);
+}
+
+.macro-body {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.macro-body h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 18px 0 6px;
+}
+
+.macro-body h2:first-child {
+  margin-top: 4px;
+}
+
+.macro-body p {
+  margin: 0 0 10px;
+}
+
+.macro-body ul,
+.macro-body ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.macro-body li {
+  margin: 2px 0;
+}
+
+.macro-empty {
+  font-size: 14px;
+  color: var(--muted, #8a94a3);
+}
+
+.macro-pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.macro-pager-btn {
+  appearance: none;
+  border: 1px solid var(--border, #1e2530);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.macro-pager-btn:hover:not(:disabled) {
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.macro-pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.macro-pager-spinner {
+  font-size: 12px;
+  color: var(--muted, #8a94a3);
+}
+
+/* Standalone /macro page chrome */
+.macro-page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}

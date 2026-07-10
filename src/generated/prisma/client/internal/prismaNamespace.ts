@@ -388,6 +388,7 @@ export const ModelName = {
   MarketsArticle: 'MarketsArticle',
   TechArticle: 'TechArticle',
   PulseArticle: 'PulseArticle',
+  MacroArticle: 'MacroArticle',
   User: 'User',
   Topic: 'Topic'
 } as const
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "user" | "topic"
+    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "macroArticle" | "user" | "topic"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -705,6 +706,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MacroArticle: {
+      payload: Prisma.$MacroArticlePayload<ExtArgs>
+      fields: Prisma.MacroArticleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MacroArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MacroArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        findFirst: {
+          args: Prisma.MacroArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MacroArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        findMany: {
+          args: Prisma.MacroArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>[]
+        }
+        create: {
+          args: Prisma.MacroArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        createMany: {
+          args: Prisma.MacroArticleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MacroArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>[]
+        }
+        delete: {
+          args: Prisma.MacroArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        update: {
+          args: Prisma.MacroArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        deleteMany: {
+          args: Prisma.MacroArticleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MacroArticleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MacroArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>[]
+        }
+        upsert: {
+          args: Prisma.MacroArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MacroArticlePayload>
+        }
+        aggregate: {
+          args: Prisma.MacroArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMacroArticle>
+        }
+        groupBy: {
+          args: Prisma.MacroArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MacroArticleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MacroArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MacroArticleCountAggregateOutputType> | number
+        }
+      }
+    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -966,6 +1041,19 @@ export const PulseArticleScalarFieldEnum = {
 export type PulseArticleScalarFieldEnum = (typeof PulseArticleScalarFieldEnum)[keyof typeof PulseArticleScalarFieldEnum]
 
 
+export const MacroArticleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  publishedDate: 'publishedDate',
+  body: 'body',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MacroArticleScalarFieldEnum = (typeof MacroArticleScalarFieldEnum)[keyof typeof MacroArticleScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -1215,6 +1303,7 @@ export type GlobalOmitConfig = {
   marketsArticle?: Prisma.MarketsArticleOmit
   techArticle?: Prisma.TechArticleOmit
   pulseArticle?: Prisma.PulseArticleOmit
+  macroArticle?: Prisma.MacroArticleOmit
   user?: Prisma.UserOmit
   topic?: Prisma.TopicOmit
 }

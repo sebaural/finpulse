@@ -38,6 +38,11 @@ export type TechArticle = Prisma.TechArticleModel
  */
 export type PulseArticle = Prisma.PulseArticleModel
 /**
+ * Model MacroArticle
+ * 
+ */
+export type MacroArticle = Prisma.MacroArticleModel
+/**
  * Model User
  * 
  */

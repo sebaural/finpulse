@@ -58,6 +58,9 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     { section: 'markets',     run: runDailyMarketsPipeline },
     { section: 'tech',        run: runDailyTechPipeline },
     { section: 'pulse',       run: runDailyPulsePipeline },
+    // NOTE: Macro Landscape is NOT part of this unified pipeline — it has its
+    // own dedicated cron (`/api/macro/generate`, M–F 9am EST) in vercel.json,
+    // because it self-sources via live web search on its own schedule.
   ];
 
   const results: ContentCronResult[] = [];

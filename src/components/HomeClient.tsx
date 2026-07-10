@@ -25,8 +25,10 @@ import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import NavMenu from '@/components/topNav/NavMenu';
 import { PulseHighlights } from '@/components/pulse/PulseHighlights';
+import MacroPageClient from '@/components/macro/MacroPageClient';
 import { VoicePlayer } from '@/modules/VoicePlayer';
 import type { PulseArticle, PulseSlug } from '@/types/pulse';
+import type { MacroArticleResponse } from '@/types/macro';
 
 interface MarketResponse {
   tickerItems: TickerItem[];
@@ -101,6 +103,7 @@ interface HomeClientProps {
   initialUsingFallback: boolean;
   topicAnalysis: TopicAnalysisItem[];
   pulseLatest: Record<PulseSlug, PulseArticle | null>;
+  macroInitial: MacroArticleResponse;
 }
 
 export default function HomeClient({
@@ -108,6 +111,7 @@ export default function HomeClient({
   initialUsingFallback,
   topicAnalysis,
   pulseLatest,
+  macroInitial,
 }: HomeClientProps) {
   // Editorial deep-dive grid: topic-linked briefings route to
   // /topics/[topicSlug]/[articleSlug]. One latest article is shown for each
@@ -389,6 +393,10 @@ export default function HomeClient({
                 ))}
               </section>
             )}
+
+            <section className="widget macro-landscape-widget">
+              <MacroPageClient initial={macroInitial} variant="embedded" />
+            </section>
 
             {hero && (
               <HeroCard article={hero} onRead={speech.readById} relativeTime={relativeTimeFor(hero)} />

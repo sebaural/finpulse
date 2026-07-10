@@ -97,6 +97,22 @@ model PulseArticle {
   @@map("pulse_articles")
 }
 
+model MacroArticle {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  // Pagination key — the archive steps through entries one day at a time,
+  // ordered by this. Stored as a bare date (America/New_York) so a same-day
+  // re-run upserts rather than duplicating.
+  publishedDate DateTime @db.Date
+  body          String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([publishedDate])
+  @@map("macro_articles")
+}
+
 model User {
   id                String    @id @default(cuid())
   email             String    @unique

@@ -61,12 +61,15 @@ export async function GET() {
       updatedAt: true,
     } as const;
 
-    const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics] =
+    const macroSelect = { slug: true, updatedAt: true } as const;
+
+    const [geopolitics, markets, tech, pulse, macro, geoTopics, marketTopics, techTopics] =
       await Promise.all([
         prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
         prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
         prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
         prisma.pulseArticle.findMany({ select: pulseSelect, orderBy: { updatedAt: 'desc' } }),
+        prisma.macroArticle.findMany({ select: macroSelect, orderBy: { updatedAt: 'desc' } }),
         prisma.geopoliticsArticle.findMany({ where: topicWhere, select: topicSelect }),
         prisma.marketsArticle.findMany({ where: topicWhere, select: topicSelect }),
         prisma.techArticle.findMany({ where: topicWhere, select: topicSelect }),
@@ -80,6 +83,20 @@ export async function GET() {
     xml += pulse
       .map((row: PulseRow) => {
         const loc = `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`;
+        const mod = row.updatedAt.toISOString();
+        return (
+          `  <url>\n` +
+          `    <loc>${loc}</loc>\n` +
+          `    <lastmod>${mod}</lastmod>\n` +
+          `    <changefreq>daily</changefreq>\n` +
+          `    <priority>0.7</priority>\n` +
+          `  </url>\n`
+        );
+      })
+      .join('');
+    xml += macro
+      .map((row: { slug: string; updatedAt: Date }) => {
+        const loc = `${SITE_URL}/macro/${row.slug}`;
         const mod = row.updatedAt.toISOString();
         return (
           `  <url>\n` +
