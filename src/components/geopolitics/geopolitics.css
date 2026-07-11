@@ -217,8 +217,8 @@
 }
 .geo-article-date {
   font-family: 'Inconsolata', monospace;
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--text);
   letter-spacing: 0.05em;
 }
 
