@@ -13,6 +13,7 @@ import PulseHeader from '@/components/pulse/PulseHeader';
 import MacroPageClient from '@/components/macro/MacroPageClient';
 import { VoicePlayer } from '@/modules/VoicePlayer';
 import type { MacroArticleResponse } from '@/types/macro';
+import { HeroCard } from '@/components/news/HeroCard';
 import './live-feed.css';
 
 const CUSTOM_SYMBOLS_KEY = 'finpuls-custom-symbols';
@@ -291,6 +292,8 @@ export default function PageClient({ initialArticles, macroInitial }: PageClient
     };
   }, [speech.autoplay, speech.isPlaying, speech.currentArticleId]);
 
+  const hero = allArticles[0] ?? null;
+
   return (
     <>
       <PulseHeader />
@@ -324,6 +327,16 @@ export default function PageClient({ initialArticles, macroInitial }: PageClient
                 />
               </div>
             </div>
+
+
+            {hero && (
+              <HeroCard
+                article={hero}
+                onRead={speech.readById}
+                relativeTime={relativeTimeFor(hero)}
+                variant="live-feed"
+              />
+            )}
 
             <div className="news-feed" ref={newsFeedRef}>
               {loading && allArticles.length === 0 && [1, 2, 3].map((n) => <div key={n} className="loading-card skeleton-block" />)}

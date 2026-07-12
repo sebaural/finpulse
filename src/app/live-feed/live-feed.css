@@ -19,6 +19,21 @@
   min-width: 0;
 }
 
+.live-feed-page .hero-card-live-feed {
+  cursor: pointer;
+}
+
+.live-feed-page .hero-card-live-feed .card-time-playable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.live-feed-page .hero-card-live-feed .card-time-playable:hover,
+.live-feed-page .hero-card-live-feed .card-time-playable:focus-visible {
+  color: var(--accent2);
+}
+
 .live-feed-aside {
   min-width: 0;
 }
