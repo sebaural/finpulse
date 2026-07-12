@@ -2,26 +2,20 @@ import { NewsArticle } from '@/types';
 
 interface HeroCardProps {
   article: NewsArticle;
-  onRead: (id: string) => void;
   relativeTime: string;
 }
 
-export function HeroCard({ article, onRead, relativeTime }: HeroCardProps) {
+export function HeroCard({ article, relativeTime }: HeroCardProps) {
   return (
-    <section className="hero-card">
+    <a className="hero-card" href="/live-feed" aria-label={`Open live feed: ${article.title}`}>
       <div className="hero-label">Breaking</div>
       <div className="hero-title">{article.title}</div>
       <div className="hero-summary">{article.summary}</div>
       <div className="hero-footer">
         <span className={`source-tag ${article.cls}`}>{article.source}</span>
         <span className="card-time">{relativeTime}</span>
-        <button className="read-btn" onClick={() => onRead(article.id)}>
-          Read Aloud
-        </button>
-        <a href={article.link} className="card-link" target="_blank" rel="noreferrer">
-          Read full story {'->'}
-        </a>
+        <span className="card-link">Live Feed {'->'}</span>
       </div>
-    </section>
+    </a>
   );
 }

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import NavMenu from '@/components/topNav/NavMenu';
 import Link from 'next/link';
+import './pulse.css';
 
 export default function PulseHeader() {
   return (

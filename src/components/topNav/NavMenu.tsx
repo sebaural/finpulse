@@ -33,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
       href: `/pulse/${config.pulseSlug}`,
     })),
   },
+  { kind: 'link', label: 'Live Feed', href: '/live-feed' },
 ];
 
 const SUMMARY_HREFS = new Set(['/geopolitics', '/markets', '/tech']);
@@ -99,15 +100,20 @@ export default function NavMenu({ variant = 'dark' }: { variant?: 'dark' | 'ligh
           {visibleItems.map((item) => {
             if (item.kind === 'link') {
               return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`nav-desktop-link${isActive(item.href, pathname) ? ' active' : ''}`}
-                  >
-                    {SUMMARY_HREFS.has(item.href) && <span className="nav-dot" aria-hidden="true" />}
-                    {item.label}
-                  </Link>
-                </li>
+                <Fragment key={item.href}>
+                  {/* Divider preceding the Live Feed link so it reads as a
+                      distinct destination after the News Pulse dropdown. */}
+                  {item.href === '/live-feed' && <li className="nav-desktop-sep" role="none" />}
+                  <li>
+                    <Link
+                      href={item.href}
+                      className={`nav-desktop-link${isActive(item.href, pathname) ? ' active' : ''}`}
+                    >
+                      {SUMMARY_HREFS.has(item.href) && <span className="nav-dot" aria-hidden="true" />}
+                      {item.label}
+                    </Link>
+                  </li>
+                </Fragment>
               );
             }
 

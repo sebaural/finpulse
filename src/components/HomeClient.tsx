@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 
 const CUSTOM_SYMBOLS_KEY = 'finpuls-custom-symbols';
 
@@ -18,15 +18,12 @@ import { useSpeechReader } from '@/hooks/useSpeechReader';
 import type { MarketRow, NewsArticle, TickerItem } from '@/types';
 
 import { MarketTicker } from '@/components/market/MarketTicker';
-import { MarketSnapshot, MarketSnapshotModal } from '@/components/market/MarketSnapshot';
-import { NewsCard } from '@/components/news/NewsCard';
+import { MarketSnapshot } from '@/components/market/MarketSnapshot';
 import { HeroCard } from '@/components/news/HeroCard';
 import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
-import { HeaderFilters } from '@/components/ui/HeaderFilters';
 import NavMenu from '@/components/topNav/NavMenu';
 import { PulseHighlights } from '@/components/pulse/PulseHighlights';
 import MacroPageClient from '@/components/macro/MacroPageClient';
-import { VoicePlayer } from '@/modules/VoicePlayer';
 import type { PulseArticle, PulseSlug } from '@/types/pulse';
 import type { MacroArticleResponse } from '@/types/macro';
 
@@ -41,40 +38,6 @@ interface NewsResponse {
   articles: NewsArticle[];
   usingFallback: boolean;
 }
-
-type CategoryFilterKey =
-  | 'all'
-  | 'markets'
-  | 'economy'
-  | 'equities'
-  | 'forex'
-  | 'commodities'
-  | 'crypto'
-  | 'geopolitics'
-  | 'tech'
-  | 'energy';
-
-type PriorityFilterKey = 'all' | 'breaking' | 'important' | 'regular';
-
-const categoryFilterOptions: Array<{ key: CategoryFilterKey; label: string }> = [
-  { key: 'all', label: 'All Categories' },
-  { key: 'markets', label: 'Markets' },
-  { key: 'economy', label: 'Economy' },
-  { key: 'equities', label: 'Equities' },
-  { key: 'forex', label: 'Forex' },
-  { key: 'commodities', label: 'Commodities' },
-  { key: 'crypto', label: 'Crypto' },
-  { key: 'geopolitics', label: 'Geopolitics' },
-  { key: 'tech', label: 'Tech' },
-  { key: 'energy', label: 'Energy' },
-];
-
-const priorityFilterOptions: Array<{ key: PriorityFilterKey; label: string }> = [
-  { key: 'all', label: 'All Priorities' },
-  { key: 'breaking', label: 'Breaking' },
-  { key: 'important', label: 'Important' },
-  { key: 'regular', label: 'Regular' },
-];
 
 function clientRelativeTime(publishedAt: string | undefined, fallback: string): string {
   if (!publishedAt) return fallback;
@@ -117,44 +80,18 @@ export default function HomeClient({
   // /topics/[topicSlug]/[articleSlug]. One latest article is shown for each
   // available topic, already sorted by recency on the server.
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
-  const [loading, setLoading] = useState(false);
   const [showFallbackBanner, setShowFallbackBanner] = useState(initialUsingFallback);
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilterKey>('all');
-  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterKey>('all');
   const [hydrated, setHydrated] = useState(false);
   const [, setTick] = useState(0);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
   const [loadingMarketNames, setLoadingMarketNames] = useState<Set<string>>(new Set());
-  const [showMarketModal, setShowMarketModal] = useState(false);
 
-  const filteredArticles = useMemo(() => {
-    const categoryFiltered =
-      categoryFilter === 'all'
-        ? allArticles
-        : allArticles.filter((article) => article.category.toLowerCase() === categoryFilter);
-
-    if (priorityFilter === 'all') return categoryFiltered;
-
-    const targetImportance =
-      priorityFilter === 'breaking' ? 1 : priorityFilter === 'important' ? 2 : 3;
-
-    return [...categoryFiltered].sort((a, b) => {
-      const aRank = a.importance === targetImportance ? 0 : 1;
-      const bRank = b.importance === targetImportance ? 0 : 1;
-
-      if (aRank !== bRank) return aRank - bRank;
-      const aMs = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const bMs = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return bMs - aMs;
-    });
-  }, [allArticles, categoryFilter, priorityFilter]);
-
-  const filterKey = `${categoryFilter}:${priorityFilter}`;
-  const speech = useSpeechReader(filteredArticles, filterKey);
-  const newsFeedRef = useRef<HTMLDivElement | null>(null);
-  const controlsHolderRef = useRef<HTMLDivElement | null>(null);
+  // The live newsroom feed and its filters now live on /live-feed; the home
+  // sidebar still reads stories aloud, so a speech reader over the full set of
+  // articles is retained here.
+  const speech = useSpeechReader(allArticles, 'home');
 
   const hero = allArticles[0] ?? null;
 
@@ -163,7 +100,6 @@ export default function HomeClient({
   }
 
   async function refresh() {
-    setLoading(true);
     try {
       const res = await fetch('/api/news', {
         method: 'GET',
@@ -179,8 +115,6 @@ export default function HomeClient({
       }
     } catch {
       // Keep showing last state on error.
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -266,73 +200,6 @@ export default function HomeClient({
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    if (!speech.autoplay || !speech.isPlaying) return;
-
-    const feedEl = newsFeedRef.current;
-    const controlsEl = controlsHolderRef.current;
-    if (!feedEl) return;
-
-    const alignReadingCard = () => {
-      const currentCard = feedEl.querySelector<HTMLElement>('.news-card.is-reading');
-      if (!currentCard) return;
-
-      const feedRect = feedEl.getBoundingClientRect();
-      const cardRect = currentCard.getBoundingClientRect();
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-
-      let occludedTop = 0;
-
-      const headerEl = document.querySelector<HTMLElement>('header');
-      if (headerEl) {
-        const headerRect = headerEl.getBoundingClientRect();
-        if (headerRect.bottom > 0) {
-          occludedTop = Math.max(occludedTop, headerRect.bottom);
-        }
-      }
-
-      if (controlsEl) {
-        const controlsRect = controlsEl.getBoundingClientRect();
-        const controlsStyle = window.getComputedStyle(controlsEl);
-        const stickyTop = Number.parseFloat(controlsStyle.top || '0') || 0;
-        const isSticky = controlsStyle.position === 'sticky';
-        const isPinned = isSticky && controlsRect.top <= stickyTop + 1;
-
-        if (isPinned && controlsRect.bottom > 0) {
-          occludedTop = Math.max(occludedTop, controlsRect.bottom);
-        }
-      }
-
-      const mobileTopGap = window.matchMedia('(max-width: 960px)').matches ? 12 : 0;
-      const visibleTop = Math.max(feedRect.top, occludedTop + mobileTopGap);
-      const visibleBottom = Math.min(feedRect.bottom, viewportHeight);
-
-      if (visibleBottom <= visibleTop) return;
-
-      const visibleFeedCenter = visibleTop + (visibleBottom - visibleTop) / 2;
-      const cardCenter = cardRect.top + cardRect.height / 2;
-      const delta = cardCenter - visibleFeedCenter;
-
-      if (Math.abs(delta) < 2) return;
-
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.scrollTo({
-        top: window.scrollY + delta,
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-      });
-    };
-
-    const raf1 = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(alignReadingCard);
-    });
-    const timer = window.setTimeout(alignReadingCard, 80);
-
-    return () => {
-      window.cancelAnimationFrame(raf1);
-      window.clearTimeout(timer);
-    };
-  }, [speech.autoplay, speech.isPlaying, speech.currentArticleId]);
-
   return (
     <>
       <MarketTicker items={tickerItems} />
@@ -350,32 +217,6 @@ export default function HomeClient({
       <main className="page">
         <div className="layout">
           <div className="main-content">
-            <div className="controls-holder" ref={controlsHolderRef}>
-              <VoicePlayer speech={speech} />
-              <div className="controls-filters-row">
-                <button
-                  className="ms-snapshot-btn"
-                  onClick={() => setShowMarketModal(true)}
-                  aria-haspopup="dialog"
-                  aria-label="Open market snapshot"
-                >
-                  <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor" aria-hidden="true">
-                    <rect x="0" y="6" width="3" height="5" rx="0.5" />
-                    <rect x="5" y="3" width="3" height="8" rx="0.5" />
-                    <rect x="10" y="0" width="3" height="11" rx="0.5" />
-                  </svg>
-                  Market Snapshot
-                </button>
-                <HeaderFilters
-                  categoryFilter={categoryFilter}
-                  priorityFilter={priorityFilter}
-                  categoryOptions={categoryFilterOptions}
-                  priorityOptions={priorityFilterOptions}
-                  onCategoryChange={setCategoryFilter}
-                  onPriorityChange={setPriorityFilter}
-                />
-              </div>
-            </div>
             <PulseHighlights latestByCategory={pulseLatest} />
             {topicAnalysis.length > 0 && (
               <section className="widget topic-analysis">
@@ -399,7 +240,7 @@ export default function HomeClient({
             </section>
 
             {hero && (
-              <HeroCard article={hero} onRead={speech.readById} relativeTime={relativeTimeFor(hero)} />
+              <HeroCard article={hero} relativeTime={relativeTimeFor(hero)} />
             )}
             <div className="data-status-row" aria-live="polite">
               {showFallbackBanner ? (
@@ -412,24 +253,6 @@ export default function HomeClient({
               ) : (
                 <span className="data-status-badge live">Live market feed</span>
               )}
-            </div>
-
-            <div className="news-feed" ref={newsFeedRef}>
-              {loading && allArticles.length === 0 && [1, 2, 3].map((n) => <div key={n} className="loading-card skeleton-block" />)}
-
-              {!loading && filteredArticles.length === 0 && (
-                <div className="empty-state">No stories match this filter.</div>
-              )}
-
-              {filteredArticles.map((article) => (
-                <NewsCard
-                  key={article.id}
-                  article={article}
-                  isReading={speech.currentArticleId === article.id}
-                  onRead={speech.readById}
-                  relativeTime={relativeTimeFor(article)}
-                />
-              ))}
             </div>
           </div>
 
@@ -455,16 +278,6 @@ export default function HomeClient({
           </aside>
         </div>
       </main>
-      {showMarketModal && (
-        <MarketSnapshotModal
-          rows={marketRows}
-          isLive={marketLive}
-          loadingNames={loadingMarketNames}
-          onAdd={handleAddSymbol}
-          onRemove={handleRemoveSymbol}
-          onClose={() => setShowMarketModal(false)}
-        />
-      )}
     </>
   );
 }

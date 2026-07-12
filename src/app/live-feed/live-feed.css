@@ -1,0 +1,46 @@
+/* Live Feed page — extracted from the home page. Hosts the controls-holder +
+   news-feed on the left and the Macro Landscape summary on the right. */
+
+.live-feed-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+/* 60% / 40% two-column split (3fr : 2fr === 60 : 40). The aside is left to
+   stretch (default) so its sticky child has room to travel down the column. */
+.live-feed-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 28px;
+}
+
+.live-feed-main {
+  min-width: 0;
+}
+
+.live-feed-aside {
+  min-width: 0;
+}
+
+/* Pin the Macro Landscape summary as the feed scrolls, clearing the sticky
+   site header (top:0, ~56px tall). */
+.live-feed-aside .macro-landscape-widget {
+  position: sticky;
+  top: 72px;
+}
+
+.live-feed-aside .macro-landscape-widget {
+  margin: 0;
+} 
+
+@media (max-width: 960px) {
+  .live-feed-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Single column on mobile — no sticky pinning. */
+  .live-feed-aside .macro-landscape-widget {
+    position: static;
+  }
+}
