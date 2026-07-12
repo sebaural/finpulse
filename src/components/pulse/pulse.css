@@ -162,7 +162,7 @@
   color: var(--pulse-text);
   text-decoration: none;
   font-family: 'Inconsolata', monospace;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.04em;
 }
 
@@ -376,4 +376,9 @@
   .pulse-crumb-date {
     font-size: 14px;
   }
+
+  .pulse-back-button {
+    font-size: 10px !important;
+  }
+
 }
