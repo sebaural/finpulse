@@ -239,21 +239,6 @@ export default function HomeClient({
               <MacroPageClient initial={macroInitial} variant="embedded" />
             </section>
 
-            {hero && (
-              <HeroCard article={hero} relativeTime={relativeTimeFor(hero)} />
-            )}
-            <div className="data-status-row" aria-live="polite">
-              {showFallbackBanner ? (
-                <>
-                  <span className="data-status-badge fallback">Demo data mode</span>
-                  <button className="inline-retry subtle" onClick={refresh}>
-                    Retry live sources
-                  </button>
-                </>
-              ) : (
-                <span className="data-status-badge live">Live market feed</span>
-              )}
-            </div>
           </div>
 
           <aside className="sidebar">
@@ -264,6 +249,10 @@ export default function HomeClient({
                 onAdd={handleAddSymbol}
                 onRemove={handleRemoveSymbol}
               />
+
+          {hero && (
+              <HeroCard article={hero} relativeTime={relativeTimeFor(hero)} />
+            )}
 
             <section className="widget">
               <h2 className="widget-title">Most Read</h2>

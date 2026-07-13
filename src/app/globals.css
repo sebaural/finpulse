@@ -1532,10 +1532,10 @@ nav {
 /* ── Desktop: sticky sidebar market widget ───────────────────────────────── */
 
 @media (min-width: 961px) {
-  .sidebar .widget.market-snapshot {
+  /* .sidebar .widget.market-snapshot {
     position: sticky;
     top: 72px;
-  }
+  } */
 }
 
 /* ── Mobile: show button, hide sidebar widget ────────────────────────────── */
@@ -1549,9 +1549,9 @@ nav {
   .ms-snapshot-btn {
     display: inline-flex;
   }
-  .sidebar .widget.market-snapshot {
+  /* .sidebar .widget.market-snapshot {
     display: none;
-  }
+  } */
 }
 
 /* ── Market Snapshot Modal ───────────────────────────────────────────────── */

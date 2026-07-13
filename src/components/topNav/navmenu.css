@@ -88,6 +88,11 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   margin-right: 0;
 }
 
+.nav-desktop-dropdown-menu li a:hover,
+.nav-desktop-dropdown-menu li a:focus { 
+  color: var(--accent); 
+}
+
 .nav-desktop-dropdown-link {
   display: block;
   text-decoration: none;
@@ -103,10 +108,10 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
   border-bottom: 1px solid #1e2530 !important;
 }
 
-.nav-desktop-dropdown-link:hover,
-.nav-desktop-dropdown-link.active {
-  color: #e8b84b;
-  background-color: #181c22;
+
+.nav-desktop-dropdown-link.active,
+.nav-desktop-dropdown-link:hover {
+  color: #e8b84b !important;
 }
 
 .nav-desktop-dropdown-menu li:last-child .nav-desktop-dropdown-link {

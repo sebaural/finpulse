@@ -328,7 +328,6 @@ export default function PageClient({ initialArticles, macroInitial }: PageClient
               </div>
             </div>
 
-
             {hero && (
               <HeroCard
                 article={hero}
@@ -337,6 +336,10 @@ export default function PageClient({ initialArticles, macroInitial }: PageClient
                 variant="live-feed"
               />
             )}
+
+            <div className="data-status-row" aria-live="polite">
+              <h1 className="data-status-badge live">Live News Feed</h1>
+            </div>
 
             <div className="news-feed" ref={newsFeedRef}>
               {loading && allArticles.length === 0 && [1, 2, 3].map((n) => <div key={n} className="loading-card skeleton-block" />)}
