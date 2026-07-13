@@ -1,7 +1,7 @@
 // src/app/macro/[slug]/page.tsx
 //
 // Permalink for one specific day's entry (used by the sitemap and by direct
-// links). Renders the same single-item view as /macro?date=..., resolved by slug.
+// links). Renders the single-item macro block resolved by slug.
 
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -76,7 +76,7 @@ export default async function MacroArticlePage({ params }: Props) {
         <NavMenu variant="dark" />
       </div>
       <main className="macro-page">
-        <MacroPageClient initial={initial} variant="page" />
+        <MacroPageClient initial={initial} />
       </main>
     </>
   );

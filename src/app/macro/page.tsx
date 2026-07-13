@@ -80,7 +80,7 @@ export default async function MacroPage({ searchParams }: Props) {
         <NavMenu variant="dark" />
       </div>
       <main className="macro-page">
-        <MacroPageClient initial={initial} variant="page" />
+        <MacroPageClient initial={initial} />
       </main>
     </>
   );

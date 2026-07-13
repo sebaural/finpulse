@@ -10,12 +10,6 @@ import './macro.css';
 interface Props {
   /** Server-fetched latest (or deep-linked) entry plus its adjacency. */
   initial: MacroArticleResponse;
-  /**
-   * 'embedded' renders just the block for the homepage widget; 'page' adds the
-   * eyebrow/heading chrome for the standalone /macro surface. Both step through
-   * entries one day at a time via client-side fetch — no full navigation.
-   */
-  variant?: 'embedded' | 'page';
 }
 
 function formatFullDate(iso: string): string {
@@ -29,7 +23,7 @@ function formatFullDate(iso: string): string {
   });
 }
 
-export default function MacroPageClient({ initial, variant = 'embedded' }: Props) {
+export default function MacroPageClient({ initial }: Props) {
   const [state, setState] = useState<MacroArticleResponse>(initial);
   const [loading, setLoading] = useState(false);
 
@@ -40,10 +34,6 @@ export default function MacroPageClient({ initial, variant = 'embedded' }: Props
       if (!res.ok) return;
       const data = (await res.json()) as MacroArticleResponse;
       setState(data);
-      // Keep the standalone page's URL shareable without a full navigation.
-      if (variant === 'page' && typeof window !== 'undefined') {
-        window.history.replaceState(null, '', `/macro?date=${target.publishedDate}`);
-      }
     } catch {
       // Leave the current entry in place on a transient fetch failure.
     } finally {
@@ -67,11 +57,7 @@ export default function MacroPageClient({ initial, variant = 'embedded' }: Props
   return (
     <section className="macro-landscape">
       <span className="macro-eyebrow">The Macro Landscape</span>
-      {variant === 'page' ? (
-        <h1 className="macro-title">{article.title}</h1>
-      ) : (
-        <h2 className="macro-title">{article.title}</h2>
-      )}
+      <h2 className="macro-title">{article.title}</h2>
       <div className="macro-date">{formatFullDate(article.publishedDate)}</div>
 
       <div

@@ -102,7 +102,21 @@ export async function getRelatedBriefings(
 
     pool.sort((a, b) => b.score - a.score || b.createdAt - a.createdAt);
 
-    return pool.slice(0, limit).map((p) => p.briefing);
+    // Two rows in the same section can canonicalize to the same slug (e.g. a
+    // republished briefing, or a title that toSlug()s identically). That would
+    // yield duplicate section+slug entries and collide on the React key in
+    // RelatedBriefings. Dedupe here, keeping the first (highest-scoring /
+    // most-recent) occurrence per section+slug.
+    const seen = new Set<string>();
+    const deduped: Scored[] = [];
+    for (const p of pool) {
+      const key = `${p.briefing.section}-${p.briefing.slug}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(p);
+    }
+
+    return deduped.slice(0, limit).map((p) => p.briefing);
   } catch (err) {
     console.error('[related-service] failed to load related briefings', err);
     return [];

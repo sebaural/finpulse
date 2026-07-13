@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 
 import { marketRows as staticMarketRows } from '@/services/news';
 import { useSpeechReader } from '@/hooks/useSpeechReader';
@@ -84,6 +84,18 @@ interface PageClientProps {
   initialArticles: NewsArticle[];
   macroInitial: MacroArticleResponse;
 }
+
+const EmbeddedMacroWidget = memo(function EmbeddedMacroWidget({
+  initial,
+}: {
+  initial: MacroArticleResponse;
+}) {
+  return (
+    <section className="widget macro-landscape-widget">
+      <MacroPageClient initial={initial} />
+    </section>
+  );
+});
 
 export default function PageClient({ initialArticles, macroInitial }: PageClientProps) {
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
@@ -361,9 +373,7 @@ export default function PageClient({ initialArticles, macroInitial }: PageClient
           </div>
 
           <aside className="live-feed-aside">
-            <section className="widget macro-landscape-widget">
-              <MacroPageClient initial={macroInitial} variant="embedded" />
-            </section>
+            <EmbeddedMacroWidget initial={macroInitial} />
           </aside>
         </div>
       </main>

@@ -7,11 +7,12 @@
 }
 
 .macro-eyebrow {
-  font-size: 12px;
+  font-family: 'Gideon Roman', serif;
+  font-size: 22px;
+  line-height: 1.25;
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent, #c9873a);
+  color: var(--accent);
 }
 
 .macro-title {
@@ -49,6 +50,7 @@
 .macro-body ol {
   margin: 0 0 10px;
   padding-left: 20px;
+  font-size: 10px;
 }
 
 .macro-body li {

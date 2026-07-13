@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { memo, useEffect, useEffectEvent, useState } from 'react';
 
 const CUSTOM_SYMBOLS_KEY = 'finpuls-custom-symbols';
 
@@ -68,6 +68,18 @@ interface HomeClientProps {
   pulseLatest: Record<PulseSlug, PulseArticle | null>;
   macroInitial: MacroArticleResponse;
 }
+
+const EmbeddedMacroWidget = memo(function EmbeddedMacroWidget({
+  initial,
+}: {
+  initial: MacroArticleResponse;
+}) {
+  return (
+    <section className="widget macro-landscape-widget">
+      <MacroPageClient initial={initial} />
+    </section>
+  );
+});
 
 export default function HomeClient({
   initialArticles,
@@ -235,9 +247,7 @@ export default function HomeClient({
               </section>
             )}
 
-            <section className="widget macro-landscape-widget">
-              <MacroPageClient initial={macroInitial} variant="embedded" />
-            </section>
+            <EmbeddedMacroWidget initial={macroInitial} />
 
           </div>
 
