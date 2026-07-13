@@ -49,6 +49,15 @@
   margin: 0;
 } 
 
+/* Live Feed only: keep the macro block readable in a bounded panel with
+   internal scrolling while the widget stays sticky. */
+.live-feed-page .macro-landscape {
+  max-height: calc(100dvh - 108px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
 @media (max-width: 960px) {
   .live-feed-layout {
     grid-template-columns: 1fr;

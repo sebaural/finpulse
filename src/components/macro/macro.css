@@ -16,6 +16,7 @@
 }
 
 .macro-title {
+  display: none;
   margin: 0;
   font-size: 22px;
   line-height: 1.25;
@@ -36,6 +37,7 @@
   font-size: 16px;
   font-weight: 700;
   margin: 18px 0 6px;
+  color: #889fbc;
 }
 
 .macro-body h2:first-child {
