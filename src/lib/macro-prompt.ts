@@ -2,7 +2,7 @@
 //
 // The task prompt for "The Macro Landscape" generation, consuming the contract
 // defined in MD_FILES/HOMEPAGE/macro-landscape-generation-prompt.md. The model
-// (Claude Sonnet 5) scrapes and reviews the latest financial news itself, live,
+// (Claude Opus 4.6) scrapes and reviews the latest financial news itself, live,
 // via the web_search server tool enabled on the call — there is no feed
 // ingestion step. `publishDate` (America/New_York, YYYY-MM-DD) is injected so
 // `title`, `slug`, and `publishedDate` in the output are unambiguous.
@@ -21,8 +21,6 @@ Before writing, use web search to scrape and review the latest financial and
 macroeconomic news to determine current content. Output must be a single JSON
 object with exactly these keys:
 
-- "title" — string. Format: "The Macro Landscape — <Month D, YYYY>", using the
-  publish date ${publishDate}, e.g. "The Macro Landscape — July 10, 2026".
 - "slug" — string. Format: "macro-landscape-${publishDate}", lowercase, using the
   publish date in America/New_York. Contains only lowercase letters, numbers, and
   hyphens.
@@ -37,7 +35,7 @@ Do not add any other top-level keys. Do not wrap the JSON in markdown code fence
 A. The value of "body" must be an HTML fragment only. Do not use asterisks, markdown
    bold, markdown bullets, or any XML-style wrapper tags. Use semantic HTML. Make each
    subsection title a separate <h2> element. Place the text beneath each heading inside
-   <p> elements (use more than one <p> per subsection where it improves readability).
+  exactly one <p> element per subsection.
 
 B. Do not embed citations or source links inline. Collect all sources used and list
    them separately in a <ul> block at the very end of the fragment, under a final

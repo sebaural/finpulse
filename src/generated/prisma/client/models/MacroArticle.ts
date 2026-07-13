@@ -213,15 +213,15 @@ export type MacroArticleOrderByWithRelationInput = {
 export type MacroArticleWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   slug?: string
+  publishedDate?: Date | string
   AND?: Prisma.MacroArticleWhereInput | Prisma.MacroArticleWhereInput[]
   OR?: Prisma.MacroArticleWhereInput[]
   NOT?: Prisma.MacroArticleWhereInput | Prisma.MacroArticleWhereInput[]
   title?: Prisma.StringFilter<"MacroArticle"> | string
-  publishedDate?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
   body?: Prisma.StringFilter<"MacroArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
-}, "id" | "slug">
+}, "id" | "slug" | "publishedDate">
 
 export type MacroArticleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

@@ -200,7 +200,7 @@ export async function upsertMacroArticle(data: {
 }
 
 // ---------------------------------------------------------------------------
-// Generation — Claude Sonnet 5 with live web search (no feed ingestion)
+// Generation — Claude Opus 4.6 with live web search (no feed ingestion)
 // ---------------------------------------------------------------------------
 
 interface ClaudeMacroResponse {
@@ -238,7 +238,7 @@ export async function generateMacroArticle(): Promise<{
     { role: 'user', content: buildMacroPrompt(publishDate) },
   ];
 
-  // web_search_20260209 (dynamic filtering) is supported on Claude Sonnet 5.
+  // web_search_20260209 (dynamic filtering) is supported on Claude Opus 4.6.
   // The server runs its own search loop; if it hits the iteration cap it returns
   // stop_reason 'pause_turn' and we re-send to resume.
   const tools = [
@@ -246,7 +246,7 @@ export async function generateMacroArticle(): Promise<{
   ] as unknown as Anthropic.Messages.ToolUnion[];
 
   let response = await client.messages.create({
-    model: 'claude-sonnet-5',
+    model: 'claude-opus-4.6',
     max_tokens: 8000,
     system: MACRO_SYSTEM_PROMPT,
     tools,
@@ -257,7 +257,7 @@ export async function generateMacroArticle(): Promise<{
   while (response.stop_reason === 'pause_turn' && guard < 5) {
     messages.push({ role: 'assistant', content: response.content });
     response = await client.messages.create({
-      model: 'claude-sonnet-5',
+      model: 'claude-opus-4.6',
       max_tokens: 8000,
       system: MACRO_SYSTEM_PROMPT,
       tools,
