@@ -67,7 +67,7 @@ function toAdjacent(row: MacroRow | null): AdjacentMacroArticleInfo | null {
 // Queries — single-item, not list (the block always shows exactly one entry)
 // ---------------------------------------------------------------------------
 
-/** The most recently published entry — the homepage/`/macro` default. */
+/** The most recently published entry for embedded surfaces (home + live feed). */
 export async function getLatestMacroArticle(): Promise<MacroArticle | null> {
   try {
     const prisma = getPrisma();
