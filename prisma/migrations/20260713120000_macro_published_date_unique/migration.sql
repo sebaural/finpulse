@@ -4,7 +4,7 @@ WITH ranked AS (
     id,
     ROW_NUMBER() OVER (
       PARTITION BY "publishedDate"
-      ORDER BY "updatedAt" DESC, "createdAt" DESC, id DESC
+      ORDER BY "createdAt" ASC, "updatedAt" ASC, id ASC
     ) AS rn
   FROM "macro_articles"
 )

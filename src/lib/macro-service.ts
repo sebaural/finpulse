@@ -124,7 +124,7 @@ export async function getMacroArticleBySlug(slug: string): Promise<MacroArticle 
 export async function getMacroArticleByDate(publishedDate: string): Promise<MacroArticle | null> {
   try {
     const prisma = getPrisma();
-    const row = await prisma.macroArticle.findFirst({
+    const row = await prisma.macroArticle.findUnique({
       where: { publishedDate: isoToDateColumn(publishedDate) },
     });
     return row ? mapRow(row) : null;
@@ -168,10 +168,19 @@ export async function getLatestMacroResponse(): Promise<MacroArticleResponse> {
 }
 
 // ---------------------------------------------------------------------------
-// Write — upsert keyed on publishedDate (a same-day re-run overwrites)
+// Write — create once per publishedDate (same-day re-runs do not update)
 // ---------------------------------------------------------------------------
 
-export async function upsertMacroArticle(data: {
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === 'P2002'
+  );
+}
+
+export async function createMacroArticleIfMissing(data: {
   title: string;
   slug: string;
   publishedDate: string;
@@ -180,10 +189,9 @@ export async function upsertMacroArticle(data: {
   const prisma = getPrisma();
   const publishedDate = isoToDateColumn(data.publishedDate);
 
-  // Upsert on publishedDate (not slug): a re-run for the same NY day overwrites
-  // that day's entry rather than duplicating. slug is deterministic per date, so
-  // updating the found row by id keeps the unique slug consistent.
-  const existing = await prisma.macroArticle.findFirst({ where: { publishedDate } });
+  // Immutable rule: once a row exists for this NY date, never update it.
+  const existing = await prisma.macroArticle.findUnique({ where: { publishedDate } });
+  if (existing) return mapRow(existing);
 
   const payload = {
     title: data.title,
@@ -192,11 +200,18 @@ export async function upsertMacroArticle(data: {
     body: data.body,
   };
 
-  const row = existing
-    ? await prisma.macroArticle.update({ where: { id: existing.id }, data: payload })
-    : await prisma.macroArticle.create({ data: payload });
-
-  return mapRow(row);
+  try {
+    const row = await prisma.macroArticle.create({ data: payload });
+    return mapRow(row);
+  } catch (error) {
+    // Concurrent cron invocations can race on the same publishedDate unique key.
+    // On conflict, return the already-created row and keep it unchanged.
+    if (isUniqueConstraintError(error)) {
+      const raced = await prisma.macroArticle.findUnique({ where: { publishedDate } });
+      if (raced) return mapRow(raced);
+    }
+    throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -301,8 +316,15 @@ export async function generateMacroArticle(): Promise<{
   };
 }
 
-/** Cron entry point: generate today's entry and upsert it. */
+/**
+ * Cron entry point: generate today's entry once.
+ * If a row for today's NY date already exists, return it without re-generating.
+ */
 export async function runDailyMacroPipeline(): Promise<MacroArticle> {
+  const today = todayInNewYork();
+  const existing = await getMacroArticleByDate(today);
+  if (existing) return existing;
+
   const generated = await generateMacroArticle();
-  return upsertMacroArticle(generated);
+  return createMacroArticleIfMissing(generated);
 }
