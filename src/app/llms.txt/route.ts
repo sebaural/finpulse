@@ -7,8 +7,53 @@ export async function GET() {
   const body =
 `# MacroStance
 > MacroStance aggregates real-time financial news and market intelligence across equities, macro, forex, commodities, crypto, geopolitics, and tech — built for traders, analysts, and market observers.
+> This file is intended for AI agents and LLM crawlers and describes the site's access policy for automated systems.
 
 Updated continuously. Sourced from 50+ providers including Reuters, Bloomberg, WSJ, and CNBC.
+
+## AI Crawler Access Policy
+
+Access for AI agents and search engines is open and configured at the edge/WAF level (Cloudflare).
+36 AI/search crawlers have been whitelisted and receive a normal \`200 OK\` response without a Cloudflare Challenge / CAPTCHA / JS verification.
+
+Allowed crawlers:
+
+- GPTBot
+- ChatGPT-User
+- OAI-SearchBot
+- ClaudeBot
+- Claude-Web
+- anthropic-ai
+- PerplexityBot
+- Perplexity-User
+- Google-Extended
+- Googlebot
+- Bingbot
+- BingPreview
+- CCBot
+- cohere-ai
+- Amazonbot
+- Applebot
+- Applebot-Extended
+- Bytespider
+- YandexBot
+- DuckDuckBot
+- facebookexternalhit
+- Meta-ExternalAgent
+- Meta-ExternalFetcher
+- Twitterbot
+- LinkedInBot
+- Diffbot
+- MJ12bot
+- SemrushBot
+- AhrefsBot
+- DotBot
+- Timpibot
+- ImagesiftBot
+- YouBot
+- Omgilibot
+- FriendlyCrawler
+- Webzio-Extended
 
 ## Coverage
 
@@ -18,7 +63,8 @@ Updated continuously. Sourced from 50+ providers including Reuters, Bloomberg, W
 
 ## Live Feed
 
-- [Home — Full Feed](${SITE_URL}/): Real-time headlines across all categories, updated continuously.
+- [Live Feed — Full Feed](${SITE_URL}/live-feed): Real-time headlines across all categories, updated continuously.
+- [Home](${SITE_URL}/): Landing page featuring the News Pulse, Deep-Dive Analysis, and The Macro Landscape blocks.
 
 ## About
 
