@@ -384,6 +384,12 @@ async function generatePulseArticleFromSource(
     `### STEP 3: THE TWO META-SUMMARIES\n` +
     `Synthesize those 3 perspectives into two distinct, overarching macro-narratives. These summaries should not just list the viewpoints, but seamlessly weave them into the two primary, competing realities currently clashing on the global stage.\n\n` +
     `Maintain strict analytical objectivity. Do not favor any perspective; instead, focus on accurately capturing the emotional weight, logical frameworks, and geopolitical drivers behind each faction's engagement.\n\n` +
+    `### STEP 4: TITLE REQUIREMENTS\n` +
+    `Write a headline for this article that is specific to the actual topic identified in Step 1 — not a generic template.\n` +
+    `- Do NOT use the phrase "Sparks Global," or any close variant of it (e.g., "Ignites Global," "Fuels Worldwide," "Triggers International," "Sets Off Global"). These connector-verb-plus-"Global" constructions are overused and banned.\n` +
+    `- Do NOT structure the title as [Subject] + [connector verb] + "Global" + [abstract noun]. Vary the structure instead — options include a colon-led format ("Topic: What's Actually at Stake"), a direct statement, a named-entity-led format, or a question.\n` +
+    `- Anchor the title in a concrete, specific detail from Step 1 (a name, number, bill, agency, or event) rather than an abstract category label like "Economic Realignment" or "Fiscal Direction."\n` +
+    `- The title must read as distinct from a generic wire-service headline template — assume a reader will see this alongside titles from other categories, and it should not share a structural pattern with them.\n\n` +
     `Respond with JSON only using this exact shape:\n` +
     `{\n` +
     `  "title": "...",\n` +
