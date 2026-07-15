@@ -90,6 +90,7 @@
     break-inside: avoid; /* prevents a single item from splitting across columns */
     -webkit-column-break-inside: avoid; /* older Safari support */
     padding-bottom: 0.1rem;
+    line-height: 1;
   }
 
 .macro-empty {
