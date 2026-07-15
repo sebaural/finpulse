@@ -21,6 +21,9 @@ Before writing, use web search to scrape and review the latest financial and
 macroeconomic news to determine current content. Output must be a single JSON
 object with exactly these keys:
 
+- "title" — string. A concise, neutral headline for the day's macro summary (roughly
+  6–12 words). Plain text only: no HTML, markdown, quotes wrapping the whole title, or
+  the publish date embedded in it.
 - "slug" — string. Format: "macro-landscape-${publishDate}", lowercase, using the
   publish date in America/New_York. Contains only lowercase letters, numbers, and
   hyphens.

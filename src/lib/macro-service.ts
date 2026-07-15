@@ -225,16 +225,31 @@ interface ClaudeMacroResponse {
   body: string;
 }
 
+/** Strip markdown code fences the way parseClaudeJson does, for candidacy checks. */
+function stripFences(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned
+      .replace(/^```(?:json)?\s*\n?/i, '')
+      .replace(/\n?```\s*$/, '')
+      .trim();
+  }
+  return cleaned;
+}
+
 function extractJsonText(content: Anthropic.Messages.ContentBlock[]): string {
   // The final answer is a text block; web search / thinking blocks precede it.
-  // Walk from the end and take the last non-empty text block.
+  // Walk from the end and return the last text block that actually holds a JSON
+  // object. Taking the *last* text block unconditionally is fragile: the model
+  // sometimes ends its turn with a trailing commentary block ("Let me now …")
+  // AFTER the JSON, which would otherwise be parsed and fail.
   for (let i = content.length - 1; i >= 0; i--) {
     const block = content[i];
-    if (block.type === 'text' && block.text.trim()) {
+    if (block.type === 'text' && stripFences(block.text).startsWith('{')) {
       return block.text;
     }
   }
-  throw new Error('No text block found in Claude response');
+  throw new Error('No JSON object found in Claude response text blocks');
 }
 
 export async function generateMacroArticle(): Promise<{
@@ -261,7 +276,7 @@ export async function generateMacroArticle(): Promise<{
   ] as unknown as Anthropic.Messages.ToolUnion[];
 
   let response = await client.messages.create({
-    model: 'claude-opus-4.6',
+    model: 'claude-opus-4-6',
     max_tokens: 8000,
     system: MACRO_SYSTEM_PROMPT,
     tools,
@@ -272,7 +287,7 @@ export async function generateMacroArticle(): Promise<{
   while (response.stop_reason === 'pause_turn' && guard < 5) {
     messages.push({ role: 'assistant', content: response.content });
     response = await client.messages.create({
-      model: 'claude-opus-4.6',
+      model: 'claude-opus-4-6',
       max_tokens: 8000,
       system: MACRO_SYSTEM_PROMPT,
       tools,
