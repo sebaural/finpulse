@@ -1090,11 +1090,6 @@ nav {
   min-height: 102px;
 }
 
-/* Macro Landscape Section */
-.macro-landscape-widget {
-  margin: 20px 0 0;
-} 
-
 @keyframes ticker {
   0% {
     transform: translateX(0);

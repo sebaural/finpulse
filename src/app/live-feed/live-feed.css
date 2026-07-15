@@ -38,33 +38,8 @@
   min-width: 0;
 }
 
-/* Pin the Macro Landscape summary as the feed scrolls, clearing the sticky
-   site header (top:0, ~56px tall). */
-.live-feed-aside .macro-landscape-widget {
-  position: sticky;
-  top: 72px;
-}
-
-.live-feed-aside .macro-landscape-widget {
-  margin: 0;
-} 
-
-/* Live Feed only: keep the macro block readable in a bounded panel with
-   internal scrolling while the widget stays sticky. */
-.live-feed-page .macro-landscape {
-  max-height: calc(100dvh - 108px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 6px;
-}
-
 @media (max-width: 960px) {
   .live-feed-layout {
     grid-template-columns: 1fr;
-  }
-
-  /* Single column on mobile — no sticky pinning. */
-  .live-feed-aside .macro-landscape-widget {
-    position: static;
   }
 }

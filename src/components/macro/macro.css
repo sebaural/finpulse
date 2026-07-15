@@ -6,6 +6,35 @@
   gap: 12px;
 }
 
+/* Widget wrapper (home + live-feed aside) */
+.macro-landscape-widget {
+  margin: 20px 0 0;
+}
+
+/* Live Feed: pin the widget as the feed scrolls, clearing the sticky site
+   header (top:0, ~56px tall), and drop the default top margin. */
+.live-feed-aside .macro-landscape-widget {
+  position: sticky;
+  top: 72px;
+  margin: 0;
+}
+
+/* Live Feed only: keep the macro block readable in a bounded panel with
+   internal scrolling while the widget stays sticky. */
+.live-feed-page .macro-landscape {
+  max-height: calc(100dvh - 108px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+@media (max-width: 960px) {
+  /* Single column on mobile — no sticky pinning. */
+  .live-feed-aside .macro-landscape-widget {
+    position: static;
+  }
+}
+
 .macro-eyebrow {
   font-family: 'Gideon Roman', serif;
   font-size: 22px;
@@ -48,16 +77,20 @@
   margin: 0 0 10px;
 }
 
-.macro-body ul,
-.macro-body ol {
-  margin: 0 0 10px;
-  padding-left: 20px;
-  font-size: 10px;
-}
+.macro-body ul {
+    column-count: auto; 
+    column-width: 300px;
+    column-gap: 1rem;
+    list-style-position: outside;
+    padding-left: 1rem;
+    font-size: 9px;
+  }
 
-.macro-body li {
-  margin: 2px 0;
-}
+  .macro-body li {
+    break-inside: avoid; /* prevents a single item from splitting across columns */
+    -webkit-column-break-inside: avoid; /* older Safari support */
+    padding-bottom: 0.1rem;
+  }
 
 .macro-empty {
   font-size: 14px;
