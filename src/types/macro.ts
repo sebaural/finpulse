@@ -10,7 +10,6 @@ export interface MacroArticle {
   /** Sanitized HTML fragment. */
   body: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 /**

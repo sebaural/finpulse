@@ -1047,8 +1047,7 @@ export const MacroArticleScalarFieldEnum = {
   title: 'title',
   publishedDate: 'publishedDate',
   body: 'body',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  createdAt: 'createdAt'
 } as const
 
 export type MacroArticleScalarFieldEnum = (typeof MacroArticleScalarFieldEnum)[keyof typeof MacroArticleScalarFieldEnum]

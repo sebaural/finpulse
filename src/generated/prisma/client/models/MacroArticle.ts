@@ -31,7 +31,6 @@ export type MacroArticleMinAggregateOutputType = {
   publishedDate: Date | null
   body: string | null
   createdAt: Date | null
-  updatedAt: Date | null
 }
 
 export type MacroArticleMaxAggregateOutputType = {
@@ -41,7 +40,6 @@ export type MacroArticleMaxAggregateOutputType = {
   publishedDate: Date | null
   body: string | null
   createdAt: Date | null
-  updatedAt: Date | null
 }
 
 export type MacroArticleCountAggregateOutputType = {
@@ -51,7 +49,6 @@ export type MacroArticleCountAggregateOutputType = {
   publishedDate: number
   body: number
   createdAt: number
-  updatedAt: number
   _all: number
 }
 
@@ -63,7 +60,6 @@ export type MacroArticleMinAggregateInputType = {
   publishedDate?: true
   body?: true
   createdAt?: true
-  updatedAt?: true
 }
 
 export type MacroArticleMaxAggregateInputType = {
@@ -73,7 +69,6 @@ export type MacroArticleMaxAggregateInputType = {
   publishedDate?: true
   body?: true
   createdAt?: true
-  updatedAt?: true
 }
 
 export type MacroArticleCountAggregateInputType = {
@@ -83,7 +78,6 @@ export type MacroArticleCountAggregateInputType = {
   publishedDate?: true
   body?: true
   createdAt?: true
-  updatedAt?: true
   _all?: true
 }
 
@@ -166,7 +160,6 @@ export type MacroArticleGroupByOutputType = {
   publishedDate: Date
   body: string
   createdAt: Date
-  updatedAt: Date
   _count: MacroArticleCountAggregateOutputType | null
   _min: MacroArticleMinAggregateOutputType | null
   _max: MacroArticleMaxAggregateOutputType | null
@@ -197,7 +190,6 @@ export type MacroArticleWhereInput = {
   publishedDate?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
   body?: Prisma.StringFilter<"MacroArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
 }
 
 export type MacroArticleOrderByWithRelationInput = {
@@ -207,7 +199,6 @@ export type MacroArticleOrderByWithRelationInput = {
   publishedDate?: Prisma.SortOrder
   body?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
 }
 
 export type MacroArticleWhereUniqueInput = Prisma.AtLeast<{
@@ -220,7 +211,6 @@ export type MacroArticleWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"MacroArticle"> | string
   body?: Prisma.StringFilter<"MacroArticle"> | string
   createdAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"MacroArticle"> | Date | string
 }, "id" | "slug" | "publishedDate">
 
 export type MacroArticleOrderByWithAggregationInput = {
@@ -230,7 +220,6 @@ export type MacroArticleOrderByWithAggregationInput = {
   publishedDate?: Prisma.SortOrder
   body?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
   _count?: Prisma.MacroArticleCountOrderByAggregateInput
   _max?: Prisma.MacroArticleMaxOrderByAggregateInput
   _min?: Prisma.MacroArticleMinOrderByAggregateInput
@@ -246,7 +235,6 @@ export type MacroArticleScalarWhereWithAggregatesInput = {
   publishedDate?: Prisma.DateTimeWithAggregatesFilter<"MacroArticle"> | Date | string
   body?: Prisma.StringWithAggregatesFilter<"MacroArticle"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MacroArticle"> | Date | string
-  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"MacroArticle"> | Date | string
 }
 
 export type MacroArticleCreateInput = {
@@ -256,7 +244,6 @@ export type MacroArticleCreateInput = {
   publishedDate: Date | string
   body: string
   createdAt?: Date | string
-  updatedAt?: Date | string
 }
 
 export type MacroArticleUncheckedCreateInput = {
@@ -266,7 +253,6 @@ export type MacroArticleUncheckedCreateInput = {
   publishedDate: Date | string
   body: string
   createdAt?: Date | string
-  updatedAt?: Date | string
 }
 
 export type MacroArticleUpdateInput = {
@@ -276,7 +262,6 @@ export type MacroArticleUpdateInput = {
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MacroArticleUncheckedUpdateInput = {
@@ -286,7 +271,6 @@ export type MacroArticleUncheckedUpdateInput = {
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MacroArticleCreateManyInput = {
@@ -296,7 +280,6 @@ export type MacroArticleCreateManyInput = {
   publishedDate: Date | string
   body: string
   createdAt?: Date | string
-  updatedAt?: Date | string
 }
 
 export type MacroArticleUpdateManyMutationInput = {
@@ -306,7 +289,6 @@ export type MacroArticleUpdateManyMutationInput = {
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MacroArticleUncheckedUpdateManyInput = {
@@ -316,7 +298,6 @@ export type MacroArticleUncheckedUpdateManyInput = {
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MacroArticleCountOrderByAggregateInput = {
@@ -326,7 +307,6 @@ export type MacroArticleCountOrderByAggregateInput = {
   publishedDate?: Prisma.SortOrder
   body?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
 }
 
 export type MacroArticleMaxOrderByAggregateInput = {
@@ -336,7 +316,6 @@ export type MacroArticleMaxOrderByAggregateInput = {
   publishedDate?: Prisma.SortOrder
   body?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
 }
 
 export type MacroArticleMinOrderByAggregateInput = {
@@ -346,7 +325,6 @@ export type MacroArticleMinOrderByAggregateInput = {
   publishedDate?: Prisma.SortOrder
   body?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
 }
 
 
@@ -358,7 +336,6 @@ export type MacroArticleSelect<ExtArgs extends runtime.Types.Extensions.Internal
   publishedDate?: boolean
   body?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
 }, ExtArgs["result"]["macroArticle"]>
 
 export type MacroArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -368,7 +345,6 @@ export type MacroArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   publishedDate?: boolean
   body?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
 }, ExtArgs["result"]["macroArticle"]>
 
 export type MacroArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -378,7 +354,6 @@ export type MacroArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   publishedDate?: boolean
   body?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
 }, ExtArgs["result"]["macroArticle"]>
 
 export type MacroArticleSelectScalar = {
@@ -388,10 +363,9 @@ export type MacroArticleSelectScalar = {
   publishedDate?: boolean
   body?: boolean
   createdAt?: boolean
-  updatedAt?: boolean
 }
 
-export type MacroArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "publishedDate" | "body" | "createdAt" | "updatedAt", ExtArgs["result"]["macroArticle"]>
+export type MacroArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "publishedDate" | "body" | "createdAt", ExtArgs["result"]["macroArticle"]>
 
 export type $MacroArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MacroArticle"
@@ -403,7 +377,6 @@ export type $MacroArticlePayload<ExtArgs extends runtime.Types.Extensions.Intern
     publishedDate: Date
     body: string
     createdAt: Date
-    updatedAt: Date
   }, ExtArgs["result"]["macroArticle"]>
   composites: {}
 }
@@ -833,7 +806,6 @@ export interface MacroArticleFieldRefs {
   readonly publishedDate: Prisma.FieldRef<"MacroArticle", 'DateTime'>
   readonly body: Prisma.FieldRef<"MacroArticle", 'String'>
   readonly createdAt: Prisma.FieldRef<"MacroArticle", 'DateTime'>
-  readonly updatedAt: Prisma.FieldRef<"MacroArticle", 'DateTime'>
 }
     
 

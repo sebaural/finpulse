@@ -22,7 +22,6 @@ type MacroRow = {
   publishedDate: Date;
   body: string;
   createdAt: Date;
-  updatedAt: Date;
 };
 
 /** A DATE column round-trips through Prisma as a Date at UTC midnight. */
@@ -54,7 +53,6 @@ function mapRow(row: MacroRow): MacroArticle {
     publishedDate: dateColumnToIso(row.publishedDate),
     body: row.body,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
   };
 }
 

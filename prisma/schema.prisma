@@ -106,8 +106,10 @@ model MacroArticle {
   // re-run upserts rather than duplicating.
   publishedDate DateTime @unique @db.Date
   body          String   @db.Text
+  // Immutable rows (see the macro_articles_prevent_update trigger): a row is
+  // inserted once and never updated, so there is no updatedAt — createdAt alone
+  // records when the entry was written.
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
   @@map("macro_articles")
 }
