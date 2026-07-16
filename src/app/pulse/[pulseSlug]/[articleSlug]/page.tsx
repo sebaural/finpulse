@@ -8,6 +8,7 @@ import { isPulseHtmlFragment, sanitizePulseHtml } from '@/lib/pulse-html';
 import { getPulseArticleBySlug } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
+import { getPulseSchemaMarkup } from '@/types/pulse';
 import '@/components/pulse/pulse.css';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,7 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
   const article = await getPulseArticleBySlug(pulseSlug, articleSlug);
   if (!article) notFound();
   const breadcrumbDate = formatPulseDisplayDate(getPulseDisplayDateSource(article));
+  const schemaMarkup = getPulseSchemaMarkup(article);
 
   return (
     <>
@@ -81,6 +83,12 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
             <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="pulse-source-link">
               View source
             </a>
+          ) : null}
+          {schemaMarkup ? (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup).replace(/</g, '\\u003c') }}
+            />
           ) : null}
         </div>
       </main>

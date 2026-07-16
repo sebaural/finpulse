@@ -61,6 +61,7 @@ interface ClaudePulseResponse {
   summary: string;
   body?: string;
   sourceUrl?: string;
+  schemaMarkup?: Record<string, unknown>;
 }
 
 interface PulseSourceShape {
@@ -160,7 +161,6 @@ function stripDateTokensFromSlug(slug: string): string {
     .filter((token) => {
       if (!token) return false;
       if (!/^[a-z]+$/.test(token)) return false;
-      if (/[0-9]/.test(token)) return false;
       if (isDateLikeSlugToken(token)) return false;
       return true;
     })
@@ -208,6 +208,10 @@ function isUniqueConstraintError(err: unknown): boolean {
     'code' in err &&
     (err as { code?: string }).code === 'P2002'
   );
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function toPulseArticle(row: PulseArticleRow): PulseArticle {
@@ -390,13 +394,26 @@ async function generatePulseArticleFromSource(
     `- Do NOT structure the title as [Subject] + [connector verb] + "Global" + [abstract noun]. Vary the structure instead — options include a colon-led format ("Topic: What's Actually at Stake"), a direct statement, a named-entity-led format, or a question.\n` +
     `- Anchor the title in a concrete, specific detail from Step 1 (a name, number, bill, agency, or event) rather than an abstract category label like "Economic Realignment" or "Fiscal Direction."\n` +
     `- The title must read as distinct from a generic wire-service headline template — assume a reader will see this alongside titles from other categories, and it should not share a structural pattern with them.\n\n` +
+    `### STEP 5: JSON-LD SCHEMA MARKUP\n` +
+    `Generate a valid JSON-LD structured data object using schema.org's AnalysisNewsArticle type. This is a subtype of NewsArticle intended to signal that the piece is analytical/interpretive rather than straight reporting. Requirements:\n` +
+    `- "@context" must be "https://schema.org" and "@type" must be "AnalysisNewsArticle".\n` +
+    `- "headline" must match the title generated in Step 4 exactly (schema.org headlines should stay under ~110 characters; if the title is longer, keep this field verbatim anyway and do not truncate silently — instead ensure Step 4's title respects this limit).\n` +
+    `- "description" should mirror the "summary" field content (2-3 sentences).\n` +
+    `- "datePublished" and "dateModified" should use the Observed end value in ISO 8601 format (fall back to current ISO timestamp if unavailable).\n` +
+    `- "author" must be an object of "@type": "Organization" with "name" set to a sensible publication/brand name inferred from context (or "Pulse" if none is available).\n` +
+    `- "publisher" must be an object of "@type": "Organization" with "name" and a "logo" object of "@type": "ImageObject" (use placeholder "url" values if no real asset is known).\n` +
+    `- "mainEntityOfPage" must be an object of "@type": "WebPage" with "@id" set to the sourceUrl if available, otherwise omit this field.\n` +
+    `- "about" should be an array of one or more "@type": "Thing" objects naming the key entities/topics identified in Step 1 (e.g., named people, agencies, bills).\n` +
+    `- Include "keywords" as a comma-separated string derived from the slug words and Step 2 perspective titles.\n` +
+    `- Do not include markdown, comments, or trailing commas — this must be strictly parseable JSON when extracted as its own object.\n\n` +
     `Respond with JSON only using this exact shape:\n` +
     `{\n` +
     `  "title": "...",\n` +
     `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
     `  "summary": "2-3 sentence concise summary of the top topic and the two competing macro-narratives",\n` +
     `  "body": "HTML fragment only. Do not use *, **, markdown bold, asterisks, bullets, or XML-style wrappers. Use semantic HTML and make each of the 3 Step 2 perspective titles a separate <h2> element. Keep the text beneath each heading in <p> blocks. Use this exact section order:\n\n<h2>Topic analysis</h2>\n<p>[Step 1 content]</p>\n\n<h2>Perspective 1: [title]</h2>\n<p>[core thesis and rhetoric]</p>\n\n<h2>Perspective 2: [title]</h2>\n<p>[core thesis and rhetoric]</p>\n\n<h2>Perspective 3: [title]</h2>\n<p>[core thesis and rhetoric]</p>\n\n<h2>First macro-narrative</h2>\n<p>[1-paragraph synthesis of aligned viewpoints, focusing on underlying ideology, motivations, and global implications]</p>\n\n<h2>Second macro-narrative</h2>\n<p>[1-paragraph synthesis of opposing worldviews, sharply contrasting with the first macro-narrative to reveal the core ideological fault line]</p>",\n` +
-    `  "sourceUrl": "source URL if available"\n` +
+    `  "sourceUrl": "source URL if available",\n` +
+    `  "schemaMarkup": { JSON-LD object as specified in STEP 5, valid AnalysisNewsArticle schema.org markup, returned as a nested JSON object (not a stringified string) }\n` +
     `}\n\n` +
     `Input source data:\n` +
     `Pulse slug: ${pulseSlug}\n` +
@@ -417,7 +434,7 @@ async function generatePulseArticleFromSource(
   });
 
   const first = response.content[0];
-  if (first.type !== 'text') {
+  if (!first || first.type !== 'text') {
     throw new Error('Unexpected response type from Claude');
   }
 
@@ -430,6 +447,7 @@ async function generatePulseArticleFromSource(
 
   const slugTokens = strippedSlug.split('-').filter(Boolean);
   const slug = slugTokens.length < 3 ? regeneratePulseSlug(source, pulseSlug) : strippedSlug;
+  const schemaMarkup = isObjectRecord(parsed.schemaMarkup) ? parsed.schemaMarkup : undefined;
 
   return {
     title: parsed.title || source.title,
@@ -437,6 +455,7 @@ async function generatePulseArticleFromSource(
     summary: parsed.summary || source.summaryHint || source.title,
     body: parsed.body || undefined,
     sourceUrl: parsed.sourceUrl || source.sourceUrl || undefined,
+    schemaMarkup,
   };
 }
 
@@ -578,6 +597,7 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
           title: generated.title,
           summary: generated.summary,
           body: generated.body,
+          sourceUrl: generated.sourceUrl || normalized.sourceUrl || null,
           category: config.gdeltCategory,
           observedStart: normalized.observedStart,
           observedEnd: normalized.observedEnd,
@@ -585,6 +605,7 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
           raw: {
             sourceId: sourceKey,
             row: rawRow,
+            schemaMarkup: generated.schemaMarkup ?? null,
           },
         },
       });
