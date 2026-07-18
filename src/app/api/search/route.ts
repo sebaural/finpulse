@@ -61,14 +61,18 @@ async function fetchPulseResults(q: string): Promise<(SearchResult & { score: nu
 }
 
 // --- Markets / Tech / Geopolitics: share the SummaryArticle-like shape ---
+// NOTE: limits below (30) intentionally match each vertical's live serving
+// window (see [slug]/page.tsx, page.tsx, and /api/*/articles/route.ts for
+// each vertical, which all call these with 30). Search must never index more
+// than the detail page can resolve, or results link to 404s.
 const SUMMARY_SECTIONS: {
   section: "markets" | "tech" | "geopolitics";
   urlPrefix: string;
   fetcher: () => Promise<any[]>;
 }[] = [
-  { section: "markets", urlPrefix: "/markets", fetcher: () => getMarketsSummaryArticles(200) },
-  { section: "tech", urlPrefix: "/tech", fetcher: () => getTechSummaryArticles(200) },
-  { section: "geopolitics", urlPrefix: "/geopolitics", fetcher: () => getGeopoliticsArticles(200) },
+  { section: "markets", urlPrefix: "/markets", fetcher: () => getMarketsSummaryArticles(30) },
+  { section: "tech", urlPrefix: "/tech", fetcher: () => getTechSummaryArticles(30) },
+  { section: "geopolitics", urlPrefix: "/geopolitics", fetcher: () => getGeopoliticsArticles(30) },
 ];
 
 async function fetchSummarySectionResults(q: string): Promise<(SearchResult & { score: number })[]> {
