@@ -68,6 +68,9 @@
   cursor: pointer;
 }
 
+.pulse-article-item:hover {
+  border-color: var(--pulse-accent);
+}
 .pulse-article-link {
   display: block;
   text-decoration: none;
