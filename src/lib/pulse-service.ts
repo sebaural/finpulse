@@ -441,9 +441,13 @@ async function generatePulseArticleFromSource(
     `Aggregate signal metrics: ${source.metricsHint || 'N/A'}\n` +
     `Summary hint: ${source.summaryHint || 'N/A'}\n`;
 
-  const response = await client.messages.create({
+  // Constant request config; only `messages` grows as we resume the turn.
+  const requestConfig: Omit<Anthropic.MessageCreateParamsNonStreaming, 'messages'> = {
     model: 'claude-opus-4-6',
-    max_tokens: 4096,
+    // The guardrail forces many web searches plus a full HTML body + JSON-LD
+    // schema in the final block, so give the output real headroom — 4096 was
+    // prone to truncating the JSON mid-object.
+    max_tokens: 8192,
     system:
       'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. You have web_search available and must use it to verify current status, dates, numbers, causes, and named attributions before writing — per the guardrail in the user prompt. Maintain strict analytical objectivity and return valid JSON only in your final text block.',
     tools: [
@@ -452,8 +456,30 @@ async function generatePulseArticleFromSource(
         name: 'web_search',
       },
     ],
-    messages: [{ role: 'user', content: prompt }],
-  });
+  };
+
+  // Server-side web_search runs an internal sampling loop capped at ~10
+  // iterations. The Step 0 guardrail demands more searches than that, so the
+  // API returns `stop_reason: 'pause_turn'` with NO final JSON block. If we
+  // don't resume the turn, the last text block is intermediate/empty,
+  // parseClaudeJson throws, and every pulse category ends up with 0 created.
+  // Re-send the accumulated messages until the model finishes (bounded).
+  const messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
+  let response = await client.messages.create({ ...requestConfig, messages });
+
+  const MAX_TURN_CONTINUATIONS = 3;
+  let continuations = 0;
+  while (response.stop_reason === 'pause_turn' && continuations < MAX_TURN_CONTINUATIONS) {
+    messages.push({ role: 'assistant', content: response.content });
+    response = await client.messages.create({ ...requestConfig, messages });
+    continuations += 1;
+  }
+
+  if (response.stop_reason === 'pause_turn') {
+    throw new Error(
+      `Claude did not finish the pulse turn after ${MAX_TURN_CONTINUATIONS} continuations (still paused)`,
+    );
+  }
 
   type ContentBlock = (typeof response.content)[number];
   const isTextBlock = (block: ContentBlock): block is Extract<ContentBlock, { type: 'text' }> =>
