@@ -287,8 +287,6 @@ function inferSummaryHint(row: GdeltSummaryRow): string {
   return '';
 }
 
-// GDELT summary rows returned with `group_by: date` carry no explicit
-// timestamp field — the date bucket lives in `key` (e.g. "2026-07-02").
 function getBucketDate(row: GdeltSummaryRow): Date | null {
   const candidates = [row.key, row.date, row.bucket, row.event_date];
   for (const candidate of candidates) {
@@ -302,8 +300,6 @@ function getBucketDate(row: GdeltSummaryRow): Date | null {
   return null;
 }
 
-// Compact, human-readable digest of the aggregate metrics on a date bucket so
-// Claude has real signal to differentiate one day's briefing from the next.
 function inferMetricsHint(row: GdeltSummaryRow): string {
   const parts: string[] = [];
   const metrics = (row.metrics ?? {}) as Record<string, { total?: unknown } | undefined>;
@@ -350,11 +346,6 @@ function stableSourceKey(row: GdeltSummaryRow, normalized: PulseSourceShape): st
     if (typeof id === 'number') return String(id);
   }
 
-  // Date-bucketed GDELT summaries have no per-event id or url, so keying on
-  // title+url collapses to a per-category constant — after the first run every
-  // row matches an existing key and nothing new is ever created. The date
-  // bucket (`key`) is the stable per-day identity; syncPulseCategory already
-  // scopes by category, so bucketKey alone is unique per (category, date).
   if (normalized.bucketKey) {
     return `${normalized.title.toLowerCase()}::${normalized.bucketKey.toLowerCase()}`;
   }
@@ -376,18 +367,43 @@ async function generatePulseArticleFromSource(
 
   const prompt =
     `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
-    `Please execute this task using the following structured steps:\n\n` +
+    `Before drafting any content, you MUST apply the following accuracy guardrail, using the web_search tool available to you. Do not skip searching — do not rely on training data, memory of "typical" figures, or plausible-sounding inference for any current event, especially anything dated within the last 90 days.\n\n` +
+    `### STEP 0: VERIFY BEFORE ANALYZING (MANDATORY — USE WEB SEARCH)\n` +
+    `IMPORTANT — SOURCE DATA PROVENANCE: The "Input source data" below (title, bucketKey, sourceUrl, observedStart/observedEnd, metricsHint, summaryHint) comes from GDELT, an automated global event-monitoring system that algorithmically detects and clusters event mentions across worldwide media. This is NOT a vetted, human-confirmed account of events. Specifically:\n` +
+    `- Treat "title" and "summaryHint" as an investigative LEAD to search from, never as a confirmed fact to write from — they may be auto-generated, drawn from a single outlier article, or reflect a mis-clustered/mis-coded event.\n` +
+    `- Treat "observedStart" and "observedEnd" as the window when GDELT detected coverage VOLUME, not as the date the underlying event actually occurred. Coverage can lag an event, or spike due to renewed discussion of something older (an anniversary, an appeal, a follow-up ruling, a resurfaced story). Do not assume the observed window equals the event date — confirm the actual event date via search.\n` +
+    `- Treat "metricsHint" as a signal of how much something is being discussed, not evidence that the framing in "title"/"summaryHint" is accurate. High volume is not corroboration.\n` +
+    `- Treat "sourceUrl" as one contributing article, not necessarily the authoritative or complete account of the event.\n` +
+    `Use these fields only to decide WHAT to search for — then verify everything independently before Step 1.\n\n` +
+    `Before identifying the topic in Step 1, run web searches to verify the following. Do not proceed to Step 1 until you have search-grounded answers for each:\n` +
+    `1. STATUS/TENSE — Search for the actual current status of any process this topic involves (bill, ruling, negotiation, investigation, election) as of today. Do not assume something is "still pending" or "still in committee" without confirming it via search — status can go stale fast, and GDELT's own coverage-detection window is not a reliable indicator of current status either. If your prior understanding or the source data conflicts with what search results show, defer to the search results.\n` +
+    `2. TIMELINE — Search to confirm every date you plan to use (passage, signing, effective date, deadlines, phase-ins, the specific triggering event date) and confirm it's consistent with "today." Explicitly distinguish the actual event date (confirmed via search) from GDELT's observedStart/observedEnd (when coverage was merely detected).\n` +
+    `3. TRIGGERING EVENT/CAUSE — Search for the specific event, vote, decision, ruling, or document actually driving the story right now. Do not infer a plausible-sounding cause from the general topic area or from "summaryHint" alone, and do not invent supporting evidence (no fabricated leaks, IG findings, classified documents, or named provisions). If search does not surface a specific real catalyst, use a more defensible framing (e.g., an actual confirmed deadline) rather than inventing one.\n` +
+    `4. NUMBERS — Search to confirm every dollar figure, vote count, percentage, or score you plan to use. Do not use a "clean" rounded estimate from memory or from "metricsHint." If multiple figures should refer to the same underlying thing, confirm via search that they agree; if sources disagree, use the most recent/authoritative figure.\n` +
+    `5. POLITICAL ALIGNMENT/VOTE MECHANICS — Search for the actual vote breakdown rather than assuming "bipartisan" or "party-line" by default; note any procedural nuances that change the surface narrative.\n` +
+    `6. NAMED INDIVIDUALS/ORGANIZATIONS — Only attribute positions, quotes, sponsorship, or statements to specific people, companies, or organizations you can confirm via search actually said or did them. If a specific attribution can't be confirmed, generalize (e.g., "industry response has been mixed") instead of naming an unverified source.\n` +
+    `7. COMPARATIVE CLAIMS — Verify any comparison to other laws, precedents, or prior events via search rather than relying on plausible-sounding analogy.\n\n` +
+    `If search results conflict with the framing implied by the GDELT source data, or with a more "in-progress" or dramatic framing that might otherwise seem natural, prioritize the accurate, current, search-confirmed state. If search results are sparse or conflicting on a specific detail, omit that detail or state it in more general terms rather than asserting it as fact.\n\n` +
+    `### STEP 0.5: CLUSTER COHERENCE CHECK (MANDATORY)\n` +
+    `GDELT frequently clusters multiple distinct-but-related news items under a single event summary — e.g., two separate bills on a similar theme, a ruling and an unrelated protest that both mention the same agency, or several officials' unrelated statements that share a keyword. Before treating "title" and "summaryHint" as describing ONE coherent event, verify via your Step 0 searches that they actually do:\n` +
+    `- If your searches turn up what is clearly a single, coherent event/story matching the source data, proceed normally.\n` +
+    `- If your searches instead surface two or more distinct, only-tangentially-related stories (different bills, different rulings, different actors, different dates) that appear to have been merged into one "title"/"summaryHint" by the clustering process, do NOT silently pick one and discard the rest, and do NOT force them into a single false narrative thread. Instead, select the single most substantively significant, best-sourced, and most current of the candidate events as the actual topic for Step 1, and proceed using only search-verified facts about that one event.\n` +
+    `- If your searches cannot establish that ANY specific, real, current event matches the source data closely enough to write about responsibly (e.g., the "title"/"summaryHint" appears to be a coding artifact, a duplicate-event inflation, or too vague to trace to real reporting), do not fabricate a plausible-sounding event to fill the gap. In that case, fall back to the closest verifiable real story within the same general subject area (same agency, same policy domain) that is actually well-sourced, current, and significant — rather than inventing specifics for the original, unverifiable cluster.\n` +
+    `- In either fallback case, the topic you ultimately write about in Step 1 onward must be one coherent, search-verified event — never a blended composite of multiple unrelated ones.\n\n` +
+    `Please execute the remaining task using the following structured steps:\n\n` +
     `### STEP 1: TOPIC IDENTIFICATION\n` +
-    `Identify the top U.S. political topic of today that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences.\n\n` +
+    `Identify the top U.S. political topic of today that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences, using only the search-verified, single-coherent-event catalyst and timeline established in Step 0/0.5 — not the raw GDELT source data and not an inferred or generic one.\n\n` +
     `### STEP 2: THE 3 OPPOSING PERSPECTIVES\n` +
     `Break down the global conversation into 3 distinct, prominent, and competing viewpoints driving the highest engagement. For each perspective, provide:\n` +
     `1. A descriptive title for the faction/viewpoint.\n` +
     `2. The core narrative or thesis statement.\n` +
     `3. The specific arguments or rhetoric they are using to drive engagement.\n\n` +
-    `Ensure these 3 perspectives cover a diverse spectrum (e.g., domestic populist, traditional institutionalist, global realist, adversarial/anti-Western, or neutral bystander/Global South).\n\n` +
+    `Ensure these 3 perspectives cover a diverse spectrum (e.g., domestic populist, traditional institutionalist, global realist, adversarial/anti-Western, or neutral bystander/Global South). Perspectives may characterize how each faction interprets events, but must not be used to smuggle unverified facts into the piece as if established — any factual claim within a perspective should still be one you can trace to search results or that plausibly reflects that faction's real, stated position.\n\n` +
     `### STEP 3: THE TWO META-SUMMARIES\n` +
     `Synthesize those 3 perspectives into two distinct, overarching macro-narratives. These summaries should not just list the viewpoints, but seamlessly weave them into the two primary, competing realities currently clashing on the global stage.\n\n` +
     `Maintain strict analytical objectivity. Do not favor any perspective; instead, focus on accurately capturing the emotional weight, logical frameworks, and geopolitical drivers behind each faction's engagement.\n\n` +
+    `### STEP 3.5: SELF-CHECK (MANDATORY BEFORE FINALIZING)\n` +
+    `Before producing final output, review the "Topic analysis" content specifically (the neutral scene-setting section, not the perspectives) and confirm every factual claim in it — status, dates, numbers, named parties, causal claims — traces to a search result you actually retrieved in Step 0, and describes the single coherent event confirmed in Step 0.5, not a blended composite. If any claim doesn't trace to a search result, either run an additional search to confirm it, soften it with hedging, or cut it. Also confirm framing tense is correct: if the underlying event has already happened or been decided, do not describe it with speculative language ("could," "would," "may reshape") in the neutral section.\n\n` +
     `### STEP 4: TITLE REQUIREMENTS\n` +
     `Write a headline for this article that is specific to the actual topic identified in Step 1 — not a generic template.\n` +
     `- Do NOT use the phrase "Sparks Global," or any close variant of it (e.g., "Ignites Global," "Fuels Worldwide," "Triggers International," "Sets Off Global"). These connector-verb-plus-"Global" constructions are overused and banned.\n` +
@@ -406,7 +422,7 @@ async function generatePulseArticleFromSource(
     `- "about" should be an array of one or more "@type": "Thing" objects naming the key entities/topics identified in Step 1 (e.g., named people, agencies, bills).\n` +
     `- Include "keywords" as a comma-separated string derived from the slug words and Step 2 perspective titles.\n` +
     `- Do not include markdown, comments, or trailing commas — this must be strictly parseable JSON when extracted as its own object.\n\n` +
-    `Respond with JSON only using this exact shape:\n` +
+    `IMPORTANT: You have access to a web_search tool and will use it during Step 0. Your searches, tool results, and any intermediate reasoning will appear as separate content blocks before your final answer. Your FINAL text block — and only your final text block — must contain the JSON object below, with no markdown fences, no commentary, and no partial JSON in earlier blocks. Respond with JSON only using this exact shape in your final text block:\n` +
     `{\n` +
     `  "title": "...",\n` +
     `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
@@ -427,18 +443,28 @@ async function generatePulseArticleFromSource(
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 3200,
+    max_tokens: 4096,
     system:
-      'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Maintain strict analytical objectivity and return valid JSON only.',
+      'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. You have web_search available and must use it to verify current status, dates, numbers, causes, and named attributions before writing — per the guardrail in the user prompt. Maintain strict analytical objectivity and return valid JSON only in your final text block.',
+    tools: [
+      {
+        type: 'web_search_20250305',
+        name: 'web_search',
+      },
+    ],
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const first = response.content[0];
-  if (!first || first.type !== 'text') {
-    throw new Error('Unexpected response type from Claude');
+  type ContentBlock = (typeof response.content)[number];
+  const isTextBlock = (block: ContentBlock): block is Extract<ContentBlock, { type: 'text' }> =>
+    block.type === 'text';
+
+  const textBlocks = response.content.filter(isTextBlock).map((block) => block.text);
+  if (textBlocks.length === 0) {
+    throw new Error('Unexpected response type from Claude: no text content returned');
   }
 
-  const parsed = parseClaudeJson<ClaudePulseResponse>(first.text);
+  const parsed = parseClaudeJson<ClaudePulseResponse>(textBlocks[textBlocks.length - 1]);
   const modelSlug = parsed.slug || parsed.title || source.title;
   const strippedSlug = stripDateTokensFromSlug(modelSlug);
   if (strippedSlug !== canonicalizeSlug(modelSlug)) {
@@ -499,10 +525,6 @@ export async function getPulseArticleBySlug(
   }
 }
 
-// Effective publish time for ordering: the observed date, falling back to the
-// stored publish time. Legacy rows have a null observedStart, so relying on the
-// DB's `observedStart desc` (NULLS FIRST in Postgres) would surface the oldest
-// row as "latest" — compute the max explicitly instead.
 function pulseArticleTime(article: PulseArticle): number {
   const value = article.observedStart ?? article.publishedAt;
   if (!value) return -Infinity;
@@ -576,8 +598,6 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
       continue;
     }
 
-    // Keep pulse URLs date-free. If a slug collides, disambiguate with a
-    // non-date suffix so the URL shape remains /pulse/{pulseSlug}/{articleSlug}.
     let articleSlug = generated.slug;
     if (existingSlugs.has(articleSlug) || (await isSlugTakenAcrossVerticals(articleSlug))) {
       let nextSlug = `${articleSlug}-${pulseSlug}`;
@@ -635,9 +655,6 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
 export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
   const slugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
 
-  // Fault-isolate per category: a single category's GDELT/Claude failure must
-  // not reject the whole pulse pipeline and zero out the categories that would
-  // otherwise have succeeded.
   const settled = await Promise.allSettled(slugs.map((slug) => syncPulseCategory(slug)));
   const results = settled.map((outcome, i) => {
     if (outcome.status === 'fulfilled') return outcome.value;
@@ -650,3 +667,4 @@ export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { creat
     { created: number }
   >;
 }
+
