@@ -5,11 +5,13 @@ import PulseHeader from '@/components/pulse/PulseHeader';
 import { PULSE_CATEGORIES, resolvePulseSlug } from '@/lib/pulse-categories';
 import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
 import { isPulseHtmlFragment, sanitizePulseHtml } from '@/lib/pulse-html';
-import { getPulseArticleBySlug } from '@/lib/pulse-service';
+import { getPulseArticleBySlug, getLatestArticlePerCategory } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
 import { getPulseSchemaMarkup } from '@/types/pulse';
 import '@/components/pulse/pulse.css';
+
+import { PulseHighlights } from '@/components/pulse/PulseHighlights';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,17 +49,24 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
   if (!article) notFound();
   const breadcrumbDate = formatPulseDisplayDate(getPulseDisplayDateSource(article));
   const schemaMarkup = getPulseSchemaMarkup(article);
+  const pulseLatest = await getLatestArticlePerCategory();
 
   return (
     <>
       <PulseHeader />
       <main className="pulse-page pulse-article-page">
-        <div className="pulse-container">
+
           <div className="pulse-article-toolbar">
             <Link href={`/pulse/${pulseSlug}`} className="pulse-back-button">
               ← View All {config.label} Articles
             </Link>
           </div>
+
+        <div className="pulse-container">
+
+        <div className="pulse-article-proper">
+
+         
           <p className="pulse-crumbs">
             <Link href={`/pulse/${pulseSlug}`}>Pulse / {pulseSlug}</Link>
             {breadcrumbDate ? (
@@ -91,6 +100,15 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
             />
           ) : null}
         </div>
+
+      
+        <div className="pulse-article-sidebar-content">
+            <PulseHighlights latestByCategory={pulseLatest} />
+        </div>
+
+
+        </div>
+
       </main>
     </>
   );

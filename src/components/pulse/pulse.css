@@ -145,10 +145,6 @@
   outline-offset: 2px;
 }
 
-.pulse-article-page {
-  padding-top: 34px;
-}
-
 .pulse-article-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -198,6 +194,26 @@
 .pulse-crumb-date {
   color: var(--text);
   font-size: 18px
+}
+
+.pulse-article-page {
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+.pulse-article-page .pulse-container {
+  max-width: auto;
+}
+
+
+@media (min-width: 768px) {
+  .pulse-article-page .pulse-container {
+    display: grid;
+    grid-template-columns: 6fr 2fr;
+    gap: 20px;
+     max-width: 1420px;
+  }
 }
 
 .pulse-article-page .pulse-summary {
