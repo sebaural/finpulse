@@ -275,7 +275,7 @@ export async function generateMacroArticle(): Promise<{
 
   let response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 8000,
+    max_tokens: 4000,
     system: MACRO_SYSTEM_PROMPT,
     tools,
     messages,
@@ -286,7 +286,7 @@ export async function generateMacroArticle(): Promise<{
     messages.push({ role: 'assistant', content: response.content });
     response = await client.messages.create({
       model: 'claude-opus-4-6',
-      max_tokens: 8000,
+      max_tokens: 4000,
       system: MACRO_SYSTEM_PROMPT,
       tools,
       messages,
