@@ -52,16 +52,33 @@ export type ContentCronResult =
   | { section: ContentSection; success: true; article: GeneratedArticle }
   | { section: ContentSection; success: false; error: string };
 
+// Pulse sources from GDELT, which is capped at 100 query units/month on the
+// free plan. Four categories run per invocation, so a daily cadence is ~120
+// QU/month — over the cap, which silently zeros out generation once exhausted.
+// Running pulse every other day (~15 days × 4 ≈ 60 QU/month) keeps it under
+// budget. Parity is on the epoch day number so it alternates cleanly across
+// month boundaries (unlike a cron `*/2` day-of-month, which double-fires at the
+// 31st→1st rollover). The manual `/api/pulse/generate` route is unaffected.
+function shouldRunPulseToday(): boolean {
+  return Math.floor(Date.now() / 86_400_000) % 2 === 0;
+}
+
 export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
   const pipelines: { section: ContentSection; run: () => Promise<GeneratedArticle> }[] = [
     { section: 'geopolitics', run: runDailyGeopoliticsPipeline },
     { section: 'markets',     run: runDailyMarketsPipeline },
     { section: 'tech',        run: runDailyTechPipeline },
-    { section: 'pulse',       run: runDailyPulsePipeline },
     // NOTE: Macro Landscape is NOT part of this unified pipeline — it has its
     // own dedicated cron (`/api/macro/generate`, M–F 9am EST) in vercel.json,
     // because it self-sources via live web search on its own schedule.
   ];
+
+  // Pulse runs every other day to stay within the GDELT free-plan quota.
+  if (shouldRunPulseToday()) {
+    pipelines.push({ section: 'pulse', run: runDailyPulsePipeline });
+  } else {
+    console.log('[content-cron] [pulse] skipped today — runs every other day (GDELT quota budget)');
+  }
 
   const results: ContentCronResult[] = [];
   for (const { section, run } of pipelines) {

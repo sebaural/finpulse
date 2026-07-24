@@ -47,7 +47,21 @@ export async function fetchPulseSummary(
   });
 
   if (!res.ok) {
-    throw new Error(`GDELT API error: HTTP ${res.status}`);
+    // Surface the response body — GDELT returns a structured error (notably a
+    // `QUOTA_EXCEEDED` code with the calendar-month reset time on the free
+    // plan). Without it, a spent quota looks identical to any other outage and
+    // is easy to misdiagnose as an application bug.
+    const body = await res.text().catch(() => '');
+    let detail = body.slice(0, 500);
+    try {
+      const parsed = JSON.parse(body) as { code?: string; error?: string };
+      if (parsed.code || parsed.error) {
+        detail = [parsed.code, parsed.error].filter(Boolean).join(': ');
+      }
+    } catch {
+      /* body was not JSON — fall back to the raw text slice */
+    }
+    throw new Error(`GDELT API error: HTTP ${res.status}${detail ? ` — ${detail}` : ''}`);
   }
 
   return (await res.json()) as GdeltSummaryResponse;
