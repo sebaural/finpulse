@@ -5,7 +5,7 @@
 
 */
 -- DropTable
-DROP TABLE "summary_articles";
+DROP TABLE IF EXISTS "summary_articles";
 
 -- CreateTable
 CREATE TABLE "geopolitics_articles" (
