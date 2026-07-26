@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL, formatDateSegment } from '@/lib/seo';
 import { getPrisma } from '@/lib/db';
 import { toSlug } from '@/lib/summary-pipeline';
 
 export const revalidate = 3600;
 
 type ArticleRow = { slug: string; title: string; updatedAt: Date };
+type OverviewArticleRow = { slug: string; title: string; publishedDate: Date };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -25,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   let articleEntries: MetadataRoute.Sitemap = [];
+  let overviewEntries: MetadataRoute.Sitemap = [];
 
   try {
     const prisma = getPrisma();
@@ -51,5 +53,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] failed to load article rows, returning static entries only', err);
   }
 
-  return [...staticEntries, ...articleEntries];
+  // OverviewArticle is queried separately from the block above — it's an
+  // independent table/pipeline (per Step 2), so a failure here shouldn't be
+  // able to blank out the geopolitics/markets/tech entries, or vice versa.
+  try {
+    const prisma = getPrisma();
+    const overviewSelect = { slug: true, title: true, publishedDate: true } as const;
+    const overview = await prisma.overviewArticle.findMany({
+      select: overviewSelect,
+      orderBy: { publishedDate: 'desc' },
+    });
+
+    overviewEntries = overview.map((row: OverviewArticleRow) => ({
+      url: `${SITE_URL}/overview/${formatDateSegment(row.publishedDate)}/${row.slug || toSlug(row.title)}`,
+      lastModified: row.publishedDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch (err) {
+    console.error('[sitemap] failed to load overview article rows, returning without them', err);
+  }
+
+  return [...staticEntries, ...articleEntries, ...overviewEntries];
 }
+

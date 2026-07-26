@@ -453,3 +453,13 @@ export function newsArticleSchema(input: NewsArticleSchemaInput) {
 export function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
+
+/* Overview Articles related */
+export function formatDateSegment(date: Date): string {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${mm}-${dd}-${yyyy}`;
+}
+
+

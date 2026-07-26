@@ -76,3 +76,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type Topic = Prisma.TopicModel
+/**
+ * Model OverviewArticle
+ * 
+ */
+export type OverviewArticle = Prisma.OverviewArticleModel

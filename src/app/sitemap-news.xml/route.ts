@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { SITE_URL, SITE_NAME } from '@/lib/seo';
+import { SITE_URL, SITE_NAME, formatDateSegment } from '@/lib/seo';
 import { toSlug } from '@/lib/summary-pipeline';
 
 // Google News sitemap. Unlike the standard sitemap, Google News only considers
@@ -19,6 +19,16 @@ type PulseNewsRow = {
   title: string;
   category: string;
   createdAt: Date;
+};
+
+// OverviewArticle has no createdAt field (it's create-once, per Step 2 of
+// the guide) — publishedDate is the only timestamp available, and doubles
+// as both the news-window filter column and the publication_date value.
+type OverviewNewsRow = {
+  slug: string;
+  title: string;
+  category: string;
+  publishedDate: Date;
 };
 
 function xmlEscape(value: string): string {
@@ -56,69 +66,132 @@ function buildEntry(
   );
 }
 
-export async function GET() {
+function buildPulseEntry(row: PulseNewsRow): string {
+  const loc = `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`;
+  const publicationDate = row.createdAt.toISOString();
+  const keywords = xmlEscape([row.category, row.pulseSlug].join(', '));
+  return (
+    `  <url>\n` +
+    `    <loc>${loc}</loc>\n` +
+    `    <news:news>\n` +
+    `      <news:publication>\n` +
+    `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
+    `        <news:language>${PUBLICATION_LANGUAGE}</news:language>\n` +
+    `      </news:publication>\n` +
+    `      <news:publication_date>${publicationDate}</news:publication_date>\n` +
+    `      <news:title>${xmlEscape(row.title)}</news:title>\n` +
+    `      <news:keywords>${keywords}</news:keywords>\n` +
+    `    </news:news>\n` +
+    `  </url>\n`
+  );
+}
+
+function buildOverviewEntry(row: OverviewNewsRow): string {
+  const slug = row.slug || toSlug(row.title);
+  const loc = `${SITE_URL}/overview/${formatDateSegment(row.publishedDate)}/${slug}`;
+  const publicationDate = row.publishedDate.toISOString();
+  const keywords = xmlEscape(row.category);
+  return (
+    `  <url>\n` +
+    `    <loc>${loc}</loc>\n` +
+    `    <news:news>\n` +
+    `      <news:publication>\n` +
+    `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
+    `        <news:language>${PUBLICATION_LANGUAGE}</news:language>\n` +
+    `      </news:publication>\n` +
+    `      <news:publication_date>${publicationDate}</news:publication_date>\n` +
+    `      <news:title>${xmlEscape(row.title)}</news:title>\n` +
+    (keywords ? `      <news:keywords>${keywords}</news:keywords>\n` : ``) +
+    `    </news:news>\n` +
+    `  </url>\n`
+  );
+}
+
+// Runs one query in isolation. If it fails, logs which section broke and
+// returns an empty array instead of throwing — so a single bad table or
+// connection can only ever drop that section's URLs from the feed, never
+// take down the whole news sitemap. Same pattern as sitemap-dynamic.xml.
+async function safeQuery<T>(label: string, fn: () => Promise<T[]>): Promise<T[]> {
   try {
-    const prisma = getPrisma();
-    const cutoff = new Date(Date.now() - NEWS_WINDOW_MS);
-    const select = { slug: true, title: true, tags: true, createdAt: true } as const;
-    const where = { createdAt: { gte: cutoff } };
-    const orderBy = { createdAt: 'desc' as const };
-
-    const pulseSelect = {
-      pulseSlug: true,
-      articleSlug: true,
-      title: true,
-      category: true,
-      createdAt: true,
-    } as const;
-
-    const [geopolitics, markets, tech, pulse] = await Promise.all([
-      prisma.geopoliticsArticle.findMany({ select, where, orderBy }),
-      prisma.marketsArticle.findMany({ select, where, orderBy }),
-      prisma.techArticle.findMany({ select, where, orderBy }),
-      prisma.pulseArticle.findMany({ select: pulseSelect, where, orderBy }),
-    ]);
-
-    const entries = [
-      ...geopolitics.map((r) => buildEntry('geopolitics', r)),
-      ...markets.map((r) => buildEntry('markets', r)),
-      ...tech.map((r) => buildEntry('tech', r)),
-      ...pulse.map((r: PulseNewsRow) => {
-        const loc = `${SITE_URL}/pulse/${r.pulseSlug}/${r.articleSlug}`;
-        const publicationDate = r.createdAt.toISOString();
-        const keywords = xmlEscape([r.category, r.pulseSlug].join(', '));
-        return (
-          `  <url>\n` +
-          `    <loc>${loc}</loc>\n` +
-          `    <news:news>\n` +
-          `      <news:publication>\n` +
-          `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
-          `        <news:language>${PUBLICATION_LANGUAGE}</news:language>\n` +
-          `      </news:publication>\n` +
-          `      <news:publication_date>${publicationDate}</news:publication_date>\n` +
-          `      <news:title>${xmlEscape(r.title)}</news:title>\n` +
-          `      <news:keywords>${keywords}</news:keywords>\n` +
-          `    </news:news>\n` +
-          `  </url>\n`
-        );
-      }),
-    ].slice(0, MAX_URLS);
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml +=
-      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ` +
-      `xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n`;
-    xml += entries.join('');
-    xml += `</urlset>`;
-
-    return new NextResponse(xml, {
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60',
-      },
-    });
+    return await fn();
   } catch (err) {
-    console.error('[sitemap-news] failed to generate:', err);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error(`[sitemap-news] failed to load "${label}" rows, omitting from feed`, err);
+    return [];
   }
+}
+
+export async function GET() {
+  const prisma = getPrisma();
+  const cutoff = new Date(Date.now() - NEWS_WINDOW_MS);
+  const select = { slug: true, title: true, tags: true, createdAt: true } as const;
+  const where = { createdAt: { gte: cutoff } };
+  const orderBy = { createdAt: 'desc' as const };
+
+  const pulseSelect = {
+    pulseSlug: true,
+    articleSlug: true,
+    title: true,
+    category: true,
+    createdAt: true,
+  } as const;
+
+  const overviewSelect = {
+    slug: true,
+    title: true,
+    category: true,
+    publishedDate: true,
+  } as const;
+  const overviewWhere = { publishedDate: { gte: cutoff } };
+  const overviewOrderBy = { publishedDate: 'desc' as const };
+
+  // Each section fetched independently — a failure in any one of these
+  // (including the newest, least battle-tested OverviewArticle query)
+  // can never take down the others, since safeQuery already caught it
+  // and this Promise.all can therefore never reject.
+  const [geopolitics, markets, tech, pulse, overview] = await Promise.all([
+    safeQuery<NewsRow>('geopolitics', () =>
+      prisma.geopoliticsArticle.findMany({ select, where, orderBy }),
+    ),
+    safeQuery<NewsRow>('markets', () =>
+      prisma.marketsArticle.findMany({ select, where, orderBy }),
+    ),
+    safeQuery<NewsRow>('tech', () =>
+      prisma.techArticle.findMany({ select, where, orderBy }),
+    ),
+    safeQuery<PulseNewsRow>('pulse', () =>
+      prisma.pulseArticle.findMany({ select: pulseSelect, where, orderBy }),
+    ),
+    safeQuery<OverviewNewsRow>('overview', () =>
+      prisma.overviewArticle.findMany({
+        select: overviewSelect,
+        where: overviewWhere,
+        orderBy: overviewOrderBy,
+      }),
+    ),
+  ]);
+
+  const entries = [
+    ...geopolitics.map((r) => buildEntry('geopolitics', r)),
+    ...markets.map((r) => buildEntry('markets', r)),
+    ...tech.map((r) => buildEntry('tech', r)),
+    ...pulse.map(buildPulseEntry),
+    ...overview.map(buildOverviewEntry),
+  ].slice(0, MAX_URLS);
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  xml +=
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ` +
+    `xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n`;
+  xml += entries.join('');
+  xml += `</urlset>`;
+
+  // No top-level try/catch needed — every query that can fail is already
+  // isolated in safeQuery above, so nothing between here and the response
+  // can throw.
+  return new NextResponse(xml, {
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60',
+    },
+  });
 }

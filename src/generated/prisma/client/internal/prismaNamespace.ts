@@ -390,7 +390,8 @@ export const ModelName = {
   PulseArticle: 'PulseArticle',
   MacroArticle: 'MacroArticle',
   User: 'User',
-  Topic: 'Topic'
+  Topic: 'Topic',
+  OverviewArticle: 'OverviewArticle'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "macroArticle" | "user" | "topic"
+    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "macroArticle" | "user" | "topic" | "overviewArticle"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -928,6 +929,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OverviewArticle: {
+      payload: Prisma.$OverviewArticlePayload<ExtArgs>
+      fields: Prisma.OverviewArticleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OverviewArticleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OverviewArticleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        findFirst: {
+          args: Prisma.OverviewArticleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OverviewArticleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        findMany: {
+          args: Prisma.OverviewArticleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+        }
+        create: {
+          args: Prisma.OverviewArticleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        createMany: {
+          args: Prisma.OverviewArticleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OverviewArticleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+        }
+        delete: {
+          args: Prisma.OverviewArticleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        update: {
+          args: Prisma.OverviewArticleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        deleteMany: {
+          args: Prisma.OverviewArticleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OverviewArticleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OverviewArticleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+        }
+        upsert: {
+          args: Prisma.OverviewArticleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+        }
+        aggregate: {
+          args: Prisma.OverviewArticleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOverviewArticle>
+        }
+        groupBy: {
+          args: Prisma.OverviewArticleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewArticleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OverviewArticleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewArticleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1077,6 +1152,21 @@ export const TopicScalarFieldEnum = {
 } as const
 
 export type TopicScalarFieldEnum = (typeof TopicScalarFieldEnum)[keyof typeof TopicScalarFieldEnum]
+
+
+export const OverviewArticleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  summary: 'summary',
+  body: 'body',
+  sourceUrls: 'sourceUrls',
+  category: 'category',
+  publishedDate: 'publishedDate',
+  model: 'model'
+} as const
+
+export type OverviewArticleScalarFieldEnum = (typeof OverviewArticleScalarFieldEnum)[keyof typeof OverviewArticleScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1305,6 +1395,7 @@ export type GlobalOmitConfig = {
   macroArticle?: Prisma.MacroArticleOmit
   user?: Prisma.UserOmit
   topic?: Prisma.TopicOmit
+  overviewArticle?: Prisma.OverviewArticleOmit
 }
 
 /* Types for Logging */

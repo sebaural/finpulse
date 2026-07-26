@@ -57,7 +57,8 @@ export const ModelName = {
   PulseArticle: 'PulseArticle',
   MacroArticle: 'MacroArticle',
   User: 'User',
-  Topic: 'Topic'
+  Topic: 'Topic',
+  OverviewArticle: 'OverviewArticle'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -186,6 +187,21 @@ export const TopicScalarFieldEnum = {
 } as const
 
 export type TopicScalarFieldEnum = (typeof TopicScalarFieldEnum)[keyof typeof TopicScalarFieldEnum]
+
+
+export const OverviewArticleScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  summary: 'summary',
+  body: 'body',
+  sourceUrls: 'sourceUrls',
+  category: 'category',
+  publishedDate: 'publishedDate',
+  model: 'model'
+} as const
+
+export type OverviewArticleScalarFieldEnum = (typeof OverviewArticleScalarFieldEnum)[keyof typeof OverviewArticleScalarFieldEnum]
 
 
 export const SortOrder = {
