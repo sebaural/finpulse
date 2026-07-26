@@ -45,8 +45,6 @@ export async function fetchWorldNewsFeeds(): Promise<RawStory[]> {
   return stories.filter((s) => s.publishedAt.getTime() >= cutoff);
 }
 
-import { dedupeStories } from './dedup'; // reuse existing clustering logic
-
 export interface StoryCluster {
   representative: RawStory;
   members: RawStory[];
@@ -54,8 +52,64 @@ export interface StoryCluster {
   priority: 'high' | 'low';
 }
 
+// NOTE: an earlier version of this guide assumed src/lib/dedup.ts already
+// contained reusable near-duplicate-story clustering logic. It doesn't —
+// dedup.ts is unrelated, handling X-poster repost prevention (tracking the
+// last-posted URL per section via Redis), not story grouping. So this is a
+// small, dependency-free implementation written specifically for this
+// pipeline rather than a reuse of anything else in the codebase.
+
+const STOPWORD_MIN_LENGTH = 3; // drop very short tokens (a, to, of, ...)
+const SIMILARITY_THRESHOLD = 0.5; // fraction of shared title vocabulary to count as "the same story"
+
+function normalizeTitle(title: string): Set<string> {
+  return new Set(
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((word) => word.length >= STOPWORD_MIN_LENGTH),
+  );
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const word of a) {
+    if (b.has(word)) intersection++;
+  }
+  const union = a.size + b.size - intersection;
+  return intersection / union;
+}
+
+// Single-linkage clustering by title-word overlap: a story joins the first
+// existing cluster whose "anchor" (first member) shares enough vocabulary
+// with it, otherwise it starts a new cluster. Good enough for a daily batch
+// of a few dozen RSS items across 3 feeds — not meant to scale beyond that.
+function groupSimilarStories(stories: RawStory[]): RawStory[][] {
+  const candidates = stories.map((story) => ({
+    story,
+    words: normalizeTitle(story.title),
+  }));
+
+  const clusters: (typeof candidates)[] = [];
+
+  for (const candidate of candidates) {
+    const match = clusters.find(
+      (cluster) => jaccardSimilarity(candidate.words, cluster[0].words) >= SIMILARITY_THRESHOLD,
+    );
+    if (match) {
+      match.push(candidate);
+    } else {
+      clusters.push([candidate]);
+    }
+  }
+
+  return clusters.map((cluster) => cluster.map((c) => c.story));
+}
+
 export function clusterAndWeight(stories: RawStory[]): StoryCluster[] {
-  const clusters = dedupeStories(stories); // groups of RawStory[]
+  const clusters = groupSimilarStories(stories); // groups of RawStory[]
 
   return clusters.map((members): StoryCluster => {
     const distinctSources = new Set(members.map((m) => m.source));
@@ -82,4 +136,3 @@ export function isGeopoliticsRelevant(story: RawStory): boolean {
   const text = `${story.title} ${story.snippet}`.toLowerCase();
   return keywords.some((k) => text.includes(k));
 }
-

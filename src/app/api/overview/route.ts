@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getPrisma } from '@/lib/db';
 import { formatDateSegment } from '@/lib/seo';
 
 export async function GET() {
-  const articles = await db.overviewArticle.findMany({
+  const prisma = getPrisma();
+  const articles = await prisma.overviewArticle.findMany({
     orderBy: { publishedDate: 'desc' },
     take: 50,
   });

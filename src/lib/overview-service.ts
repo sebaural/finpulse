@@ -1,6 +1,6 @@
 import { fetchWorldNewsFeeds, clusterAndWeight, isGeopoliticsRelevant, StoryCluster } from './overview-ingest';
 import { generateWithRunpod } from './runpod';
-import { db } from './db'; // Adjust to export name in src/lib/db.ts
+import { getPrisma } from './db';
 import slugify from 'slugify';
 import { Client } from '@upstash/qstash';
 
@@ -37,6 +37,16 @@ export async function selectDailyClusters(): Promise<StoryCluster[]> {
 // Called by /api/overview/generate — fans clusters out to QStash, one job each
 export async function enqueueDailyClusters() {
   const clusters = await selectDailyClusters();
+  // VERCEL_URL is injected automatically by the Vercel platform on every
+  // deployment (production and preview) — it is NOT something you set
+  // yourself, and it holds the domain WITHOUT a protocol prefix (e.g.
+  // "my-app-git-main-team.vercel.app"), hence the manual `https://` below.
+  // It is only present when code is actually running on Vercel.
+  //
+  // SITE_URL is the opposite: a custom env var YOU define (see Step 11),
+  // used as the fallback whenever VERCEL_URL doesn't exist — most commonly
+  // local development (`npm run dev`), where there's no Vercel deployment
+  // to inject a URL from.
   const base = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : process.env.SITE_URL;
@@ -57,22 +67,22 @@ export async function enqueueDailyClusters() {
 // so each call stays well within maxDuration = 60 regardless of RunPod's
 // MAX_CONCURRENCY=2 limit or overall batch size.
 export async function processCluster(cluster: StoryCluster) {
+  const prisma = getPrisma();
+
   const sourceText = cluster.members
     .map((m) => `- [${m.source}] ${m.title}: ${m.snippet}`)
     .join('\n');
 
   const messages = [
-  {
-    role: 'system',
-    content:
-      'You are a neutral geopolitics news editor. Write a factual, attributed summary ' +
-      'article from the provided source snippets. Respond ONLY with raw JSON format (no markdown fences): ' +
-      '{"title": "...", "summary": "...", "body": "HTML fragment only. Do not use *, **, markdown bold, ' +
-      'asterisks, bullets, or XML-style wrappers. Use semantic HTML and make titles a separate <h2> element. ' +
-      'Keep the text beneath each heading in <p> blocks."}.',
-  },
-  { role: 'user', content: sourceText },
-];
+    {
+      role: 'system',
+      content:
+        'You are a neutral geopolitics news editor. Write a factual, attributed summary ' +
+        'article from the provided source snippets. Respond ONLY with raw JSON format (no markdown fences): ' +
+        '{"title": "...", "summary": "...", "body": "..."}. Attribute claims to sources by name.',
+    },
+    { role: 'user', content: sourceText },
+  ];
 
   const output = await generateWithRunpod(messages);
   const choiceContent = output?.choices?.[0]?.message?.content ?? output?.output;
@@ -86,12 +96,12 @@ export async function processCluster(cluster: StoryCluster) {
   // Collision guard: if a different article already holds this slug, disambiguate
   // rather than silently overwriting it. Same-title/same-story re-runs still upsert
   // cleanly onto the same row.
-  const existing = await db.overviewArticle.findUnique({ where: { slug } });
+  const existing = await prisma.overviewArticle.findUnique({ where: { slug } });
   if (existing && existing.title !== parsed.title) {
     slug = `${slug}-${existing.id.slice(-6)}`;
   }
 
-  await db.overviewArticle.upsert({
+  await prisma.overviewArticle.upsert({
     where: { slug },
     update: {
       title: parsed.title,

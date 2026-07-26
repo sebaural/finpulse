@@ -1,9 +1,12 @@
+import { getPrisma } from '@/lib/db';
+
 export default async function Page({
   params,
 }: {
   params: Promise<{ date: string; slug: string }>;
 }) {
   const { slug } = await params;
+  const prisma = getPrisma();
 
   const article = await prisma.overviewArticle.findUnique({
     where: { slug },
@@ -16,5 +19,3 @@ export default async function Page({
   // ... render with existing layout/typography components for visual consistency
   // (reuse presentation components only, not the geopolitics data logic)
 }
-
-
