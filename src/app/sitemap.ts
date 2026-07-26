@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     overviewEntries = overview.map((row: OverviewArticleRow) => ({
       url: `${SITE_URL}/overview/${formatDateSegment(row.publishedDate)}/${row.slug || toSlug(row.title)}`,
       lastModified: row.publishedDate,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'never' as const,
       priority: 0.8,
     }));
   } catch (err) {
@@ -76,4 +76,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticEntries, ...articleEntries, ...overviewEntries];
 }
-
