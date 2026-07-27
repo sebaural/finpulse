@@ -7,6 +7,16 @@ import { Client } from '@upstash/qstash';
 const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
 
 // Extracts the first {...} JSON object from a string, tolerating preamble/fences
+//
+// NOTE: since the system prompt now requires "body" to contain an HTML
+// fragment, the model has to correctly escape any quotes inside HTML
+// attributes (e.g. an <a href="..."> in body text) as \" for the overall
+// JSON to remain valid. extractJson/JSON.parse below handle standard
+// escaped JSON fine — the risk is entirely on the model's output discipline,
+// not this parsing logic. If parse failures start showing up in
+// [overview/process] logs, check whether they correlate with HTML
+// attributes in the failed body content before assuming extractJson itself
+// is at fault.
 function extractJson(raw: string): string {
   const fenceStripped = raw.replace(/```json\n?|\n?```/g, '').trim();
   const start = fenceStripped.indexOf('{');
@@ -74,14 +84,16 @@ export async function processCluster(cluster: StoryCluster) {
     .join('\n');
 
   const messages = [
-    {
-      role: 'system',
-      content:
-        'You are a neutral geopolitics news editor. Write a factual, attributed summary ' +
-        'article from the provided source snippets. Respond ONLY with raw JSON format (no markdown fences): ' +
-        '{"title": "...", "summary": "...", "body": "..."}. Attribute claims to sources by name.',
-    },
-    { role: 'user', content: sourceText },
+  {
+    role: 'system',
+    content:
+      'You are a neutral geopolitics news editor. Write a factual, attributed summary ' +
+      'article from the provided source snippets. Respond ONLY with raw JSON format (no markdown fences): ' +
+      '{"title": "...", "summary": "...", "body": "..."}. Attribute claims to sources by name. ' +
+      'The value of "body" must be an HTML fragment only. Do not use asterisks, markdown ' +
+      'bold, markdown bullets, or any XML-style wrapper tags.',
+  },
+  { role: 'user', content: sourceText },
   ];
 
   const output = await generateWithRunpod(messages);
@@ -107,14 +119,12 @@ export async function processCluster(cluster: StoryCluster) {
       title: parsed.title,
       summary: parsed.summary,
       body: parsed.body,
-      sourceUrls: cluster.members.map((m) => m.url),
     },
     create: {
       slug,
       title: parsed.title,
       summary: parsed.summary,
       body: parsed.body,
-      sourceUrls: cluster.members.map((m) => m.url),
       category: 'daily-overview',
     },
   });

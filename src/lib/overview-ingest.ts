@@ -92,7 +92,7 @@ function groupSimilarStories(stories: RawStory[]): RawStory[][] {
     words: normalizeTitle(story.title),
   }));
 
-  const clusters: (typeof candidates)[] = [];
+  const clusters: (typeof candidates) [] = [];
 
   for (const candidate of candidates) {
     const match = clusters.find(
@@ -136,3 +136,4 @@ export function isGeopoliticsRelevant(story: RawStory): boolean {
   const text = `${story.title} ${story.snippet}`.toLowerCase();
   return keywords.some((k) => text.includes(k));
 }
+

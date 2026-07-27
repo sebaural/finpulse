@@ -19,3 +19,4 @@ export default async function Page({
   // ... render with existing layout/typography components for visual consistency
   // (reuse presentation components only, not the geopolitics data logic)
 }
+

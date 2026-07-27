@@ -29,6 +29,19 @@ type TopicArticleRow = { slug: string; updatedAt: Date; topic: { slug: string } 
 
 type PulseRow = { pulseSlug: string; articleSlug: string; updatedAt: Date };
 
+function buildPulseEntry(row: PulseRow): string {
+  const loc = `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`;
+  const mod = row.updatedAt.toISOString();
+  return (
+    `  <url>\n` +
+    `    <loc>${loc}</loc>\n` +
+    `    <lastmod>${mod}</lastmod>\n` +
+    `    <changefreq>daily</changefreq>\n` +
+    `    <priority>0.7</priority>\n` +
+    `  </url>\n`
+  );
+}
+
 // OverviewArticle is a separate table/pipeline (per Step 2 of the guide),
 // so it gets its own row type and its own entry builder rather than reusing
 // buildEntry — its URL shape includes a date segment that the other
@@ -136,20 +149,7 @@ export async function GET() {
   xml += geopolitics.map((r) => buildEntry('geopolitics', r)).join('');
   xml += markets.map((r) => buildEntry('markets', r)).join('');
   xml += tech.map((r) => buildEntry('tech', r)).join('');
-  xml += pulse
-    .map((row) => {
-      const loc = `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`;
-      const mod = row.updatedAt.toISOString();
-      return (
-        `  <url>\n` +
-        `    <loc>${loc}</loc>\n` +
-        `    <lastmod>${mod}</lastmod>\n` +
-        `    <changefreq>daily</changefreq>\n` +
-        `    <priority>0.7</priority>\n` +
-        `  </url>\n`
-      );
-    })
-    .join('');
+  xml += pulse.map(buildPulseEntry).join('');
   xml += [...geoTopics, ...marketTopics, ...techTopics].map(buildTopicEntry).join('');
   xml += overview.map(buildOverviewEntry).join('');
   xml += `</urlset>`;
@@ -166,4 +166,3 @@ export async function GET() {
     },
   });
 }
-
