@@ -71,6 +71,16 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     // NOTE: Macro Landscape is NOT part of this unified pipeline — it has its
     // own dedicated cron (`/api/macro/generate`, M–F 9am EST) in vercel.json,
     // because it self-sources via live web search on its own schedule.
+    //
+    // NOTE: Daily Overview is ALSO not part of this unified pipeline, for a
+    // different reason — its own dedicated cron (`/api/overview/generate`,
+    // vercel.json) only enqueues jobs to QStash and returns immediately; the
+    // actual RunPod generation happens later, one cluster per invocation, in
+    // `/api/overview/process`. That fan-out exists specifically to keep each
+    // RunPod round-trip inside its own maxDuration=60 budget. Folding it into
+    // this sequential, await-until-done loop would either block this route on
+    // up to 8 RunPod calls, or misreport success before any article exists —
+    // see daily-overview-pipeline.md for the full architecture.
   ];
 
   // Pulse runs every other day to stay within the GDELT free-plan quota.
