@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarketsSummaryArticles, runDailyMarketsPipeline } from '@/lib/markets-service';
-import { runDailyPulsePipeline } from '@/lib/pulse-service';
+// TODO: restore this import after August 1, 2026 (see disabled block below)
+// import { runDailyPulsePipeline } from '@/lib/pulse-service';
 import { getSummaryArticles as getGeopoliticsArticles, runDailyGeopoliticsPipeline } from '@/lib/geopolitics-service';
 import { getTechSummaryArticles, runDailyTechPipeline } from '@/lib/tech-service';
 import { hasPosted, markPosted } from '@/lib/dedup';
@@ -45,8 +46,9 @@ type ContentSection = 'geopolitics' | 'markets' | 'tech' | 'pulse';
 type GeneratedArticle =
   | Awaited<ReturnType<typeof runDailyGeopoliticsPipeline>>
   | Awaited<ReturnType<typeof runDailyMarketsPipeline>>
-  | Awaited<ReturnType<typeof runDailyTechPipeline>>
-  | Awaited<ReturnType<typeof runDailyPulsePipeline>>;
+  | Awaited<ReturnType<typeof runDailyTechPipeline>>;
+  // Pulse member removed from this union while disabled — see TODO above.
+  // Restore: `| Awaited<ReturnType<typeof runDailyPulsePipeline>>;`
 
 export type ContentCronResult =
   | { section: ContentSection; success: true; article: GeneratedArticle }
@@ -59,9 +61,13 @@ export type ContentCronResult =
 // budget. Parity is on the epoch day number so it alternates cleanly across
 // month boundaries (unlike a cron `*/2` day-of-month, which double-fires at the
 // 31st→1st rollover). The manual `/api/pulse/generate` route is unaffected.
-function shouldRunPulseToday(): boolean {
-  return Math.floor(Date.now() / 86_400_000) % 2 === 0;
-}
+//
+// DISABLED until August 1, 2026 — see TODO markers in this file. Commented
+// out rather than deleted so the exact prior scheduling logic is preserved
+// verbatim and can be restored by uncommenting, with no need to re-derive it.
+// function shouldRunPulseToday(): boolean {
+//   return Math.floor(Date.now() / 86_400_000) % 2 === 0;
+// }
 
 export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
   const pipelines: { section: ContentSection; run: () => Promise<GeneratedArticle> }[] = [
@@ -83,12 +89,16 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     // see daily-overview-pipeline.md for the full architecture.
   ];
 
-  // Pulse runs every other day to stay within the GDELT free-plan quota.
-  if (shouldRunPulseToday()) {
-    pipelines.push({ section: 'pulse', run: runDailyPulsePipeline });
-  } else {
-    console.log('[content-cron] [pulse] skipped today — runs every other day (GDELT quota budget)');
-  }
+  // TODO: restore after August 1, 2026 — re-enable the import at the top of
+  // this file, restore the `| Awaited<ReturnType<typeof runDailyPulsePipeline>>`
+  // union member above, uncomment shouldRunPulseToday(), and replace this
+  // block with:
+  //   if (shouldRunPulseToday()) {
+  //     pipelines.push({ section: 'pulse', run: runDailyPulsePipeline });
+  //   } else {
+  //     console.log('[content-cron] [pulse] skipped today — runs every other day (GDELT quota budget)');
+  //   }
+  console.log('[content-cron] [pulse] disabled until August 1, 2026');
 
   const results: ContentCronResult[] = [];
   for (const { section, run } of pipelines) {
