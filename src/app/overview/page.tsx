@@ -11,6 +11,8 @@ import {
   formatDateSegment,
 } from '@/lib/seo';
 import '@/components/geopolitics/geopolitics.css';
+import NavMenu from '@/components/topNav/NavMenu';
+import Image from 'next/image';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Daily Overview — Global Geopolitics Briefings',
@@ -47,6 +49,17 @@ export default async function OverviewPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
       />
+
+      <header>
+        <div className="header-inner">
+          <div className="logo">
+            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <h1>MacroStance</h1>
+          </div>
+          <NavMenu />
+        </div>
+      </header>
+
       <div className="geo-root">
         <div className="geo-empty">
           <span className="geo-empty-globe">🌍</span>

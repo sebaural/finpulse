@@ -11,6 +11,8 @@ import {
   SITE_URL,
 } from '@/lib/seo';
 import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
+import NavMenu from '@/components/topNav/NavMenu';
+import Image from 'next/image';
 
 export const revalidate = 3600;
 
@@ -100,6 +102,17 @@ export default async function Page({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
+
+      <header>
+        <div className="header-inner">
+          <div className="logo">
+            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <h1>MacroStance</h1>
+          </div>
+          <NavMenu />
+        </div>
+      </header>
+
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <article className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
           <div className="border-b border-neutral-200 px-6 py-5 sm:px-8">
