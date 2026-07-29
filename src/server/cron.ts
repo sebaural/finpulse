@@ -85,8 +85,7 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     // `/api/overview/process`. That fan-out exists specifically to keep each
     // RunPod round-trip inside its own maxDuration=60 budget. Folding it into
     // this sequential, await-until-done loop would either block this route on
-    // up to 8 RunPod calls, or misreport success before any article exists —
-    // see daily-overview-pipeline.md for the full architecture.
+    // up to 8 RunPod calls, or misreport success before any article exists.
   ];
 
   // TODO: restore after August 1, 2026 — re-enable the import at the top of

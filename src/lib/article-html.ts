@@ -12,7 +12,7 @@ const ALLOWED_TAGS = new Set([
 
 const BLOCKED_TAGS = /<(script|style|iframe|object|embed|svg|math)[\s\S]*?<\/\1>/gi;
 
-export function isPulseHtmlFragment(html: string): boolean {
+export function isHtmlFragment(html: string): boolean {
   return /<\/?[a-z][\w:-]*(?:\s[^>]*)?>/i.test(html);
 }
 
@@ -20,7 +20,7 @@ function stripTagAttributes(tag: string): string {
   return tag.replace(/\s+[a-zA-Z0-9:-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?/g, '');
 }
 
-export function sanitizePulseHtml(html: string): string {
+export function sanitizeArticleHtml(html: string): string {
   const withoutBlocked = html.replace(BLOCKED_TAGS, '');
 
   return withoutBlocked.replace(/<\/?([a-zA-Z0-9-]+)([^>]*)>/g, (match, tagName, attrs) => {

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import PulseHeader from '@/components/pulse/PulseHeader';
 import { PULSE_CATEGORIES, resolvePulseSlug } from '@/lib/pulse-categories';
 import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
-import { isPulseHtmlFragment, sanitizePulseHtml } from '@/lib/pulse-html';
+import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
 import { getPulseArticleBySlug, getLatestArticlePerCategory } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { canonicalUrl } from '@/lib/seo';
@@ -80,10 +80,10 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
           </p>
           <h1>{article.title}</h1>
           {article.summary ? <p className="pulse-summary">{article.summary}</p> : null}
-          {article.body && isPulseHtmlFragment(article.body) ? (
+          {article.body && isHtmlFragment(article.body) ? (
             <article
               className="pulse-body pulse-body--html"
-              dangerouslySetInnerHTML={{ __html: sanitizePulseHtml(article.body) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.body) }}
             />
           ) : article.body ? (
             <article className="pulse-body">{article.body}</article>

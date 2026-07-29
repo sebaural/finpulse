@@ -195,7 +195,6 @@ export const OverviewArticleScalarFieldEnum = {
   title: 'title',
   summary: 'summary',
   body: 'body',
-  sourceUrls: 'sourceUrls',
   category: 'category',
   publishedDate: 'publishedDate',
   model: 'model'

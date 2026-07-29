@@ -62,7 +62,7 @@ export default function MacroPageClient({ initial }: Props) {
 
       <div
         className="macro-body"
-        // body is a server-sanitized HTML fragment (sanitizePulseHtml on write).
+        // body is a server-sanitized HTML fragment (sanitizeArticleHtml on write).
         dangerouslySetInnerHTML={{ __html: article.body }}
       />
 

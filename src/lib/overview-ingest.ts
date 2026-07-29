@@ -127,13 +127,24 @@ export function clusterAndWeight(stories: RawStory[]): StoryCluster[] {
   });
 }
 
+const GEOPOLITICS_KEYWORDS = [
+  'sanctions', 'election', 'military', 'diplomacy', 'border',
+  'ceasefire', 'treaty', 'summit', 'coup', 'invasion', 'nato',
+  'united nations', 'security council',
+];
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Word-boundary matching avoids false positives like "coup" matching inside
+// an unrelated word containing that substring.
+const GEOPOLITICS_KEYWORD_PATTERNS = GEOPOLITICS_KEYWORDS.map(
+  (k) => new RegExp(`\\b${escapeRegExp(k)}\\b`, 'i')
+);
+
 export function isGeopoliticsRelevant(story: RawStory): boolean {
-  const keywords = [
-    'sanctions', 'election', 'military', 'diplomacy', 'border',
-    'ceasefire', 'treaty', 'summit', 'coup', 'invasion', 'nato',
-    'united nations', 'security council',
-  ];
-  const text = `${story.title} ${story.snippet}`.toLowerCase();
-  return keywords.some((k) => text.includes(k));
+  const text = `${story.title} ${story.snippet}`;
+  return GEOPOLITICS_KEYWORD_PATTERNS.some((pattern) => pattern.test(text));
 }
 

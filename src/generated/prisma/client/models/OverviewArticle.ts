@@ -52,7 +52,6 @@ export type OverviewArticleCountAggregateOutputType = {
   title: number
   summary: number
   body: number
-  sourceUrls: number
   category: number
   publishedDate: number
   model: number
@@ -88,7 +87,6 @@ export type OverviewArticleCountAggregateInputType = {
   title?: true
   summary?: true
   body?: true
-  sourceUrls?: true
   category?: true
   publishedDate?: true
   model?: true
@@ -173,7 +171,6 @@ export type OverviewArticleGroupByOutputType = {
   title: string
   summary: string
   body: string
-  sourceUrls: string[]
   category: string
   publishedDate: Date
   model: string
@@ -206,7 +203,6 @@ export type OverviewArticleWhereInput = {
   title?: Prisma.StringFilter<"OverviewArticle"> | string
   summary?: Prisma.StringFilter<"OverviewArticle"> | string
   body?: Prisma.StringFilter<"OverviewArticle"> | string
-  sourceUrls?: Prisma.StringNullableListFilter<"OverviewArticle">
   category?: Prisma.StringFilter<"OverviewArticle"> | string
   publishedDate?: Prisma.DateTimeFilter<"OverviewArticle"> | Date | string
   model?: Prisma.StringFilter<"OverviewArticle"> | string
@@ -218,7 +214,6 @@ export type OverviewArticleOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   body?: Prisma.SortOrder
-  sourceUrls?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publishedDate?: Prisma.SortOrder
   model?: Prisma.SortOrder
@@ -233,7 +228,6 @@ export type OverviewArticleWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"OverviewArticle"> | string
   summary?: Prisma.StringFilter<"OverviewArticle"> | string
   body?: Prisma.StringFilter<"OverviewArticle"> | string
-  sourceUrls?: Prisma.StringNullableListFilter<"OverviewArticle">
   category?: Prisma.StringFilter<"OverviewArticle"> | string
   publishedDate?: Prisma.DateTimeFilter<"OverviewArticle"> | Date | string
   model?: Prisma.StringFilter<"OverviewArticle"> | string
@@ -245,7 +239,6 @@ export type OverviewArticleOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   body?: Prisma.SortOrder
-  sourceUrls?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publishedDate?: Prisma.SortOrder
   model?: Prisma.SortOrder
@@ -263,7 +256,6 @@ export type OverviewArticleScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"OverviewArticle"> | string
   summary?: Prisma.StringWithAggregatesFilter<"OverviewArticle"> | string
   body?: Prisma.StringWithAggregatesFilter<"OverviewArticle"> | string
-  sourceUrls?: Prisma.StringNullableListFilter<"OverviewArticle">
   category?: Prisma.StringWithAggregatesFilter<"OverviewArticle"> | string
   publishedDate?: Prisma.DateTimeWithAggregatesFilter<"OverviewArticle"> | Date | string
   model?: Prisma.StringWithAggregatesFilter<"OverviewArticle"> | string
@@ -275,7 +267,6 @@ export type OverviewArticleCreateInput = {
   title: string
   summary: string
   body: string
-  sourceUrls?: Prisma.OverviewArticleCreatesourceUrlsInput | string[]
   category?: string
   publishedDate?: Date | string
   model?: string
@@ -287,7 +278,6 @@ export type OverviewArticleUncheckedCreateInput = {
   title: string
   summary: string
   body: string
-  sourceUrls?: Prisma.OverviewArticleCreatesourceUrlsInput | string[]
   category?: string
   publishedDate?: Date | string
   model?: string
@@ -299,7 +289,6 @@ export type OverviewArticleUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
-  sourceUrls?: Prisma.OverviewArticleUpdatesourceUrlsInput | string[]
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
@@ -311,7 +300,6 @@ export type OverviewArticleUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
-  sourceUrls?: Prisma.OverviewArticleUpdatesourceUrlsInput | string[]
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
@@ -323,7 +311,6 @@ export type OverviewArticleCreateManyInput = {
   title: string
   summary: string
   body: string
-  sourceUrls?: Prisma.OverviewArticleCreatesourceUrlsInput | string[]
   category?: string
   publishedDate?: Date | string
   model?: string
@@ -335,7 +322,6 @@ export type OverviewArticleUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
-  sourceUrls?: Prisma.OverviewArticleUpdatesourceUrlsInput | string[]
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
@@ -347,18 +333,9 @@ export type OverviewArticleUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
   body?: Prisma.StringFieldUpdateOperationsInput | string
-  sourceUrls?: Prisma.OverviewArticleUpdatesourceUrlsInput | string[]
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publishedDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
-}
-
-export type StringNullableListFilter<$PrismaModel = never> = {
-  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
-  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
-  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  isEmpty?: boolean
 }
 
 export type OverviewArticleCountOrderByAggregateInput = {
@@ -367,7 +344,6 @@ export type OverviewArticleCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   summary?: Prisma.SortOrder
   body?: Prisma.SortOrder
-  sourceUrls?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publishedDate?: Prisma.SortOrder
   model?: Prisma.SortOrder
@@ -395,15 +371,6 @@ export type OverviewArticleMinOrderByAggregateInput = {
   model?: Prisma.SortOrder
 }
 
-export type OverviewArticleCreatesourceUrlsInput = {
-  set: string[]
-}
-
-export type OverviewArticleUpdatesourceUrlsInput = {
-  set?: string[]
-  push?: string | string[]
-}
-
 
 
 export type OverviewArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -412,7 +379,6 @@ export type OverviewArticleSelect<ExtArgs extends runtime.Types.Extensions.Inter
   title?: boolean
   summary?: boolean
   body?: boolean
-  sourceUrls?: boolean
   category?: boolean
   publishedDate?: boolean
   model?: boolean
@@ -424,7 +390,6 @@ export type OverviewArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   title?: boolean
   summary?: boolean
   body?: boolean
-  sourceUrls?: boolean
   category?: boolean
   publishedDate?: boolean
   model?: boolean
@@ -436,7 +401,6 @@ export type OverviewArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   title?: boolean
   summary?: boolean
   body?: boolean
-  sourceUrls?: boolean
   category?: boolean
   publishedDate?: boolean
   model?: boolean
@@ -448,13 +412,12 @@ export type OverviewArticleSelectScalar = {
   title?: boolean
   summary?: boolean
   body?: boolean
-  sourceUrls?: boolean
   category?: boolean
   publishedDate?: boolean
   model?: boolean
 }
 
-export type OverviewArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "summary" | "body" | "sourceUrls" | "category" | "publishedDate" | "model", ExtArgs["result"]["overviewArticle"]>
+export type OverviewArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "summary" | "body" | "category" | "publishedDate" | "model", ExtArgs["result"]["overviewArticle"]>
 
 export type $OverviewArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "OverviewArticle"
@@ -465,7 +428,6 @@ export type $OverviewArticlePayload<ExtArgs extends runtime.Types.Extensions.Int
     title: string
     summary: string
     body: string
-    sourceUrls: string[]
     category: string
     publishedDate: Date
     model: string
@@ -897,7 +859,6 @@ export interface OverviewArticleFieldRefs {
   readonly title: Prisma.FieldRef<"OverviewArticle", 'String'>
   readonly summary: Prisma.FieldRef<"OverviewArticle", 'String'>
   readonly body: Prisma.FieldRef<"OverviewArticle", 'String'>
-  readonly sourceUrls: Prisma.FieldRef<"OverviewArticle", 'String[]'>
   readonly category: Prisma.FieldRef<"OverviewArticle", 'String'>
   readonly publishedDate: Prisma.FieldRef<"OverviewArticle", 'DateTime'>
   readonly model: Prisma.FieldRef<"OverviewArticle", 'String'>

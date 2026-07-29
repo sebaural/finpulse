@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { isPulseHtmlFragment, sanitizePulseHtml } from '@/lib/pulse-html';
+import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
 import type { PulseArticle } from '@/types/pulse';
 
 function renderBody(body: string): string[] {
@@ -42,10 +42,10 @@ export function PulseArticleModal({
         </button>
         <h2>{article.title}</h2>
         {article.summary ? <p className="pulse-summary">{article.summary}</p> : null}
-        {article.body && isPulseHtmlFragment(article.body) ? (
+        {article.body && isHtmlFragment(article.body) ? (
           <div
             className="pulse-body pulse-body--html"
-            dangerouslySetInnerHTML={{ __html: sanitizePulseHtml(article.body) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.body) }}
           />
         ) : article.body ? (
           <div className="pulse-body">

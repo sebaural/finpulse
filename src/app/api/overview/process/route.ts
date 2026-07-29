@@ -18,13 +18,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid QStash signature' }, { status: 401 });
   }
 
-  const { cluster } = JSON.parse(body);
-
   try {
+    const { cluster } = JSON.parse(body);
     await processCluster(cluster);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[summaries/process] failed:', err);
+    console.error('[overview/process] failed:', err);
     // Non-2xx so QStash retries per its own retry policy
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }

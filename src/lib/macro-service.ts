@@ -11,7 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { parseClaudeJson } from '@/lib/summary-pipeline';
-import { sanitizePulseHtml } from '@/lib/pulse-html';
+import { sanitizeArticleHtml } from '@/lib/article-html';
 import { buildMacroPrompt, MACRO_SYSTEM_PROMPT } from '@/lib/macro-prompt';
 import type { AdjacentMacroArticleInfo, MacroArticle, MacroArticleResponse } from '@/types/macro';
 
@@ -318,7 +318,7 @@ export async function generateMacroArticle(): Promise<{
     );
   }
 
-  const body = sanitizePulseHtml(parsed.body).trim();
+  const body = sanitizeArticleHtml(parsed.body).trim();
   if (!body) throw new Error('Macro generation produced an empty body after sanitization');
 
   return {

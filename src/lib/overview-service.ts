@@ -1,10 +1,18 @@
 import { fetchWorldNewsFeeds, clusterAndWeight, isGeopoliticsRelevant, StoryCluster } from './overview-ingest';
-import { generateWithRunpod } from './runpod';
+import { generateWithRunpod, RUNPOD_MODEL } from './runpod';
 import { getPrisma } from './db';
+import { formatDateSegment } from './seo';
 import slugify from 'slugify';
 import { Client } from '@upstash/qstash';
+import { z } from 'zod';
 
 const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
+
+const OverviewLlmOutputSchema = z.object({
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  body: z.string().min(1),
+});
 
 // Extracts the first {...} JSON object from a string, tolerating preamble/fences
 //
@@ -61,7 +69,7 @@ export async function enqueueDailyClusters() {
     ? `https://${process.env.VERCEL_URL}`
     : process.env.SITE_URL;
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     clusters.map((cluster) =>
       qstash.publishJSON({
         url: `${base}/api/overview/process`,
@@ -70,17 +78,48 @@ export async function enqueueDailyClusters() {
     )
   );
 
-  return { enqueued: clusters.length };
+  let enqueued = 0;
+  let failed = 0;
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      enqueued++;
+    } else {
+      failed++;
+      console.error(
+        `[overview/generate] enqueue failed for cluster "${clusters[i].representative.title}":`,
+        result.reason
+      );
+    }
+  });
+
+  return { enqueued, failed };
 }
 
 // Called by /api/overview/process — handles exactly ONE cluster per invocation,
 // so each call stays well within maxDuration = 60 regardless of RunPod's
 // MAX_CONCURRENCY=2 limit or overall batch size.
+// RSS titles/snippets are third-party content — strip stray markup before
+// it's interpolated into the LLM prompt. Defense-in-depth alongside the
+// output-side sanitization in the page (sanitizeArticleHtml): even though
+// the model is instructed not to echo raw HTML, nothing prevents a feed
+// item from containing it in the first place.
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, '');
+}
+
 export async function processCluster(cluster: StoryCluster) {
   const prisma = getPrisma();
 
-  const sourceText = cluster.members
-    .map((m) => `- [${m.source}] ${m.title}: ${m.snippet}`)
+  // Lead with the representative source (preferred BBC/NYT phrasing, see
+  // overview-ingest.ts) so the model anchors on the clearest account of the
+  // story first; remaining members follow for corroborating detail.
+  const orderedMembers = [
+    cluster.representative,
+    ...cluster.members.filter((m) => m !== cluster.representative),
+  ];
+
+  const sourceText = orderedMembers
+    .map((m) => `- [${m.source}] ${stripHtml(m.title)}: ${stripHtml(m.snippet)}`)
     .join('\n');
 
   const messages = [
@@ -96,20 +135,34 @@ export async function processCluster(cluster: StoryCluster) {
   { role: 'user', content: sourceText },
   ];
 
-  const output = await generateWithRunpod(messages);
-  const choiceContent = output?.choices?.[0]?.message?.content ?? output?.output;
-  if (!choiceContent) throw new Error('Invalid output structure from RunPod');
+  const choiceContent = await generateWithRunpod(messages);
 
   const cleanJson = extractJson(choiceContent);
-  const parsed = JSON.parse(cleanJson);
+  const parsed = OverviewLlmOutputSchema.parse(JSON.parse(cleanJson));
 
   let slug = slugify(parsed.title, { lower: true, strict: true });
 
-  // Collision guard: if a different article already holds this slug, disambiguate
-  // rather than silently overwriting it. Same-title/same-story re-runs still upsert
-  // cleanly onto the same row.
+  // Collision guard: if a different article already holds this slug,
+  // disambiguate rather than silently overwriting it.
+  //
+  // Same-day re-runs (idempotent cron retries) still upsert cleanly onto the
+  // same row. But if the existing row was published on an earlier calendar
+  // day, this is a genuine headline recurrence (e.g. a slow-moving story),
+  // not a retry — suffix with today's date segment so the older day's
+  // article isn't silently overwritten and its publishedDate isn't
+  // misrepresented under new content.
   const existing = await prisma.overviewArticle.findUnique({ where: { slug } });
-  if (existing && existing.title !== parsed.title) {
+  const todaySegment = formatDateSegment(new Date());
+  if (existing && formatDateSegment(existing.publishedDate) !== todaySegment) {
+    slug = `${slug}-${todaySegment}`;
+    // Residual edge case: the date-suffixed slug itself collides with an
+    // unrelated article (e.g. slugify producing the same base title twice
+    // in one day under different clusters) — fall back to an id suffix.
+    const dateCollision = await prisma.overviewArticle.findUnique({ where: { slug } });
+    if (dateCollision && dateCollision.title !== parsed.title) {
+      slug = `${slug}-${dateCollision.id.slice(-6)}`;
+    }
+  } else if (existing && existing.title !== parsed.title) {
     slug = `${slug}-${existing.id.slice(-6)}`;
   }
 
@@ -119,6 +172,7 @@ export async function processCluster(cluster: StoryCluster) {
       title: parsed.title,
       summary: parsed.summary,
       body: parsed.body,
+      model: RUNPOD_MODEL,
     },
     create: {
       slug,
@@ -126,6 +180,7 @@ export async function processCluster(cluster: StoryCluster) {
       summary: parsed.summary,
       body: parsed.body,
       category: 'daily-overview',
+      model: RUNPOD_MODEL,
     },
   });
 }
