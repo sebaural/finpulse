@@ -386,6 +386,8 @@ nav {
 }
 
 .news-card {
+  display: flex;
+  flex-direction: column;
   width: 49%;
   background: var(--surface);
   border: 1px solid var(--border);
