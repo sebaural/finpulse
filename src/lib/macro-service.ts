@@ -250,6 +250,29 @@ function extractJsonText(content: Anthropic.Messages.ContentBlock[]): string {
   throw new Error('No JSON object found in Claude response text blocks');
 }
 
+// Each multi-turn web-search round trip is a separate network call that can
+// hit a transient error (Anthropic 5xx/529 "overloaded", connection reset,
+// etc.) several minutes into a run with no benefit from the SDK's own
+// built-in retries (those only cover 408/409/429/5xx and not every failure
+// mode seen in practice). Mirrors the retry shape already used in
+// runpod.ts's submitJob so a single hiccup doesn't fail the whole pipeline.
+async function createMessageWithRetry(
+  client: Anthropic,
+  params: Anthropic.Messages.MessageCreateParamsNonStreaming,
+): Promise<Anthropic.Messages.Message> {
+  const attempts = 3;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await client.messages.create(params);
+    } catch (err) {
+      console.error(`[macro-service] messages.create attempt ${attempt}/${attempts} failed:`, err);
+      if (attempt === attempts) throw err;
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+    }
+  }
+  throw new Error('unreachable');
+}
+
 export async function generateMacroArticle(): Promise<{
   title: string;
   slug: string;
@@ -273,7 +296,7 @@ export async function generateMacroArticle(): Promise<{
     { type: 'web_search_20260209', name: 'web_search', max_uses: 8 },
   ] as unknown as Anthropic.Messages.ToolUnion[];
 
-  let response = await client.messages.create({
+  let response = await createMessageWithRetry(client, {
     model: 'claude-opus-4-6',
     max_tokens: 4000,
     system: MACRO_SYSTEM_PROMPT,
@@ -284,7 +307,7 @@ export async function generateMacroArticle(): Promise<{
   let guard = 0;
   while (response.stop_reason === 'pause_turn' && guard < 5) {
     messages.push({ role: 'assistant', content: response.content });
-    response = await client.messages.create({
+    response = await createMessageWithRetry(client, {
       model: 'claude-opus-4-6',
       max_tokens: 4000,
       system: MACRO_SYSTEM_PROMPT,

@@ -27,6 +27,7 @@ export async function runCronPipeline<T>(
     return NextResponse.json({ success: true, article });
   } catch (err) {
     const details = err instanceof Error ? err.message : String(err);
+    console.error('[runCronPipeline] pipeline failed:', err);
     return NextResponse.json({ error: 'Pipeline failed', details }, { status: 500 });
   }
 }
