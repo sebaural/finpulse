@@ -69,6 +69,10 @@ export async function enqueueDailyClusters() {
     ? `https://${process.env.VERCEL_URL}`
     : process.env.SITE_URL;
 
+  console.log('[overview/generate] clusters.length', clusters.length);
+  console.log('[overview/generate] base', base);
+  console.log('[overview/generate] publishing to', `${base}/api/overview/process`);
+
   const results = await Promise.allSettled(
     clusters.map((cluster) =>
       qstash.publishJSON({
