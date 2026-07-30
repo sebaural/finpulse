@@ -19,7 +19,14 @@ export interface RawStory {
 export async function fetchWorldNewsFeeds(): Promise<RawStory[]> {
   const results = await Promise.allSettled(
     NEWS_FEEDS.map(async (feedUrl) => {
-      const feed = await parser.parseURL(feedUrl);
+      // Fetch manually + parseString rather than parser.parseURL(feedUrl):
+      // parseURL builds its request with the legacy, deprecated url.parse()
+      // (Node DEP0169) under the hood. fetch() uses the WHATWG URL API.
+      const res = await fetch(feedUrl, {
+        headers: { 'User-Agent': 'rss-parser', Accept: 'application/rss+xml' },
+      });
+      if (!res.ok) throw new Error(`Status code ${res.status}`);
+      const feed = await parser.parseString(await res.text());
       const sourceName = feed.title ?? new URL(feedUrl).hostname;
 
       return (feed.items ?? []).map((item): RawStory => ({
