@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SITE_URL } from '@/lib/seo';
+import { submitToIndexNow } from '@/lib/indexnow';
 
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY;
 const HOST = new URL(SITE_URL).hostname;
 
+// Kept for external/manual triggering. Internal callers should use
+// submitToIndexNow() from '@/lib/indexnow' directly instead of fetching this
+// route — see the comment on that function for why.
 export async function POST(req: NextRequest) {
-  if (!INDEXNOW_KEY) {
-    return NextResponse.json(
-      { error: 'INDEXNOW_KEY environment variable is not set' },
-      { status: 500 },
-    );
-  }
-
   let body: { urls?: unknown };
   try {
     body = await req.json();
@@ -36,23 +32,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const response = await fetch('https://api.indexnow.org/IndexNow', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    body: JSON.stringify({
-      host: HOST,
-      key: INDEXNOW_KEY,
-      keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
-      urlList: urls,
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    return NextResponse.json(
-      { error: 'IndexNow submission failed', detail },
-      { status: response.status },
-    );
+  try {
+    await submitToIndexNow(urls as string[]);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
   return NextResponse.json({ success: true, submitted: urls.length, urls });
