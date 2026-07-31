@@ -73,11 +73,18 @@ export async function enqueueDailyClusters() {
   console.log('[overview/generate] base', base);
   console.log('[overview/generate] publishing to', `${base}/api/overview/process`);
 
+  // The target URL is the deployment's own VERCEL_URL, which sits behind
+  // Vercel's Deployment Protection (Vercel Authentication) — QStash has no
+  // Vercel session to pass that wall with, so its callback gets redirected
+  // into vercel.com/login and processCluster() never runs. The Protection
+  // Bypass for Automation secret (Project Settings -> Deployment Protection)
+  // lets QStash's webhook through without disabling protection entirely.
   const results = await Promise.allSettled(
     clusters.map((cluster) =>
       qstash.publishJSON({
         url: `${base}/api/overview/process`,
         body: { cluster },
+        headers: { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET! },
       })
     )
   );

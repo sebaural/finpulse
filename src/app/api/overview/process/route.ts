@@ -15,6 +15,7 @@ export async function POST(req: Request) {
 
   const isValid = await receiver.verify({ signature, body });
   if (!isValid) {
+    console.error('[overview/process] invalid QStash signature — check QSTASH_CURRENT_SIGNING_KEY/QSTASH_NEXT_SIGNING_KEY');
     return NextResponse.json({ error: 'Invalid QStash signature' }, { status: 401 });
   }
 
