@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarketsSummaryArticles, runDailyMarketsPipeline } from '@/lib/markets-service';
-import { runDailyPulsePipeline } from '@/lib/pulse-service';
 import { getSummaryArticles as getGeopoliticsArticles, runDailyGeopoliticsPipeline } from '@/lib/geopolitics-service';
 import { getTechSummaryArticles, runDailyTechPipeline } from '@/lib/tech-service';
 import { hasPosted, markPosted } from '@/lib/dedup';
@@ -41,28 +40,16 @@ export async function runCronPipeline<T>(
 // returned. The three pipelines each return their own SummaryArticle shape, so
 // the article type is a union of their return types.
 
-type ContentSection = 'geopolitics' | 'markets' | 'tech' | 'pulse';
+type ContentSection = 'geopolitics' | 'markets' | 'tech';
 
 type GeneratedArticle =
   | Awaited<ReturnType<typeof runDailyGeopoliticsPipeline>>
   | Awaited<ReturnType<typeof runDailyMarketsPipeline>>
-  | Awaited<ReturnType<typeof runDailyTechPipeline>>
-  | Awaited<ReturnType<typeof runDailyPulsePipeline>>;
+  | Awaited<ReturnType<typeof runDailyTechPipeline>>;
 
 export type ContentCronResult =
   | { section: ContentSection; success: true; article: GeneratedArticle }
   | { section: ContentSection; success: false; error: string };
-
-// Pulse sources from GDELT, which is capped at 100 query units/month on the
-// free plan. Four categories run per invocation, so a daily cadence is ~120
-// QU/month — over the cap, which silently zeros out generation once exhausted.
-// Running pulse every other day (~15 days × 4 ≈ 60 QU/month) keeps it under
-// budget. Parity is on the epoch day number so it alternates cleanly across
-// month boundaries (unlike a cron `*/2` day-of-month, which double-fires at the
-// 31st→1st rollover). The manual `/api/pulse/generate` route is unaffected.
-function shouldRunPulseToday(): boolean {
-  return Math.floor(Date.now() / 86_400_000) % 2 === 0;
-}
 
 export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
   const pipelines: { section: ContentSection; run: () => Promise<GeneratedArticle> }[] = [
@@ -81,13 +68,16 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     // RunPod round-trip inside its own maxDuration=60 budget. Folding it into
     // this sequential, await-until-done loop would either block this route on
     // up to 8 RunPod calls, or misreport success before any article exists.
+    //
+    // NOTE: Pulse is ALSO not part of this unified pipeline — it has its own
+    // dedicated cron (`/api/pulse/generate`, daily 13:00 UTC) in vercel.json.
+    // Pulse's 4 categories now run sequentially (not in parallel) so each
+    // category's prompt can see topics already generated earlier in the same
+    // run and avoid cross-category duplicates — that serialization adds enough
+    // wall-clock time that it needs its own maxDuration budget rather than
+    // sharing this route's, and stacking it after geopolitics/markets/tech here
+    // risked exceeding the shared timeout.
   ];
-
-  if (shouldRunPulseToday()) {
-    pipelines.push({ section: 'pulse', run: runDailyPulsePipeline });
-  } else {
-    console.log('[content-cron] [pulse] skipped today — runs every other day (GDELT quota budget)');
-  }
 
   const results: ContentCronResult[] = [];
   for (const { section, run } of pipelines) {

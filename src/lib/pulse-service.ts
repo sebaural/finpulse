@@ -61,6 +61,12 @@ interface ClaudePulseResponse {
   summary: string;
   body?: string;
   sourceUrl?: string;
+  topic?: string;
+}
+
+interface RunTopic {
+  topic: string;
+  title: string;
 }
 
 interface PulseSourceShape {
@@ -362,7 +368,9 @@ async function generatePulseArticleFromSource(
   source: PulseSourceShape,
   pulseSlug: PulseSlug,
   categoryLabel: string,
-): Promise<ClaudePulseResponse> {
+  otherTopicsThisRun: RunTopic[] = [],
+): Promise<Required<Pick<ClaudePulseResponse, 'title' | 'slug' | 'summary' | 'topic'>> &
+  Pick<ClaudePulseResponse, 'body' | 'sourceUrl'>> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicKey) {
     throw new Error('ANTHROPIC_API_KEY environment variable is not set');
@@ -371,10 +379,23 @@ async function generatePulseArticleFromSource(
   const client = new Anthropic({ apiKey: anthropicKey });
 
   const prompt =
-    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
+    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now through the specific lens of this category, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
+    `### CATEGORY LENS (READ FIRST)\n` +
+    `Different categories will often be tempted to cover the same dominant news event on the same day. You must avoid this. Interpret "top topic" strictly through the lens implied by "${categoryLabel}":\n` +
+    `- If the label suggests geopolitics/national security ("strategic"), prioritize the angle of international alliances, foreign-policy leverage, or global power balance — not the domestic legislative mechanics.\n` +
+    `- If the label suggests domestic governance ("politics"), prioritize the angle of legislative process, party dynamics, or electoral consequence.\n` +
+    `- If the label suggests markets/fiscal policy ("economy"), prioritize the angle of quantifiable economic impact — spending, taxation, markets, labor, trade.\n` +
+    `- If the label suggests technology/media ("information"), prioritize the angle of digital platforms, AI governance, media ecosystems, or information warfare.\n` +
+    `- If "${categoryLabel}" doesn't map cleanly onto the above, infer its distinct beat and hold to it.\n` +
+    `Even when one event (e.g., a major bill or crisis) is genuinely dominant across every beat, your job is to find the sub-facet, data point, or stakeholder conflict that is distinctly "${categoryLabel}"'s story — not to restate the same headline other categories would also reach for.\n\n` +
+    (otherTopicsThisRun && otherTopicsThisRun.length
+      ? `### TOPICS ALREADY COVERED THIS RUN (MUST NOT DUPLICATE)\n` +
+        `The following topics and titles have already been generated for other categories today. Do not select the same primary topic as any of these. If your category's most obvious top story overlaps with one of these, you must either (a) select the next-most-significant distinct story for your category's lens, or (b) if the event is truly unavoidable for your beat, cover a materially different sub-facet of it — a different bill provision, different stakeholder, different geography, or different consequence — such that a reader would not perceive it as the same article. Your title's subject noun and structure must also differ from all of these:\n` +
+        otherTopicsThisRun.map((t, i) => `${i + 1}. Topic: "${t.topic}" — Title: "${t.title}"`).join('\n') + `\n\n`
+      : ``) +
     `Please execute this task using the following structured steps:\n\n` +
     `### STEP 1: TOPIC IDENTIFICATION\n` +
-    `Identify the top U.S. political topic of today that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences, including any relevant data context (e.g., a CBO score, market reaction, or vote count) where genuinely applicable — hedged per Step 5.\n\n` +
+    `Identify the top U.S. political topic of today — filtered through the category lens above and checked against the "already covered" list — that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences, including any relevant data context (e.g., a CBO score, market reaction, or vote count) where genuinely applicable — hedged per Step 5.\n\n` +
     `### STEP 2: THE 3 OPPOSING PERSPECTIVES\n` +
     `Break down the global conversation into 3 distinct, prominent, and competing viewpoints driving the highest engagement. For each perspective, provide:\n` +
     `1. A descriptive title for the faction/viewpoint.\n` +
@@ -395,12 +416,15 @@ async function generatePulseArticleFromSource(
     `### STEP 6: TITLE REQUIREMENTS\n` +
     `Write a headline for this article that is specific to the actual topic identified in Step 1 — not a generic template.\n` +
     `- Do NOT use the phrase "Sparks Global," or any close variant of it (e.g., "Ignites Global," "Fuels Worldwide," "Triggers International," "Sets Off Global"). These connector-verb-plus-"Global" constructions are overused and banned.\n` +
+    `- Do NOT use the pattern [Quoted proper noun/nickname] + [verb phrase describing a procedural stage, e.g. "Reaches the Senate Floor," "Heads to [Person]'s Desk," "Hits the Senate Floor"] + [colon] + [abstract subtitle]. This exact template is banned even if the wording varies, because it produces near-identical headlines across categories covering the same event.\n` +
+    `- If your topic shares its central proper noun (a bill name, agency, person) with a title in the "already covered" list above, do not lead the title with that same proper noun in quotes. Lead with your category's distinct angle, stakeholder, or consequence instead.\n` +
     `- Do NOT structure the title as [Subject] + [connector verb] + "Global" + [abstract noun]. Vary the structure instead — options include a colon-led format ("Topic: What's Actually at Stake"), a direct statement, a named-entity-led format, or a question.\n` +
     `- Anchor the title in a concrete, specific detail from Step 1 (a name, number, bill, agency, or event) rather than an abstract category label like "Economic Realignment" or "Fiscal Direction."\n` +
-    `- The title must read as distinct from a generic wire-service headline template — assume a reader will see this alongside titles from other categories, and it should not share a structural pattern with them.\n\n` +
+    `- The title must read as distinct from a generic wire-service headline template — assume a reader will see this alongside titles from other categories, including the ones listed in "already covered" above, and it must not share a structural pattern or leading proper noun with any of them.\n\n` +
     `### CRITICAL OUTPUT RULE\n` +
     `Respond ONLY with a valid, raw JSON object using the exact key structure below. Do not wrap the JSON in Markdown code fences (e.g., do NOT use \`\`\`json). Do not include any intro, outro, or prose outside the JSON object. Escape all double quotes inside string values using standard JSON escaping (\\"). Do not include any keys other than the ones listed below.\n\n` +
     `{\n` +
+    `  "topic": "3-6 word noun phrase naming the specific news topic/event identified in Step 1 (e.g. 'Senate reconciliation bill vote'). Internal use only for cross-category duplicate tracking — not shown to readers, so keep it plain and concrete, not headline-styled.",\n` +
     `  "title": "...",\n` +
     `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
     `  "summary": "2-3 sentence concise summary of the top topic and the two competing macro-narratives",\n` +
@@ -445,6 +469,7 @@ async function generatePulseArticleFromSource(
     summary: parsed.summary || source.summaryHint || source.title,
     body: parsed.body || undefined,
     sourceUrl: parsed.sourceUrl || source.sourceUrl || undefined,
+    topic: parsed.topic || parsed.title || source.title,
   };
 }
 
@@ -514,7 +539,10 @@ export async function getLatestArticlePerCategory(): Promise<Record<PulseSlug, P
   return Object.fromEntries(entries) as Record<PulseSlug, PulseArticle | null>;
 }
 
-export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created: number }> {
+export async function syncPulseCategory(
+  pulseSlug: PulseSlug,
+  otherTopicsThisRun: RunTopic[] = [],
+): Promise<{ created: number }> {
   const pulseArticle = getPulseDelegate();
   if (!pulseArticle) return { created: 0 };
 
@@ -560,10 +588,18 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
 
     seenBatchKeys.add(sourceKey);
 
-    const generated = await generatePulseArticleFromSource(normalized, pulseSlug, config.label);
+    const generated = await generatePulseArticleFromSource(
+      normalized,
+      pulseSlug,
+      config.label,
+      otherTopicsThisRun,
+    );
     if (!generated.slug) {
       continue;
     }
+    // Shared across categories in this run (see runDailyPulsePipeline) so later
+    // categories' prompts know what earlier ones already covered.
+    otherTopicsThisRun.push({ topic: generated.topic, title: generated.title });
 
     // Keep pulse URLs date-free. If a slug collides, disambiguate with a
     // non-date suffix so the URL shape remains /pulse/{pulseSlug}/{articleSlug}.
@@ -619,18 +655,48 @@ export async function syncPulseCategory(pulseSlug: PulseSlug): Promise<{ created
   return { created };
 }
 
+// Pulse sources from GDELT, which is capped at 100 query units/month on the
+// free plan. Four categories run per invocation, so a daily cadence is ~120
+// QU/month — over the cap, which silently zeros out generation once exhausted.
+// Running pulse every other day (~15 days × 4 ≈ 60 QU/month) keeps it under
+// budget. Parity is on the epoch day number so it alternates cleanly across
+// month boundaries (unlike a cron `*/2` day-of-month, which double-fires at the
+// 31st→1st rollover). Enforced here (not by the caller) so it holds regardless
+// of which cron/route invokes runDailyPulsePipeline.
+function shouldRunPulseToday(): boolean {
+  return Math.floor(Date.now() / 86_400_000) % 2 === 0;
+}
+
 export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
   const slugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
 
+  if (!shouldRunPulseToday()) {
+    console.log('[pulse-service] skipped today — runs every other day (GDELT quota budget)');
+    return Object.fromEntries(slugs.map((slug) => [slug, { created: 0 }])) as Record<
+      PulseSlug,
+      { created: number }
+    >;
+  }
+
+  // Categories run sequentially (not in parallel) so each category's prompt can
+  // be given the topics already generated earlier in this run — otherwise the
+  // model has no way to know what other categories picked and cross-category
+  // duplicates are unavoidable. otherTopicsThisRun accumulates across the whole
+  // run and is threaded into every syncPulseCategory call below.
+  //
   // Fault-isolate per category: a single category's GDELT/Claude failure must
   // not reject the whole pulse pipeline and zero out the categories that would
   // otherwise have succeeded.
-  const settled = await Promise.allSettled(slugs.map((slug) => syncPulseCategory(slug)));
-  const results = settled.map((outcome, i) => {
-    if (outcome.status === 'fulfilled') return outcome.value;
-    console.error(`[pulse-service] ${slugs[i]} pipeline failed`, outcome.reason);
-    return { created: 0 };
-  });
+  const otherTopicsThisRun: RunTopic[] = [];
+  const results: { created: number }[] = [];
+  for (const slug of slugs) {
+    try {
+      results.push(await syncPulseCategory(slug, otherTopicsThisRun));
+    } catch (err) {
+      console.error(`[pulse-service] ${slug} pipeline failed`, err);
+      results.push({ created: 0 });
+    }
+  }
 
   return Object.fromEntries(slugs.map((slug, i) => [slug, results[i]])) as Record<
     PulseSlug,
