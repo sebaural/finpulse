@@ -13,7 +13,7 @@
     --pulse-border: #2b3746;
     --pulse-text: #e8eff8;
     --pulse-muted: #8fa0b5;
-    --pulse-accent: #f5b948;
+    --pulse-accent: #b2945b;
     min-height: 100vh;
     /* background: radial-gradient(circle at -3% 166%, #203b5a 4%, transparent 40%), var(--pulse-bg); */
     color: var(--pulse-text);
@@ -210,7 +210,7 @@
 @media (min-width: 768px) {
   .pulse-article-page .pulse-container {
     display: grid;
-    grid-template-columns: 6fr 2fr;
+    grid-template-columns: 5fr 3fr;
     gap: 20px;
      max-width: 1420px;
   }
@@ -237,7 +237,7 @@
 
 .pulse-body--html h2 {
   margin: 18px 0 10px;
-  color: #f5b948;
+  color: var(--pulse-accent);
   font-family: 'Gideon Roman', serif;
   font-size: clamp(24px, 3vw, 1.8rem);
   font-weight: 300;
@@ -342,10 +342,10 @@
 
 .pulse-highlight-label {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #f5b948;
+  color: var(--accent);
   font-family: 'Inconsolata', monospace;
   margin-bottom: 6px;
 }
