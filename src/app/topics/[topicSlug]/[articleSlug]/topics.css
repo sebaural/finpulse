@@ -4,8 +4,9 @@
 }
 
 .topcis-article .geo-region-badge {
+    font-size: 14px;
     font-weight: 900;
-    padding: 10px 20px;
+    padding: 5px 20px;
 }
 
 .topcis-article .geo-region-badge:hover, 
