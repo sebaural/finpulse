@@ -67,7 +67,11 @@ export default async function RelatedBriefings({
               </div>
               <a
                 className="related-card-title"
-                href={`/${briefing.section}/${briefing.slug}`}
+                href={
+                  briefing.topicSlug
+                    ? `/topics/${briefing.topicSlug}/${briefing.slug}`
+                    : `/${briefing.section}/${briefing.slug}`
+                }
               >
                 {briefing.title}
               </a>

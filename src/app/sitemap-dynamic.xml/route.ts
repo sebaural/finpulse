@@ -118,14 +118,17 @@ export async function GET() {
   // resolves to either real rows or an empty array on failure.
   const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics, overview] =
     await Promise.all([
+      // topicId: null — topic-linked rows are submitted only via buildTopicEntry
+      // below, at their canonical /topics/... URL, so we never double-submit
+      // the same article at two URLs in the same sitemap.
       safeQuery<ArticleRow>('geopolitics', () =>
-        prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.geopoliticsArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
       ),
       safeQuery<ArticleRow>('markets', () =>
-        prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.marketsArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
       ),
       safeQuery<ArticleRow>('tech', () =>
-        prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+        prisma.techArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
       ),
       safeQuery<PulseRow>('pulse', () =>
         prisma.pulseArticle.findMany({ select: pulseSelect, orderBy: { updatedAt: 'desc' } }),

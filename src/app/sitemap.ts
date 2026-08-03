@@ -31,10 +31,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const prisma = getPrisma();
     const select = { slug: true, title: true, updatedAt: true } as const;
+    // topicId: null — topic-linked articles canonicalize to /topics/... and are
+    // submitted there via sitemap-dynamic.xml instead, so we don't list the
+    // same content twice across sitemaps.
     const [geopolitics, markets, tech] = await Promise.all([
-      prisma.geopoliticsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
-      prisma.marketsArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
-      prisma.techArticle.findMany({ select, orderBy: { updatedAt: 'desc' } }),
+      prisma.geopoliticsArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
+      prisma.marketsArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
+      prisma.techArticle.findMany({ where: { topicId: null }, select, orderBy: { updatedAt: 'desc' } }),
     ]);
 
     const toEntry = (section: 'geopolitics' | 'markets' | 'tech') => (row: ArticleRow) => ({

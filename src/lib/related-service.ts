@@ -13,6 +13,7 @@ export interface RelatedBriefing {
   excerpt: string;
   date: string;
   region: string;
+  topicSlug: string | null;
 }
 
 interface RelatedRow {
@@ -23,6 +24,7 @@ interface RelatedRow {
   region: string;
   date: string;
   createdAt: Date;
+  topic: { slug: string } | null;
 }
 
 // Pull a recent window from each section to score against; far more than we
@@ -54,6 +56,7 @@ export async function getRelatedBriefings(
       region: true,
       date: true,
       createdAt: true,
+      topic: { select: { slug: true } },
     } as const;
     const query = { select, orderBy: { createdAt: 'desc' as const }, take: POOL_PER_SECTION };
 
@@ -89,6 +92,7 @@ export async function getRelatedBriefings(
             excerpt: truncateDescription(row.summary, 140),
             date: row.date,
             region: row.region,
+            topicSlug: row.topic?.slug ?? null,
           },
           score,
           createdAt: row.createdAt.getTime(),
