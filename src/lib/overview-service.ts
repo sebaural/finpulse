@@ -85,6 +85,12 @@ export async function enqueueDailyClusters() {
         url: `${base}/api/overview/process`,
         body: { cluster },
         headers: { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET! },
+        // Must exceed maxDuration (300s) on /api/overview/process — the RunPod
+        // poll loop in runpod.ts can legitimately run close to that. Without
+        // this, QStash's own default callback timeout could fire first and
+        // retry the job while the original invocation is still in flight,
+        // doubling RunPod usage for the same cluster.
+        timeout: '295s',
       })
     )
   );
@@ -107,7 +113,7 @@ export async function enqueueDailyClusters() {
 }
 
 // Called by /api/overview/process — handles exactly ONE cluster per invocation,
-// so each call stays well within maxDuration = 60 regardless of RunPod's
+// so each call stays well within maxDuration = 300 regardless of RunPod's
 // MAX_CONCURRENCY=2 limit or overall batch size.
 // RSS titles/snippets are third-party content — strip stray markup before
 // it's interpolated into the LLM prompt. Defense-in-depth alongside the

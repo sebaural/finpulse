@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { Receiver } from '@upstash/qstash';
 import { processCluster } from '@/lib/overview-service';
 
-export const maxDuration = 60;
+// RunPod cold starts (min workers=0) plus polling can take several minutes —
+// see POLL_MAX_WAIT_MS in runpod.ts, which this must stay above.
+export const maxDuration = 300;
 
 const receiver = new Receiver({
   currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,

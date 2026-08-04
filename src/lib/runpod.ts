@@ -7,11 +7,19 @@ const STATUS_URL = (id: string) =>
 // if this ever changes.
 export const RUNPOD_MODEL = 'meta-llama/Llama-3.1-8B-Instruct';
 
-// Poll budget: kept comfortably under maxDuration=60 on both
-// /api/overview/generate and /api/overview/process (24 * 2s = 48s, leaving
-// ~12s headroom for submission + response handling).
-const POLL_ATTEMPTS = 24;
-const POLL_INTERVAL_MS = 2000;
+// Poll budget: kept comfortably under maxDuration=300 on /api/overview/process
+// (4m20s of polling, leaving ~40s headroom for submission retries, response
+// handling, and the DB write in processCluster). RunPod cold starts (min
+// workers=0, see note below) can take 60-180s, so the old 48s budget was
+// timing out client-side on otherwise-healthy jobs.
+const POLL_MAX_WAIT_MS = 4.5 * 60 * 1000 - 10_000; // 4m20s
+const POLL_INTERVAL_START_MS = 2000;
+const POLL_INTERVAL_MAX_MS = 10_000;
+const POLL_INTERVAL_BACKOFF = 1.4;
+// A run of consecutive poll failures (network blip, transient 5xx) shouldn't
+// burn the whole budget silently, but one-off errors shouldn't kill the job
+// either — bail out only once they stop looking transient.
+const MAX_CONSECUTIVE_POLL_FAILURES = 5;
 
 async function submitJob(messages: { role: string; content: string }[]): Promise<string> {
   const attempts = 3;
@@ -80,16 +88,33 @@ async function submitJob(messages: { role: string; content: string }[]): Promise
 export async function generateWithRunpod(messages: { role: string; content: string }[]): Promise<string> {
   const jobId = await submitJob(messages);
 
-  for (let i = 0; i < POLL_ATTEMPTS; i++) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  const deadline = Date.now() + POLL_MAX_WAIT_MS;
+  let interval = POLL_INTERVAL_START_MS;
+  let consecutiveFailures = 0;
+  let pollNum = 0;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, interval));
+    interval = Math.min(POLL_INTERVAL_MAX_MS, Math.round(interval * POLL_INTERVAL_BACKOFF));
+    pollNum++;
+
     const statusRes = await fetch(STATUS_URL(jobId), {
       headers: { Authorization: `Bearer ${process.env.RUNPOD_API_KEY}` },
+    }).catch((err) => {
+      console.error(`[runpod] status poll ${pollNum} for job ${jobId} network error:`, err);
+      return null;
     });
 
-    if (!statusRes.ok) {
-      console.error(`[runpod] status poll ${i} for job ${jobId} failed: ${statusRes.status} ${statusRes.statusText}`);
+    if (!statusRes || !statusRes.ok) {
+      const detail = statusRes ? `${statusRes.status} ${statusRes.statusText}` : 'network error';
+      consecutiveFailures++;
+      console.error(`[runpod] status poll ${pollNum} for job ${jobId} failed (${consecutiveFailures}/${MAX_CONSECUTIVE_POLL_FAILURES}): ${detail}`);
+      if (consecutiveFailures >= MAX_CONSECUTIVE_POLL_FAILURES) {
+        throw new Error(`RunPod status polling for job ${jobId} failed ${consecutiveFailures} times in a row (last: ${detail})`);
+      }
       continue;
     }
+    consecutiveFailures = 0;
 
     const status = await statusRes.json();
 
@@ -104,6 +129,6 @@ export async function generateWithRunpod(messages: { role: string; content: stri
       throw new Error(`RunPod job ${jobId} failed: ${JSON.stringify(status.error)}`);
     }
   }
-  throw new Error(`RunPod job ${jobId} timed out`);
+  throw new Error(`RunPod job ${jobId} timed out after ${POLL_MAX_WAIT_MS}ms`);
 }
 
