@@ -21,6 +21,20 @@ const POLL_INTERVAL_BACKOFF = 1.4;
 // either — bail out only once they stop looking transient.
 const MAX_CONSECUTIVE_POLL_FAILURES = 5;
 
+// RunPod's own job policy, sent at submission time. `ttl` is a hard wall-clock
+// limit measured from SUBMISSION, not from when a worker picks the job up —
+// it includes time spent queued waiting for a cold worker. Once it expires,
+// RunPod deletes the job outright, and status polls for it return 404. Cold
+// starts here (min workers=0) routinely take 60-180s, so ttl has to clear
+// that plus generation time and stay aligned with POLL_MAX_WAIT_MS above —
+// otherwise the client keeps polling a job RunPod already discarded. (This is
+// what caused the "5x 404 in a row" incident: ttl was still 60_000, a
+// leftover from the old 48s poll budget, so RunPod was killing jobs mid
+// cold-start.) executionTimeoutMs is separate — it only bounds time once a
+// worker actually starts running, so it can stay well under the ttl.
+const JOB_TTL_MS = POLL_MAX_WAIT_MS - 5_000;
+const JOB_EXECUTION_TIMEOUT_MS = 90_000;
+
 async function submitJob(messages: { role: string; content: string }[]): Promise<string> {
   const attempts = 3;
   let lastError: unknown;
@@ -48,9 +62,11 @@ async function submitJob(messages: { role: string; content: string }[]): Promise
           // queued-but-never-picked-up job expire instead of holding a slot.
           // Neither field changes `min workers` — that stays 0 from Step 1 —
           // this is purely about not letting one job overstay once it starts.
+          // See JOB_TTL_MS/JOB_EXECUTION_TIMEOUT_MS above for why these must
+          // stay aligned with the poll budget rather than a fixed guess.
           policy: {
-            executionTimeoutMs: 55_000, // stay under our own 60s route budget
-            ttl: 60_000,                // drop the job if it's still queued after 60s
+            executionTimeoutMs: JOB_EXECUTION_TIMEOUT_MS,
+            ttl: JOB_TTL_MS,
           },
         }),
       });
