@@ -298,7 +298,7 @@ export async function generateMacroArticle(): Promise<{
 
   let response = await createMessageWithRetry(client, {
     model: 'claude-opus-4-6',
-    max_tokens: 4000,
+    max_tokens: 8000,
     system: MACRO_SYSTEM_PROMPT,
     tools,
     messages,
@@ -309,12 +309,22 @@ export async function generateMacroArticle(): Promise<{
     messages.push({ role: 'assistant', content: response.content });
     response = await createMessageWithRetry(client, {
       model: 'claude-opus-4-6',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: MACRO_SYSTEM_PROMPT,
       tools,
       messages,
     });
     guard += 1;
+  }
+
+  // Surface truncation/stall causes explicitly instead of falling through to
+  // extractJsonText's generic "no JSON block found" error, which was the only
+  // signal we had in production when max_tokens cut the response off mid-object.
+  if (response.stop_reason === 'max_tokens') {
+    throw new Error('Claude macro response was truncated (stop_reason: max_tokens) — consider raising max_tokens');
+  }
+  if (response.stop_reason === 'pause_turn') {
+    throw new Error('Claude did not finish the macro turn after 5 continuations (still paused)');
   }
 
   const parsed = parseClaudeJson<ClaudeMacroResponse>(extractJsonText(response.content));
