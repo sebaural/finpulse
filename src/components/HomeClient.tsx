@@ -14,13 +14,11 @@ function saveStoredSymbols(list: Array<{ symbol: string; label: string }>) {
 }
 
 import { tickerItems as staticTickerItems, marketRows as staticMarketRows } from '@/services/news';
-import { useSpeechReader } from '@/hooks/useSpeechReader';
 import type { MarketRow, NewsArticle, TickerItem } from '@/types';
 
 import { MarketTicker } from '@/components/market/MarketTicker';
 import { MarketSnapshot } from '@/components/market/MarketSnapshot';
 import { HeroCard } from '@/components/news/HeroCard';
-import { SidebarNewsItem } from '@/components/news/SidebarNewsItem';
 import NavMenu from '@/components/topNav/NavMenu';
 import { PulseHighlights } from '@/components/pulse/PulseHighlights';
 import MacroPageClient from '@/components/macro/MacroPageClient';
@@ -99,11 +97,6 @@ export default function HomeClient({
   const [marketRows, setMarketRows] = useState<MarketRow[]>(staticMarketRows);
   const [marketLive, setMarketLive] = useState(false);
   const [loadingMarketNames, setLoadingMarketNames] = useState<Set<string>>(new Set());
-
-  // The live newsroom feed and its filters now live on /live-feed; the home
-  // sidebar still reads stories aloud, so a speech reader over the full set of
-  // articles is retained here.
-  const speech = useSpeechReader(allArticles, 'home');
 
   const hero = allArticles[0] ?? null;
 
@@ -226,10 +219,12 @@ export default function HomeClient({
         </div>
       </header>
 
-      <main className="page">
+      <main className="page HomePage">
         <div className="layout">
           <div className="main-content">
-            <PulseHighlights latestByCategory={pulseLatest} />
+
+            <EmbeddedMacroWidget initial={macroInitial} />
+
             {topicAnalysis.length > 0 && (
               <section className="widget topic-analysis">
                 <h2 className="widget-title">Deep-Dive Analysis</h2>
@@ -247,8 +242,6 @@ export default function HomeClient({
               </section>
             )}
 
-            <EmbeddedMacroWidget initial={macroInitial} />
-
           </div>
 
           <aside className="sidebar">
@@ -260,20 +253,11 @@ export default function HomeClient({
                 onRemove={handleRemoveSymbol}
               />
 
+              <PulseHighlights latestByCategory={pulseLatest} />
+
           {hero && (
               <HeroCard article={hero} relativeTime={relativeTimeFor(hero)} />
             )}
-
-            <section className="widget">
-              <h2 className="widget-title">Most Read</h2>
-              {allArticles.slice(0, 6).map((article) => (
-                <SidebarNewsItem
-                  key={article.id}
-                  article={article}
-                  onRead={speech.readById}
-                />
-              ))}
-            </section>
           </aside>
         </div>
       </main>

@@ -48,6 +48,20 @@ body > .layout-content {
   min-width: 0;
 }
 
+
+/* HomePage */
+
+
+@media (min-width: 560px) {
+  .HomePage .main-content {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
+
 .footer-nav-link {
   color: var(--muted);
   text-decoration: none;
@@ -106,7 +120,7 @@ header {
 }
 
 .header-inner {
-  max-width: 1320px;
+  max-width: 1640px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -207,7 +221,7 @@ nav {
 }
 
 .page {
-  max-width: 1320px;
+  max-width: 1640px;
   margin: 0 auto;
   padding: 20px 24px;
 }
@@ -340,7 +354,7 @@ nav {
   border-radius: 999px;
   border: 1px solid var(--border);
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: calc(0.8rem + 0.2vw);
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -948,12 +962,6 @@ nav {
   font-size: 14px;
   line-height: 1.4;
   color: var(--text);
-}
-
-.side-story-time {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 5px;
 }
 
 .feed-error {
@@ -1868,3 +1876,18 @@ nav {
   to { transform: rotate(360deg); }
 }
 
+/* // background images for pulse highlights and topic analysis */
+
+/* .pulse-highlights {
+  background: url(../../public/news_pulse.svg) no-repeat center/cover;
+}
+
+.topic-analysis {
+    background: url(../../public/deep_dive_analysis.svg) no-repeat top center;
+}
+
+.macro-landscape-widget {
+  background: url(../../public/macro_landscape.svg) no-repeat center/cover;
+} */
+
+ 
