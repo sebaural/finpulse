@@ -272,7 +272,7 @@ nav.nav-menu[data-variant="accent2"] .nav-desktop-link.active {
 }
 
 /* ── Responsive breakpoint ── */
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   .nav-desktop  { display: none; }
   .nav-hamburger { display: flex; }
 }

@@ -35,7 +35,18 @@
   font-family: 'Fira Sans', sans-serif;
 }
 
-/* ── Top nav logo ── */
+/* ── Top nav (sticky, matches the .nav-menu hamburger breakpoint) ── */
+.geo-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+@media (max-width: 1024px) {
+  .geo-top-nav {
+    z-index: 1000;
+  }
+}
+
 .geo-top-nav .logo span {
   font-family: 'Cormorant Garamond', serif;
   font-size: 32px;
@@ -44,8 +55,12 @@
   color: #fff;
 }
 
-/* ── Page Header ── */
+/* ── Page Header ──
+   This is a <header> element, which globally defaults to position: sticky
+   (see globals.css). Only .geo-top-nav should stick here, so opt this one
+   back out and let it scroll away with the rest of the page. */
 .geo-header {
+  position: static;
   text-align: center;
   padding: 8px 20px 12px;
   border-bottom: 3px double var(--border);
