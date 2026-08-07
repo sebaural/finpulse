@@ -667,39 +667,76 @@ function shouldRunPulseToday(): boolean {
   return Math.floor(Date.now() / 86_400_000) % 2 === 0;
 }
 
-export async function runDailyPulsePipeline(): Promise<Record<PulseSlug, { created: number }>> {
-  const slugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
+// Seeds cross-category dedup for categories that aren't part of *this*
+// invocation's group (see PULSE_GROUPS below) by reading back what other
+// groups already published today, rather than only tracking it in-memory.
+// Without this, splitting the run across multiple invocations would blind
+// each group to what the other group already covered.
+async function getTodaysOtherCategoryTopics(excludeSlugs: PulseSlug[]): Promise<RunTopic[]> {
+  const pulseArticle = getPulseDelegate();
+  if (!pulseArticle) return [];
+
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  try {
+    const rows = await pulseArticle.findMany<{ pulseSlug: string; title: string }>({
+      where: { publishedAt: { gte: startOfDay }, pulseSlug: { notIn: excludeSlugs } },
+      select: { pulseSlug: true, title: true },
+    });
+    return rows.map((row) => ({ topic: row.title, title: row.title }));
+  } catch (err) {
+    console.error('[pulse-service] failed to load today\'s cross-group topics', err);
+    return [];
+  }
+}
+
+// Four categories run sequentially per invocation (see syncPulseCategory
+// comments) so each category's prompt can see what earlier categories already
+// covered. On Vercel Hobby, maxDuration is hard-capped at 300s and four
+// sequential GDELT-fetch + Claude-opus rounds routinely run ~230-250s for the
+// first three alone — the fourth in iteration order was reliably starved and
+// killed mid-flight before it could write anything (this is what silently
+// zeroed out the "strategic" category from Aug 3 onward). Splitting the run
+// into two groups of two categories, invoked an hour apart by separate cron
+// entries (see vercel.json — Hobby cron precision is only accurate to the
+// hour, so a few-minutes stagger wouldn't be reliable), keeps each invocation
+// comfortably under budget. `group` selects which half runs; omitted
+// (manual/local trigger) runs all four sequentially as before.
+const PULSE_GROUPS: Record<1 | 2, PulseSlug[]> = {
+  1: ['economy', 'information'],
+  2: ['politics', 'strategic'],
+};
+
+export async function runDailyPulsePipeline(
+  group?: 1 | 2,
+): Promise<Record<PulseSlug, { created: number }>> {
+  const slugs = group ? PULSE_GROUPS[group] : (Object.keys(PULSE_CATEGORIES) as PulseSlug[]);
+  const allSlugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
 
   if (!shouldRunPulseToday()) {
     console.log('[pulse-service] skipped today — runs every other day (GDELT quota budget)');
-    return Object.fromEntries(slugs.map((slug) => [slug, { created: 0 }])) as Record<
+    return Object.fromEntries(allSlugs.map((slug) => [slug, { created: 0 }])) as Record<
       PulseSlug,
       { created: number }
     >;
   }
 
-  // Categories run sequentially (not in parallel) so each category's prompt can
-  // be given the topics already generated earlier in this run — otherwise the
-  // model has no way to know what other categories picked and cross-category
-  // duplicates are unavoidable. otherTopicsThisRun accumulates across the whole
-  // run and is threaded into every syncPulseCategory call below.
-  //
-  // Fault-isolate per category: a single category's GDELT/Claude failure must
-  // not reject the whole pulse pipeline and zero out the categories that would
-  // otherwise have succeeded.
-  const otherTopicsThisRun: RunTopic[] = [];
-  const results: { created: number }[] = [];
+  // otherTopicsThisRun accumulates across this invocation's categories, seeded
+  // with whatever the other group already published today (empty on a
+  // full/manual run, or on group 1 since it runs first).
+  const otherTopicsThisRun: RunTopic[] = await getTodaysOtherCategoryTopics(slugs);
+  const resultsBySlug = new Map<PulseSlug, { created: number }>();
   for (const slug of slugs) {
     try {
-      results.push(await syncPulseCategory(slug, otherTopicsThisRun));
+      resultsBySlug.set(slug, await syncPulseCategory(slug, otherTopicsThisRun));
     } catch (err) {
       console.error(`[pulse-service] ${slug} pipeline failed`, err);
-      results.push({ created: 0 });
+      resultsBySlug.set(slug, { created: 0 });
     }
   }
 
-  return Object.fromEntries(slugs.map((slug, i) => [slug, results[i]])) as Record<
-    PulseSlug,
-    { created: number }
-  >;
+  return Object.fromEntries(
+    allSlugs.map((slug) => [slug, resultsBySlug.get(slug) ?? { created: 0 }]),
+  ) as Record<PulseSlug, { created: number }>;
 }

@@ -16,8 +16,12 @@
       "path": "/api/overview/generate", "schedule": "0 6 * * 1-5"
     },
     {
-      "path": "/api/pulse/generate",
+      "path": "/api/pulse/generate?group=1",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/pulse/generate?group=2",
+      "schedule": "0 14 * * *"
     }
   ]
 

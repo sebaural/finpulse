@@ -70,13 +70,12 @@ export async function runDailyContentPipelines(): Promise<ContentCronResult[]> {
     // up to 8 RunPod calls, or misreport success before any article exists.
     //
     // NOTE: Pulse is ALSO not part of this unified pipeline — it has its own
-    // dedicated cron (`/api/pulse/generate`, daily 13:00 UTC) in vercel.json.
-    // Pulse's 4 categories now run sequentially (not in parallel) so each
-    // category's prompt can see topics already generated earlier in the same
-    // run and avoid cross-category duplicates — that serialization adds enough
-    // wall-clock time that it needs its own maxDuration budget rather than
-    // sharing this route's, and stacking it after geopolitics/markets/tech here
-    // risked exceeding the shared timeout.
+    // dedicated cron (`/api/pulse/generate`) in vercel.json, fired twice daily
+    // (13:00 and 14:00 UTC, ?group=1/?group=2) so its 4 categories can run
+    // sequentially — each category's prompt sees topics already generated
+    // earlier the same day and avoids cross-category duplicates — without
+    // blowing Hobby's 300s maxDuration cap. See PULSE_GROUPS in
+    // pulse-service.ts for why it's split into two invocations.
   ];
 
   const results: ContentCronResult[] = [];
