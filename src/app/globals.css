@@ -1595,6 +1595,7 @@ nav {
   width: 100%;
   max-width: 420px;
   overflow: visible;
+  margin: 10dvh 0 0;
 }
 
 .msm-header {
