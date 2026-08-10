@@ -1891,19 +1891,3 @@ nav {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
-/* // background images for pulse highlights and topic analysis */
-
-/* .pulse-highlights {
-  background: url(../../public/news_pulse.svg) no-repeat center/cover;
-}
-
-.topic-analysis {
-    background: url(../../public/deep_dive_analysis.svg) no-repeat top center;
-}
-
-.macro-landscape-widget {
-  background: url(../../public/macro_landscape.svg) no-repeat center/cover;
-} */
-
- 
