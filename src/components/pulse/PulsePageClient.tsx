@@ -67,9 +67,8 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
                       className="pulse-article-link"
                       href={`/pulse/${config.pulseSlug}/${article.articleSlug}`}
                     >
-                      <span className="pulse-article-title">{article.title}</span>
                       <span className="pulse-article-meta">{formatMetaDate(article)}</span>
-                      {article.summary ? <span className="pulse-article-summary">{article.summary}</span> : null}
+                      <span className="pulse-article-title">{article.title}</span>
                     </Link>
                   </li>
                 ))}

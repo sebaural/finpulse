@@ -87,6 +87,7 @@
   font-size: 19px;
   line-height: 1.25;
   font-family: 'Gideon Roman', serif;
+  margin: 10px 0 0;
 }
 
 .pulse-article-link:hover {
@@ -100,13 +101,6 @@
   color: var(--pulse-muted);
   letter-spacing: 0.05em;
   font-family: 'Inconsolata', monospace;
-}
-
-.pulse-article-summary {
-  display: block;
-  margin-top: 8px;
-  color: #c1cede;
-  line-height: 1.55;
 }
 
 .pulse-empty {
