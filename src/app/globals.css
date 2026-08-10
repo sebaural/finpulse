@@ -238,8 +238,8 @@ nav {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 28px;
+  grid-template-columns: 1fr 276px;
+  gap: 20px;
 }
 
 .hero-card {
@@ -954,7 +954,7 @@ nav {
   border: 1px solid var(--border);
   cursor: pointer;
   color: var(--accent2);
-  border-radius: 5px;
+  border-radius: 2px;
   margin: 0 0 12px;
 }
 

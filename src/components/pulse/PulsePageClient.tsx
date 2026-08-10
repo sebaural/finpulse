@@ -7,7 +7,7 @@ import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-d
 import type { PulseArticle, PulseCategoryConfig } from '@/types/pulse';
 import './pulse.css';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 18;
 
 interface PulsePageClientProps {
   config: PulseCategoryConfig;

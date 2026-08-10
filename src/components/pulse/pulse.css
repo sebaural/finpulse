@@ -335,7 +335,7 @@
   display: block;
   text-decoration: none;
   border: 1px solid #2a3340;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 12px;
   background: #141b24;
 }
@@ -405,3 +405,16 @@
   }
 
 }
+
+@media (min-width: 1024px) {
+
+  .pulse-page .pulse-container {
+     max-width: 1640px;
+  }
+
+.pulse-article-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+

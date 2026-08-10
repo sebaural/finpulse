@@ -12,7 +12,7 @@
 .live-feed-layout {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 28px;
+  gap: 20px;
 }
 
 .live-feed-main {
