@@ -442,11 +442,18 @@ async function generatePulseArticleFromSource(
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
-    max_tokens: 3200,
+    max_tokens: 6000,
     system:
       'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Maintain strict analytical objectivity and return valid JSON only.',
     messages: [{ role: 'user', content: prompt }],
   });
+
+  // Surface truncation explicitly instead of falling through to parseClaudeJson's
+  // generic parse error, which was the only signal we had in production when
+  // max_tokens cut the response off mid-object (see macro-service.ts's identical fix).
+  if (response.stop_reason === 'max_tokens') {
+    throw new Error('Claude pulse response was truncated (stop_reason: max_tokens) — consider raising max_tokens');
+  }
 
   const first = response.content[0];
   if (first.type !== 'text') {
