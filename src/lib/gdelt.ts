@@ -30,8 +30,11 @@ export async function fetchPulseSummary(
   const params = new URLSearchParams();
   params.append('date_start', dateStart);
   params.append('date_end', dateEnd);
-  params.append('observed_start', `${dateStart}T00:00:00Z`);
-  params.append('observed_end', `${dateEnd}T23:59:59Z`);
+  // GDELT now rejects observed_start/observed_end with a time component
+  // ("INVALID_DATE: Invalid observed_start. Use a real calendar date
+  // YYYY-MM-DD") — send plain calendar dates, same as date_start/date_end.
+  params.append('observed_start', dateStart);
+  params.append('observed_end', dateEnd);
   params.append('category', options.category);
   params.append('group_by', options.groupBy ?? 'date');
 
