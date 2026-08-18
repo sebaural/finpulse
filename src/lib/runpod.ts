@@ -135,9 +135,19 @@ export async function generateWithRunpod(messages: { role: string; content: stri
     const status = await statusRes.json();
 
     if (status.status === 'COMPLETED') {
-      const content = status.output?.choices?.[0]?.message?.content ?? status.output?.output;
+      // RunPod's openai_route responses are usually a single ChatCompletion
+      // object, but some worker-vllm versions wrap it in a one-element array
+      // — handle both rather than assuming.
+      const out = Array.isArray(status.output) ? status.output[0] : status.output;
+      const content = out?.choices?.[0]?.message?.content ?? out?.output;
       if (!content) {
-        throw new Error(`RunPod job ${jobId} completed with no usable output content`);
+        // Shape/content unknown at this point (empty string, worker-level
+        // error dict, finish_reason='length' with nothing generated, etc.) —
+        // dump the raw output into the error itself so the next occurrence
+        // is diagnosable from Vercel logs alone, without needing RunPod
+        // dashboard access.
+        const raw = JSON.stringify(status.output ?? null).slice(0, 500);
+        throw new Error(`RunPod job ${jobId} completed with no usable output content: ${raw}`);
       }
       return content;
     }
