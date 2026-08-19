@@ -28,8 +28,10 @@
 
 /* ── Main content ── */
 .overview-main {
-  padding: 40px 48px;
+  padding: 40px 20px;
   overflow-y: auto;
+  max-width: 1640px;
+  margin: 0 auto;
 }
 
 .overview-headline {
@@ -79,6 +81,15 @@
 .overviews-container {
   display: block;
 }
+
+@media (min-width: 1025px) {
+  .overviews-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
 .overview-day-group {
   margin-bottom: 40px;
 }
