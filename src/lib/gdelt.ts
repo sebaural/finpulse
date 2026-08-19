@@ -1,7 +1,7 @@
 import 'server-only';
 import type { GdeltSummaryResponse } from '@/types/pulse';
 
-const GDELT_SUMMARY_URL = 'https://gdeltcloud.com/api/v2/events/summary';
+const GDELT_SUMMARY_URL = 'https://gdeltcloud.com/api/v2/stories';
 
 export interface FetchPulseSummaryOptions {
   category: string;
