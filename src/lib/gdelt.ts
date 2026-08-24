@@ -5,9 +5,10 @@ const GDELT_SUMMARY_URL = 'https://gdeltcloud.com/api/v2/stories';
 
 export interface FetchPulseSummaryOptions {
   category: string;
-  groupBy?: string;
   dateStart?: string;
   dateEnd?: string;
+  limit?: number;
+  sort?: string;
 }
 
 export async function fetchPulseSummary(
@@ -27,16 +28,15 @@ export async function fetchPulseSummary(
   const dateStart = options.dateStart ?? dayBefore;
   const dateEnd = options.dateEnd ?? today;
 
+  // /stories takes a flat story_category (not the old /events/summary
+  // category+group_by+observed_start/end shape) — verified against a live
+  // response on 2026-08-24.
   const params = new URLSearchParams();
+  params.append('limit', String(options.limit ?? 10));
   params.append('date_start', dateStart);
   params.append('date_end', dateEnd);
-  // GDELT now rejects observed_start/observed_end with a time component
-  // ("INVALID_DATE: Invalid observed_start. Use a real calendar date
-  // YYYY-MM-DD") — send plain calendar dates, same as date_start/date_end.
-  params.append('observed_start', dateStart);
-  params.append('observed_end', dateEnd);
-  params.append('category', options.category);
-  params.append('group_by', options.groupBy ?? 'date');
+  params.append('sort', options.sort ?? 'recent');
+  params.append('story_category', options.category);
 
   const url = new URL(GDELT_SUMMARY_URL);
   url.search = params.toString();

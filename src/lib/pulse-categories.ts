@@ -1,25 +1,30 @@
 import type { PulseCategoryConfig, PulseSlug } from '@/types/pulse';
 
+// gdeltCategory values are GDELT's `story_category` values for the /stories
+// endpoint (verified against a live response on 2026-08-24), e.g.
+// "cameoplus_political". The old ECONOMIC/TECHNOLOGY/POLITICAL/"Strategic
+// developments" strings were guesses for the prior /events/summary endpoint
+// and never confirmed against a real response.
 export const PULSE_CATEGORIES: Record<PulseSlug, PulseCategoryConfig> = {
   economy: {
     pulseSlug: 'economy',
     label: 'Economy',
-    gdeltCategory: 'ECONOMIC',
+    gdeltCategory: 'cameoplus_economic',
   },
   information: {
     pulseSlug: 'information',
     label: 'Technology',
-    gdeltCategory: 'TECHNOLOGY',
+    gdeltCategory: 'cameoplus_technology',
   },
   politics: {
     pulseSlug: 'politics',
     label: 'Politics',
-    gdeltCategory: 'POLITICAL',
+    gdeltCategory: 'cameoplus_political',
   },
   strategic: {
     pulseSlug: 'strategic',
     label: 'Strategic',
-    gdeltCategory: 'Strategic developments',
+    gdeltCategory: 'cameoplus_information',
   },
 };
 
