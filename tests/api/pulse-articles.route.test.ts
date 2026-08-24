@@ -43,7 +43,7 @@ describe('/api/pulse/articles route', () => {
       economy: null,
       information: null,
       politics: null,
-      strategic: null,
+      technology: null,
     });
 
     const response = await GET(request('https://macrostance.com/api/pulse/articles'));
@@ -53,7 +53,7 @@ describe('/api/pulse/articles route', () => {
     expect(body.data).toHaveProperty('economy');
     expect(body.data).toHaveProperty('information');
     expect(body.data).toHaveProperty('politics');
-    expect(body.data).toHaveProperty('strategic');
+    expect(body.data).toHaveProperty('technology');
   });
 
   it('returns 400 for invalid pulseSlug', async () => {

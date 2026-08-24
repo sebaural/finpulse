@@ -11,8 +11,8 @@ export const PULSE_CATEGORIES: Record<PulseSlug, PulseCategoryConfig> = {
     label: 'Economy',
     gdeltCategory: 'cameoplus_economic',
   },
-  information: {
-    pulseSlug: 'information',
+  technology: {
+    pulseSlug: 'technology',
     label: 'Technology',
     gdeltCategory: 'cameoplus_technology',
   },
@@ -21,9 +21,9 @@ export const PULSE_CATEGORIES: Record<PulseSlug, PulseCategoryConfig> = {
     label: 'Politics',
     gdeltCategory: 'cameoplus_political',
   },
-  strategic: {
-    pulseSlug: 'strategic',
-    label: 'Strategic',
+  information: {
+    pulseSlug: 'information',
+    label: 'Information',
     gdeltCategory: 'cameoplus_information',
   },
 };

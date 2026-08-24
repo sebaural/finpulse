@@ -9,8 +9,8 @@ import { isCronAuthorized, runCronPipeline } from '@/server/cron';
 // starved by) geopolitics/markets/tech's shared budget.
 //
 // Even with its own budget, all 4 categories sequentially routinely exceed
-// Hobby's hard 300s cap (the 4th — "strategic" in iteration order — was
-// getting silently killed mid-flight). vercel.json now fires this route twice,
+// Hobby's hard 300s cap (the 4th — "strategic", now named "information", in
+// iteration order — was getting silently killed mid-flight). vercel.json now fires this route twice,
 // an hour apart, with ?group=1 and ?group=2, each covering 2 categories; see
 // PULSE_GROUPS in pulse-service.ts. An hour (not a few minutes) because Hobby
 // cron precision is only accurate to the hour bucket, not the minute — see
