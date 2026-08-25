@@ -1,4 +1,4 @@
-export type PulseSlug = 'economy' | 'information' | 'politics' | 'strategic';
+export type PulseSlug = 'economy' | 'information' | 'politics' | 'technology';
 
 export interface PulseCategoryConfig {
   pulseSlug: PulseSlug;

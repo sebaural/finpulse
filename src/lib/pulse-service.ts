@@ -382,10 +382,10 @@ async function generatePulseArticleFromSource(
     `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now through the specific lens of this category, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
     `### CATEGORY LENS (READ FIRST)\n` +
     `Different categories will often be tempted to cover the same dominant news event on the same day. You must avoid this. Interpret "top topic" strictly through the lens implied by "${categoryLabel}":\n` +
-    `- If the label suggests geopolitics/national security ("strategic"), prioritize the angle of international alliances, foreign-policy leverage, or global power balance — not the domestic legislative mechanics.\n` +
+    `- If the label suggests geopolitics/national security ("information"), prioritize the angle of international alliances, foreign-policy leverage, or global power balance — not the domestic legislative mechanics.\n` +
     `- If the label suggests domestic governance ("politics"), prioritize the angle of legislative process, party dynamics, or electoral consequence.\n` +
     `- If the label suggests markets/fiscal policy ("economy"), prioritize the angle of quantifiable economic impact — spending, taxation, markets, labor, trade.\n` +
-    `- If the label suggests technology/media ("information"), prioritize the angle of digital platforms, AI governance, media ecosystems, or information warfare.\n` +
+    `- If the label suggests technology/media ("technology"), prioritize the angle of digital platforms, AI governance, media ecosystems, or information warfare.\n` +
     `- If "${categoryLabel}" doesn't map cleanly onto the above, infer its distinct beat and hold to it.\n` +
     `Even when one event (e.g., a major bill or crisis) is genuinely dominant across every beat, your job is to find the sub-facet, data point, or stakeholder conflict that is distinctly "${categoryLabel}"'s story — not to restate the same headline other categories would also reach for.\n\n` +
     (otherTopicsThisRun && otherTopicsThisRun.length
@@ -704,15 +704,16 @@ async function getTodaysOtherCategoryTopics(excludeSlugs: PulseSlug[]): Promise<
 // sequential GDELT-fetch + Claude-opus rounds routinely run ~230-250s for the
 // first three alone — the fourth in iteration order was reliably starved and
 // killed mid-flight before it could write anything (this is what silently
-// zeroed out the "strategic" category from Aug 3 onward). Splitting the run
+// zeroed out the "strategic" category — now named "information" — from Aug 3
+// onward). Splitting the run
 // into two groups of two categories, invoked an hour apart by separate cron
 // entries (see vercel.json — Hobby cron precision is only accurate to the
 // hour, so a few-minutes stagger wouldn't be reliable), keeps each invocation
 // comfortably under budget. `group` selects which half runs; omitted
 // (manual/local trigger) runs all four sequentially as before.
 const PULSE_GROUPS: Record<1 | 2, PulseSlug[]> = {
-  1: ['economy', 'information'],
-  2: ['politics', 'strategic'],
+  1: ['economy', 'technology'],
+  2: ['politics', 'information'],
 };
 
 export async function runDailyPulsePipeline(
