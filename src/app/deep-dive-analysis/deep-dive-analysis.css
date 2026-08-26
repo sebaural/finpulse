@@ -1,0 +1,87 @@
+/* Deep-Dive Analysis page — same two-column layout as live-feed
+   (app/live-feed/live-feed.css), with deep-dive-specific element classes. */
+
+.deep-dive-page {
+  max-width: 1640px;
+  margin: 0 auto;
+  padding: 20px 24px;
+}
+
+/* 60% / 40% two-column split (3fr : 2fr === 60 : 40), matching live-feed. */
+.deep-dive-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 20px;
+}
+
+.deep-dive-main {
+  min-width: 0;
+}
+
+.deep-dive-hero {
+  margin-bottom: 24px;
+}
+
+.deep-dive-title {
+  font-family: 'Gideon Roman', serif;
+  margin-bottom: 12px;
+}
+
+.deep-dive-hero-desc {
+  font-family: 'Fira Sans', sans-serif;
+  color: var(--muted);
+  font-size: 1.05em;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.deep-dive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deep-dive-item {
+  display: block;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--accent2);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.deep-dive-item:hover {
+  background: #141b24;
+}
+
+.deep-dive-item-source {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.deep-dive-item-title {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.deep-dive-empty {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.deep-dive-aside {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .deep-dive-layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -49,19 +49,6 @@ body > .layout-content {
 }
 
 
-/* HomePage */
-
-
-@media (min-width: 560px) {
-  .HomePage .main-content {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 20px;
-    align-items: start;
-  }
-}
-
-
 .footer-nav-link {
   color: var(--muted);
   text-decoration: none;

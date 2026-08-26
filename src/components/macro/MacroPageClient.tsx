@@ -10,6 +10,10 @@ import './macro.css';
 interface Props {
   /** Server-fetched latest (or deep-linked) entry plus its adjacency. */
   initial: MacroArticleResponse;
+  /** Render the "The Macro Landscape" eyebrow as the page's own <h1> instead
+   *  of a <span> — used only on the standalone /macro-landscape page, where
+   *  it is the top-level heading rather than an embedded widget label. */
+  eyebrowAs?: 'span' | 'h1';
 }
 
 function formatFullDate(iso: string): string {
@@ -23,9 +27,10 @@ function formatFullDate(iso: string): string {
   });
 }
 
-export default function MacroPageClient({ initial }: Props) {
+export default function MacroPageClient({ initial, eyebrowAs = 'span' }: Props) {
   const [state, setState] = useState<MacroArticleResponse>(initial);
   const [loading, setLoading] = useState(false);
+  const Eyebrow = eyebrowAs;
 
   async function step(target: AdjacentMacroArticleInfo) {
     setLoading(true);
@@ -46,7 +51,7 @@ export default function MacroPageClient({ initial }: Props) {
   if (!article) {
     return (
       <section className="macro-landscape">
-        <span className="macro-eyebrow">The Macro Landscape</span>
+        <Eyebrow className="macro-eyebrow">The Macro Landscape</Eyebrow>
         <p className="macro-empty">
           Today&apos;s macro summary will appear here once the daily pipeline has run.
         </p>
@@ -56,7 +61,7 @@ export default function MacroPageClient({ initial }: Props) {
 
   return (
     <section className="macro-landscape">
-      <span className="macro-eyebrow">The Macro Landscape</span>
+      <Eyebrow className="macro-eyebrow">The Macro Landscape</Eyebrow>
       <h2 className="macro-title">{article.title}</h2>
       <div className="macro-date">{formatFullDate(article.publishedDate)}</div>
 

@@ -16,6 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/geopolitics`,         lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
     { url: `${SITE_URL}/markets`,             lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
     { url: `${SITE_URL}/tech`,                lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${SITE_URL}/deep-dive-analysis`,  lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
+    { url: `${SITE_URL}/macro-landscape`,     lastModified: now, changeFrequency: 'daily',   priority: 0.9 },
     { url: `${SITE_URL}/about`,               lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/editorial-standards`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/data-sources`,        lastModified: now, changeFrequency: 'monthly', priority: 0.6 },

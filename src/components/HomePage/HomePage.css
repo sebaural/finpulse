@@ -1,0 +1,205 @@
+/* src/components/HomePage/HomePage.css — hero + hub-card promo layout for
+   the homepage main-content. Adapted from macrostance-landing.html, mapped
+   onto the site's existing globals.css color vars and loaded fonts. */
+
+/* .main-content only splits into columns with .sidebar via .layout (see
+   globals.css) — its own children (hero, sections) stack full-width. */
+.HomePage .main-content {
+  min-width: 0;
+}
+
+.HomePage .hero {
+  width: 100%;
+  padding: 0 0 40px;
+}
+
+.HomePage .hero h1 {
+  font-family: 'Gideon Roman', serif;
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.15;
+  color: var(--text);
+  max-width: 42ch;
+}
+
+.HomePage .hero p {
+  margin-top: 18px;
+  font-family: 'Fira Sans', sans-serif;
+  color: var(--muted);
+  font-size: 1.05em;
+  line-height: 1.55;
+  max-width: 56ch;
+}
+
+.HomePage .sections {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.HomePage .hub-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.HomePage .hub-card:hover {
+  border-color: var(--accent2);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.6);
+}
+
+.HomePage .hub-body {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  grid-template-areas:
+    "icon content"
+    "cta  cta";
+  gap: 36px;
+  align-items: start;
+}
+
+.HomePage .hub-card.reverse .hub-body {
+  grid-template-columns: 1fr 180px;
+  grid-template-areas:
+    "content icon"
+    "cta     cta";
+}
+
+.HomePage .icon-frame {
+  grid-area: icon;
+  width: 150px;
+  height: 150px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.HomePage .icon-frame svg {
+  width: 122px;
+  height: 122px;
+}
+
+.HomePage .hub-content {
+  grid-area: content;
+}
+
+.HomePage .hub-content h2 {
+  font-size: 26px;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.HomePage .section-desc {
+  font-family: 'Fira Sans', sans-serif;
+  color: var(--muted);
+  font-size: 1.05em;
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+
+.HomePage .cta-btn,
+.HomePage .pulse-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.HomePage .cta-btn:hover,
+.HomePage .pulse-cta-btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.HomePage .cta-btn:focus-visible,
+.HomePage .pulse-cta-btn:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 3px;
+}
+
+.HomePage .cta-btn svg,
+.HomePage .pulse-cta-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.HomePage .cta-holder {
+  grid-area: cta;
+}
+
+.HomePage #news-pulse .cta-holder {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.HomePage .pulse-cta-btn {
+  justify-content: center;
+}
+
+/* Pulse ping animation */
+.HomePage .ping-ring {
+  animation: home-pulse-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+@keyframes home-pulse-ping {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.7;
+  }
+  75%,
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .HomePage .ping-ring {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .HomePage .hub-card {
+    padding: 24px;
+  }
+  .HomePage .hub-body,
+  .HomePage .hub-card.reverse .hub-body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "icon"
+      "content"
+      "cta";
+    gap: 20px;
+  }
+  .HomePage #news-pulse .cta-holder {
+    grid-template-columns: 1fr;
+  }
+  .HomePage .icon-frame {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+  }
+  .HomePage .icon-frame svg {
+    width: 84px;
+    height: 84px;
+  }
+}
