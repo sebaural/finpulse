@@ -546,6 +546,13 @@ export async function getLatestArticlePerCategory(): Promise<Record<PulseSlug, P
   return Object.fromEntries(entries) as Record<PulseSlug, PulseArticle | null>;
 }
 
+// /stories returns individual per-story rows (not date-bucketed summaries), so
+// every row is now a genuinely distinct dedup key — without a cap this loop
+// would create up to `limit` new articles per invocation instead of the
+// intended ~1/category/run. Restores original intent and keeps runtime inside
+// the wall-clock budget PULSE_GROUPS was built around.
+const MAX_NEW_ARTICLES_PER_RUN = 1;
+
 export async function syncPulseCategory(
   pulseSlug: PulseSlug,
   otherTopicsThisRun: RunTopic[] = [],
@@ -586,6 +593,8 @@ export async function syncPulseCategory(
   const newUrls: string[] = [];
 
   for (const rawRow of rawRows) {
+    if (created >= MAX_NEW_ARTICLES_PER_RUN) break;
+
     const normalized = normalizePulseSource(rawRow, config.gdeltCategory);
     const sourceKey = stableSourceKey(rawRow, normalized);
 
