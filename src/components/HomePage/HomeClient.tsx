@@ -199,9 +199,8 @@ export default function HomeClient({
             <section className="hero">
               <h1>Real-time intelligence at the intersection of markets, policy, and technology.</h1>
               <p>
-                MacroStance delivers real-time financial news and deep-dive
-                analysis at the intersection of global markets, policy, and
-                technology.
+                Real-time news and expert analysis that transforms complex
+                global developments into clear breakdowns.
               </p>
             </section>
 

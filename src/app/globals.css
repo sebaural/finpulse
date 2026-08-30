@@ -49,15 +49,6 @@ body > .layout-content {
 }
 
 
-.footer-nav-link {
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-.footer-nav-link:hover {
-  color: var(--accent);
-}
-
 .ticker-wrap {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -218,6 +209,7 @@ nav {
 }
 
 .page {
+  width: 100%;
   max-width: 1640px;
   margin: 0 auto;
   padding: 20px 24px;
@@ -1245,10 +1237,6 @@ nav {
     min-width: 92px;
     font-size: 11px;
     padding: 3px 6px;
-  }
-
-  .footer-nav {
-    flex-wrap: wrap;
   }
 
   .card-actions {

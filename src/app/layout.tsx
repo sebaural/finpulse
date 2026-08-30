@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { DM_Sans, DM_Serif_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { ReCaptchaProvider } from 'next-recaptcha-v3';
-import Footer from '@/components/Footer';
+import Footer from '@/components/Footer/Footer';
+import BackToTop from '@/components/BackToTop/BackToTop';
 import { GTMScript, GTMNoScript } from '@/components/GoogleTagManager';
 import {
   SITE_URL,
@@ -122,6 +123,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}>
           <div className="layout-content">{children}</div>
           <Footer />
+          <BackToTop />
         </ReCaptchaProvider>
       </body>
     </html>

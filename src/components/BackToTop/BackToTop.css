@@ -1,0 +1,55 @@
+/* src/components/BackToTop/BackToTop.css — floating scroll-to-top button.
+   Matches the site's existing cta-btn accent treatment (border/color var(--accent),
+   solid-fill on hover) used across HomePage's hub-cards. */
+
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.back-to-top:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 3px;
+}
+
+.back-to-top svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.75;
+}
+
+@media (max-width: 600px) {
+  .back-to-top {
+    right: 16px;
+    bottom: 16px;
+    width: 38px;
+    height: 38px;
+  }
+}
