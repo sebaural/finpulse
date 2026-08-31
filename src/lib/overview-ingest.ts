@@ -6,6 +6,10 @@ const NEWS_FEEDS = [
   'https://feeds.bbci.co.uk/news/world/rss.xml',
   'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
   'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+  'https://www.economist.com/latest/rss.xml',
+  'http://rss.cnn.com/rss/edition.rss',
+  'https://www.theguardian.com/world/rss',
+  'https://feeds.npr.org/1001/rss.xml',
 ];
 
 export interface RawStory {
