@@ -58,7 +58,8 @@ export const ModelName = {
   MacroArticle: 'MacroArticle',
   User: 'User',
   Topic: 'Topic',
-  OverviewArticle: 'OverviewArticle'
+  OverviewDay: 'OverviewDay',
+  OverviewBlock: 'OverviewBlock'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -189,18 +190,30 @@ export const TopicScalarFieldEnum = {
 export type TopicScalarFieldEnum = (typeof TopicScalarFieldEnum)[keyof typeof TopicScalarFieldEnum]
 
 
-export const OverviewArticleScalarFieldEnum = {
+export const OverviewDayScalarFieldEnum = {
   id: 'id',
-  slug: 'slug',
-  title: 'title',
-  summary: 'summary',
-  body: 'body',
-  category: 'category',
   publishedDate: 'publishedDate',
-  model: 'model'
+  context: 'context',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
-export type OverviewArticleScalarFieldEnum = (typeof OverviewArticleScalarFieldEnum)[keyof typeof OverviewArticleScalarFieldEnum]
+export type OverviewDayScalarFieldEnum = (typeof OverviewDayScalarFieldEnum)[keyof typeof OverviewDayScalarFieldEnum]
+
+
+export const OverviewBlockScalarFieldEnum = {
+  id: 'id',
+  dayId: 'dayId',
+  category: 'category',
+  title: 'title',
+  description: 'description',
+  summary: 'summary',
+  model: 'model',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OverviewBlockScalarFieldEnum = (typeof OverviewBlockScalarFieldEnum)[keyof typeof OverviewBlockScalarFieldEnum]
 
 
 export const SortOrder = {

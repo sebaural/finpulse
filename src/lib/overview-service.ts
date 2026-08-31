@@ -1,30 +1,24 @@
 import { fetchWorldNewsFeeds, clusterAndWeight, isGeopoliticsRelevant, StoryCluster } from './overview-ingest';
 import { generateWithRunpod, RUNPOD_MODEL } from './runpod';
 import { getPrisma } from './db';
-import { formatDateSegment } from './seo';
-import slugify from 'slugify';
+import {
+  OVERVIEW_CATEGORIES,
+  OVERVIEW_CATEGORY_SLUGS,
+  type OverviewCategorySlug,
+} from './overview-categories';
 import { Client } from '@upstash/qstash';
 import { z } from 'zod';
 
 const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
 
 const OverviewLlmOutputSchema = z.object({
+  category: z.enum(OVERVIEW_CATEGORY_SLUGS as [OverviewCategorySlug, ...OverviewCategorySlug[]]),
   title: z.string().min(1),
-  summary: z.string().min(1),
-  body: z.string().min(1),
+  description: z.string().min(1), // one sentence
+  summary: z.string().min(1), // 3-4 sentences
 });
 
 // Extracts the first {...} JSON object from a string, tolerating preamble/fences
-//
-// NOTE: since the system prompt now requires "body" to contain an HTML
-// fragment, the model has to correctly escape any quotes inside HTML
-// attributes (e.g. an <a href="..."> in body text) as \" for the overall
-// JSON to remain valid. extractJson/JSON.parse below handle standard
-// escaped JSON fine — the risk is entirely on the model's output discipline,
-// not this parsing logic. If parse failures start showing up in
-// [overview/process] logs, check whether they correlate with HTML
-// attributes in the failed body content before assuming extractJson itself
-// is at fault.
 function extractJson(raw: string): string {
   const fenceStripped = raw.replace(/```json\n?|\n?```/g, '').trim();
   const start = fenceStripped.indexOf('{');
@@ -35,7 +29,12 @@ function extractJson(raw: string): string {
   return fenceStripped.slice(start, end + 1);
 }
 
-// Called by /api/overview/generate — picks the day's clusters
+// Only ~5 of these candidates survive as final blocks (one per fixed
+// category, chosen in processCluster), so the cap can sit well above 5 —
+// this just bounds how many RunPod calls one run can fan out to.
+const MAX_CANDIDATE_CLUSTERS = 20;
+
+// Called by /api/overview/generate — picks the day's candidate clusters
 export async function selectDailyClusters(): Promise<StoryCluster[]> {
   const rawStories = await fetchWorldNewsFeeds();
   const weighted = clusterAndWeight(rawStories);
@@ -49,11 +48,112 @@ export async function selectDailyClusters(): Promise<StoryCluster[]> {
     return rank[b.priority] - rank[a.priority];
   });
 
-  return ordered.slice(0, 8);
+  return ordered.slice(0, MAX_CANDIDATE_CLUSTERS);
 }
 
-// Called by /api/overview/generate — fans clusters out to QStash, one job each
+// 'YYYY-MM-DD' (UTC) as a bare Date at UTC midnight, matching how the
+// publishedDate @db.Date column round-trips through Prisma.
+function todayDateColumn(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === 'P2002'
+  );
+}
+
+type Prisma = ReturnType<typeof getPrisma>;
+
+async function getOrCreateOverviewDay(prisma: Prisma, publishedDate: Date) {
+  const existing = await prisma.overviewDay.findUnique({ where: { publishedDate } });
+  if (existing) return existing;
+
+  try {
+    return await prisma.overviewDay.create({ data: { publishedDate } });
+  } catch (err) {
+    // Concurrent QStash jobs for the same day can race on the unique
+    // publishedDate key — the loser just reads back the winner's row.
+    if (isUniqueConstraintError(err)) {
+      const raced = await prisma.overviewDay.findUnique({ where: { publishedDate } });
+      if (raced) return raced;
+    }
+    throw err;
+  }
+}
+
+const FALLBACK_MODEL_TAG = 'fallback';
+
+/**
+ * Fills any of the 5 fixed categories still missing a block for the given
+ * day with a deterministic "no major developments" block — no RunPod call
+ * involved. Safe to call redundantly (idempotent upsert).
+ */
+export async function ensureAllCategoriesFilled(dayId: string) {
+  const prisma = getPrisma();
+
+  const existing = await prisma.overviewBlock.findMany({
+    where: { dayId },
+    select: { category: true },
+  });
+  const filled = new Set(existing.map((b) => b.category));
+  const missing = OVERVIEW_CATEGORY_SLUGS.filter((slug) => !filled.has(slug));
+
+  await Promise.all(
+    missing.map((slug) =>
+      prisma.overviewBlock
+        .upsert({
+          where: { dayId_category: { dayId, category: slug } },
+          update: {},
+          create: {
+            dayId,
+            category: slug,
+            title: `${OVERVIEW_CATEGORIES[slug].label} — No Major Developments`,
+            description:
+              'No significant geopolitical developments were reported for this region today.',
+            summary:
+              'Our sources did not surface a qualifying story for this region in the past 24 hours. Check back for the next briefing.',
+            model: FALLBACK_MODEL_TAG,
+          },
+        })
+        .catch((err) => {
+          // Another concurrent call may have just created the same row —
+          // that's fine, nothing left to do for this category.
+          if (!isUniqueConstraintError(err)) throw err;
+        })
+    )
+  );
+}
+
+/**
+ * A day only ever receives new writes from same-day QStash jobs, so once a
+ * day is no longer "today" its set of blocks is final — this backfills any
+ * categories yesterday's run never got a qualifying cluster for. Runs at the
+ * start of each day's generate call, before today's own fan-out.
+ */
+export async function finalizePreviousOverviewDay() {
+  const prisma = getPrisma();
+  const today = todayDateColumn();
+  const yesterday = new Date(today);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+  const day = await prisma.overviewDay.findUnique({ where: { publishedDate: yesterday } });
+  if (day) {
+    await ensureAllCategoriesFilled(day.id);
+  }
+}
+
+// Called by /api/overview/generate — finalizes yesterday's day, then fans
+// today's candidate clusters out to QStash, one job each
 export async function enqueueDailyClusters() {
+  await finalizePreviousOverviewDay().catch((err) =>
+    console.error('[overview/generate] failed to finalize previous day', err)
+  );
+
   const clusters = await selectDailyClusters();
   // VERCEL_URL is injected automatically by the Vercel platform on every
   // deployment (production and preview) — it is NOT something you set
@@ -116,13 +216,15 @@ export async function enqueueDailyClusters() {
 // so each call stays well within maxDuration = 300 regardless of RunPod's
 // MAX_CONCURRENCY=2 limit or overall batch size.
 // RSS titles/snippets are third-party content — strip stray markup before
-// it's interpolated into the LLM prompt. Defense-in-depth alongside the
-// output-side sanitization in the page (sanitizeArticleHtml): even though
-// the model is instructed not to echo raw HTML, nothing prevents a feed
-// item from containing it in the first place.
+// it's interpolated into the LLM prompt.
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '');
 }
+
+// Ranks a cluster's own corroboration strength — used to decide whether it's
+// allowed to overwrite a block another cluster already wrote for the same
+// category+day (see the race guard in processCluster below).
+const PRIORITY_RANK: Record<StoryCluster['priority'], number> = { high: 1, low: 0 };
 
 export async function processCluster(cluster: StoryCluster) {
   const prisma = getPrisma();
@@ -139,17 +241,23 @@ export async function processCluster(cluster: StoryCluster) {
     .map((m) => `- [${m.source}] ${stripHtml(m.title)}: ${stripHtml(m.snippet)}`)
     .join('\n');
 
+  const categoryList = OVERVIEW_CATEGORY_SLUGS.map(
+    (slug) => `"${slug}" (${OVERVIEW_CATEGORIES[slug].label})`
+  ).join(', ');
+
   const messages = [
-  {
-    role: 'system',
-    content:
-      'You are a neutral geopolitics news editor. Write a factual, attributed summary ' +
-      'article from the provided source snippets. Respond ONLY with raw JSON format (no markdown fences): ' +
-      '{"title": "...", "summary": "...", "body": "..."}. Attribute claims to sources by name. ' +
-      'The value of "body" must be an HTML fragment only. Do not use asterisks, markdown ' +
-      'bold, markdown bullets, or any XML-style wrapper tags.',
-  },
-  { role: 'user', content: sourceText },
+    {
+      role: 'system',
+      content:
+        'You are a neutral geopolitics news editor writing one short block for a daily regional ' +
+        `briefing. Classify the story into exactly one of these regions: ${categoryList}. ` +
+        'Respond ONLY with raw JSON (no markdown fences): ' +
+        '{"category": "...", "title": "...", "description": "...", "summary": "..."}. ' +
+        '"category" must be exactly one of the region values above. "description" must be ' +
+        'exactly one sentence. "summary" must be 3-4 sentences. Attribute claims to sources by ' +
+        'name. Do not use asterisks, markdown bold, markdown bullets, or HTML tags anywhere.',
+    },
+    { role: 'user', content: sourceText },
   ];
 
   const choiceContent = await generateWithRunpod(messages);
@@ -157,48 +265,40 @@ export async function processCluster(cluster: StoryCluster) {
   const cleanJson = extractJson(choiceContent);
   const parsed = OverviewLlmOutputSchema.parse(JSON.parse(cleanJson));
 
-  let slug = slugify(parsed.title, { lower: true, strict: true });
+  const day = await getOrCreateOverviewDay(prisma, todayDateColumn());
 
-  // Collision guard: if a different article already holds this slug,
-  // disambiguate rather than silently overwriting it.
-  //
-  // Same-day re-runs (idempotent cron retries) still upsert cleanly onto the
-  // same row. But if the existing row was published on an earlier calendar
-  // day, this is a genuine headline recurrence (e.g. a slow-moving story),
-  // not a retry — suffix with today's date segment so the older day's
-  // article isn't silently overwritten and its publishedDate isn't
-  // misrepresented under new content.
-  const existing = await prisma.overviewArticle.findUnique({ where: { slug } });
-  const todaySegment = formatDateSegment(new Date());
-  if (existing && formatDateSegment(existing.publishedDate) !== todaySegment) {
-    slug = `${slug}-${todaySegment}`;
-    // Residual edge case: the date-suffixed slug itself collides with an
-    // unrelated article (e.g. slugify producing the same base title twice
-    // in one day under different clusters) — fall back to an id suffix.
-    const dateCollision = await prisma.overviewArticle.findUnique({ where: { slug } });
-    if (dateCollision && dateCollision.title !== parsed.title) {
-      slug = `${slug}-${dateCollision.id.slice(-6)}`;
-    }
-  } else if (existing && existing.title !== parsed.title) {
-    slug = `${slug}-${existing.id.slice(-6)}`;
+  const existingBlock = await prisma.overviewBlock.findUnique({
+    where: { dayId_category: { dayId: day.id, category: parsed.category } },
+  });
+
+  // Race guard: independent QStash jobs can classify different raw clusters
+  // into the same category on the same day. Only a `high`-priority
+  // (multi-source-corroborated) cluster is allowed to overwrite whatever is
+  // already there, so a later `low`-priority job can't clobber an
+  // already-corroborated block purely by finishing last.
+  if (existingBlock && PRIORITY_RANK[cluster.priority] < 1) {
+    console.log(
+      `[overview/process] skipping ${parsed.category} for ${day.publishedDate.toISOString()} — ` +
+        `block already exists and this cluster's priority ('${cluster.priority}') isn't high enough to replace it`
+    );
+    return;
   }
 
-  await prisma.overviewArticle.upsert({
-    where: { slug },
+  await prisma.overviewBlock.upsert({
+    where: { dayId_category: { dayId: day.id, category: parsed.category } },
     update: {
       title: parsed.title,
+      description: parsed.description,
       summary: parsed.summary,
-      body: parsed.body,
       model: RUNPOD_MODEL,
     },
     create: {
-      slug,
+      dayId: day.id,
+      category: parsed.category,
       title: parsed.title,
+      description: parsed.description,
       summary: parsed.summary,
-      body: parsed.body,
-      category: 'daily-overview',
       model: RUNPOD_MODEL,
     },
   });
 }
-

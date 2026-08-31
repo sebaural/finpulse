@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { SITE_URL, formatDateSegment } from '@/lib/seo';
+import { SITE_URL } from '@/lib/seo';
 import { toSlug } from '@/lib/summary-pipeline';
 
 // Revalidate every 12 hours on Vercel
@@ -38,26 +38,6 @@ function buildPulseEntry(row: PulseRow): string {
     `    <lastmod>${mod}</lastmod>\n` +
     `    <changefreq>daily</changefreq>\n` +
     `    <priority>0.7</priority>\n` +
-    `  </url>\n`
-  );
-}
-
-// OverviewArticle is a separate table/pipeline (per Step 2 of the guide),
-// so it gets its own row type and its own entry builder rather than reusing
-// buildEntry — its URL shape includes a date segment that the other
-// sections (geopolitics/markets/tech) don't have.
-type OverviewArticleRow = { slug: string; title: string; publishedDate: Date };
-
-function buildOverviewEntry(row: OverviewArticleRow): string {
-  const slug = row.slug || toSlug(row.title);
-  const loc = `${SITE_URL}/overview/${formatDateSegment(row.publishedDate)}/${slug}`;
-  const mod = row.publishedDate.toISOString();
-  return (
-    `  <url>\n` +
-    `    <loc>${loc}</loc>\n` +
-    `    <lastmod>${mod}</lastmod>\n` +
-    `    <changefreq>never</changefreq>\n` +
-    `    <priority>0.8</priority>\n` +
     `  </url>\n`
   );
 }
@@ -106,17 +86,11 @@ export async function GET() {
     updatedAt: true,
   } as const;
 
-  const overviewSelect = {
-    slug: true,
-    title: true,
-    publishedDate: true,
-  } as const;
-
   // Each section is fetched independently via safeQuery, and all of them run
   // concurrently via Promise.all around the already-caught promises — so
   // this Promise.all can never reject, since every individual promise
   // resolves to either real rows or an empty array on failure.
-  const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics, overview] =
+  const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics] =
     await Promise.all([
       // topicId: null — topic-linked rows are submitted only via buildTopicEntry
       // below, at their canonical /topics/... URL, so we never double-submit
@@ -142,9 +116,6 @@ export async function GET() {
       safeQuery<TopicArticleRow>('tech-topics', () =>
         prisma.techArticle.findMany({ where: topicWhere, select: topicSelect }),
       ),
-      safeQuery<OverviewArticleRow>('overview', () =>
-        prisma.overviewArticle.findMany({ select: overviewSelect, orderBy: { publishedDate: 'desc' } }),
-      ),
     ]);
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -154,7 +125,6 @@ export async function GET() {
   xml += tech.map((r) => buildEntry('tech', r)).join('');
   xml += pulse.map(buildPulseEntry).join('');
   xml += [...geoTopics, ...marketTopics, ...techTopics].map(buildTopicEntry).join('');
-  xml += overview.map(buildOverviewEntry).join('');
   xml += `</urlset>`;
 
   // Note: the route itself no longer has a top-level try/catch. It doesn't

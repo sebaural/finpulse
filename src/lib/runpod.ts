@@ -3,7 +3,7 @@ const STATUS_URL = (id: string) =>
   `https://api.runpod.ai/v2/${process.env.RUNPOD_ENDPOINT_ID}/status/${id}`;
 
 // Single source of truth for the model name — also written to
-// OverviewArticle.model in overview-service.ts so provenance stays accurate
+// OverviewBlock.model in overview-service.ts so provenance stays accurate
 // if this ever changes.
 export const RUNPOD_MODEL = 'meta-llama/Llama-3.1-8B-Instruct';
 

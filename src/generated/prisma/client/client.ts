@@ -77,7 +77,12 @@ export type User = Prisma.UserModel
  */
 export type Topic = Prisma.TopicModel
 /**
- * Model OverviewArticle
+ * Model OverviewDay
  * 
  */
-export type OverviewArticle = Prisma.OverviewArticleModel
+export type OverviewDay = Prisma.OverviewDayModel
+/**
+ * Model OverviewBlock
+ * 
+ */
+export type OverviewBlock = Prisma.OverviewBlockModel

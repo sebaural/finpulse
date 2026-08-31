@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { SITE_URL, SITE_NAME, formatDateSegment } from '@/lib/seo';
+import { SITE_URL, SITE_NAME } from '@/lib/seo';
 import { toSlug } from '@/lib/summary-pipeline';
 
 // Google News sitemap. Unlike the standard sitemap, Google News only considers
@@ -19,16 +19,6 @@ type PulseNewsRow = {
   title: string;
   category: string;
   createdAt: Date;
-};
-
-// OverviewArticle has no createdAt field (it's create-once, per Step 2 of
-// the guide) — publishedDate is the only timestamp available, and doubles
-// as both the news-window filter column and the publication_date value.
-type OverviewNewsRow = {
-  slug: string;
-  title: string;
-  category: string;
-  publishedDate: Date;
 };
 
 function xmlEscape(value: string): string {
@@ -86,27 +76,6 @@ function buildPulseEntry(row: PulseNewsRow): string {
   );
 }
 
-function buildOverviewEntry(row: OverviewNewsRow): string {
-  const slug = row.slug || toSlug(row.title);
-  const loc = `${SITE_URL}/overview/${formatDateSegment(row.publishedDate)}/${slug}`;
-  const publicationDate = row.publishedDate.toISOString();
-  const keywords = xmlEscape(row.category);
-  return (
-    `  <url>\n` +
-    `    <loc>${loc}</loc>\n` +
-    `    <news:news>\n` +
-    `      <news:publication>\n` +
-    `        <news:name>${xmlEscape(SITE_NAME)}</news:name>\n` +
-    `        <news:language>${PUBLICATION_LANGUAGE}</news:language>\n` +
-    `      </news:publication>\n` +
-    `      <news:publication_date>${publicationDate}</news:publication_date>\n` +
-    `      <news:title>${xmlEscape(row.title)}</news:title>\n` +
-    (keywords ? `      <news:keywords>${keywords}</news:keywords>\n` : ``) +
-    `    </news:news>\n` +
-    `  </url>\n`
-  );
-}
-
 // Runs one query in isolation. If it fails, logs which section broke and
 // returns an empty array instead of throwing — so a single bad table or
 // connection can only ever drop that section's URLs from the feed, never
@@ -135,20 +104,10 @@ export async function GET() {
     createdAt: true,
   } as const;
 
-  const overviewSelect = {
-    slug: true,
-    title: true,
-    category: true,
-    publishedDate: true,
-  } as const;
-  const overviewWhere = { publishedDate: { gte: cutoff } };
-  const overviewOrderBy = { publishedDate: 'desc' as const };
-
   // Each section fetched independently — a failure in any one of these
-  // (including the newest, least battle-tested OverviewArticle query)
   // can never take down the others, since safeQuery already caught it
   // and this Promise.all can therefore never reject.
-  const [geopolitics, markets, tech, pulse, overview] = await Promise.all([
+  const [geopolitics, markets, tech, pulse] = await Promise.all([
     safeQuery<NewsRow>('geopolitics', () =>
       prisma.geopoliticsArticle.findMany({ select, where, orderBy }),
     ),
@@ -161,13 +120,6 @@ export async function GET() {
     safeQuery<PulseNewsRow>('pulse', () =>
       prisma.pulseArticle.findMany({ select: pulseSelect, where, orderBy }),
     ),
-    safeQuery<OverviewNewsRow>('overview', () =>
-      prisma.overviewArticle.findMany({
-        select: overviewSelect,
-        where: overviewWhere,
-        orderBy: overviewOrderBy,
-      }),
-    ),
   ]);
 
   const entries = [
@@ -175,7 +127,6 @@ export async function GET() {
     ...markets.map((r) => buildEntry('markets', r)),
     ...tech.map((r) => buildEntry('tech', r)),
     ...pulse.map(buildPulseEntry),
-    ...overview.map(buildOverviewEntry),
   ].slice(0, MAX_URLS);
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

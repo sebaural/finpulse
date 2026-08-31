@@ -140,16 +140,38 @@ model Topic {
   @@map("topics")
 }
 
-model OverviewArticle {
-  id            String   @id @default(cuid())
-  slug          String   @unique
-  title         String
-  summary       String   @db.Text
-  body          String   @db.Text
-  category      String   @default("daily-overview")
-  publishedDate DateTime @default(now())
-  model         String   @default("meta-llama/Llama-3.1-8B-Instruct")
+model OverviewDay {
+  id            String          @id @default(cuid())
+  // One row per calendar day (bare DATE, mirrors MacroArticle.publishedDate)
+  // — same-day re-runs of the pipeline resolve to this row rather than
+  // creating duplicates.
+  publishedDate DateTime        @unique @db.Date
+  context       String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  blocks        OverviewBlock[]
 
-  @@index([publishedDate])
+  @@map("overview_days")
+}
+
+model OverviewBlock {
+  id          String      @id @default(cuid())
+  dayId       String
+  day         OverviewDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  // One of the fixed slugs in src/lib/overview-categories.ts (us, east-asia,
+  // middle-east, europe, africa) — validated in app code, not a DB enum, to
+  // match this schema's existing category-as-string convention.
+  category    String
+  title       String
+  description String      @db.Text
+  summary     String      @db.Text
+  model       String      @default("meta-llama/Llama-3.1-8B-Instruct")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Enforces exactly one block per category per day at the DB layer.
+  @@unique([dayId, category])
+  @@index([category])
+  @@map("overview_blocks")
 }
 

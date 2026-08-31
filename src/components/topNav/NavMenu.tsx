@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
     })),
   },
   { kind: 'link', label: 'Live Feed', href: '/live-feed' },
+  { kind: 'link', label: 'Overview', href: '/overview' },
 ];
 
 const SUMMARY_HREFS = new Set(['/geopolitics', '/markets', '/tech']);

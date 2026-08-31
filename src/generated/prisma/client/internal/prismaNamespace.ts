@@ -391,7 +391,8 @@ export const ModelName = {
   MacroArticle: 'MacroArticle',
   User: 'User',
   Topic: 'Topic',
-  OverviewArticle: 'OverviewArticle'
+  OverviewDay: 'OverviewDay',
+  OverviewBlock: 'OverviewBlock'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "macroArticle" | "user" | "topic" | "overviewArticle"
+    modelProps: "geopoliticsArticle" | "marketsArticle" | "techArticle" | "pulseArticle" | "macroArticle" | "user" | "topic" | "overviewDay" | "overviewBlock"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -929,77 +930,151 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    OverviewArticle: {
-      payload: Prisma.$OverviewArticlePayload<ExtArgs>
-      fields: Prisma.OverviewArticleFieldRefs
+    OverviewDay: {
+      payload: Prisma.$OverviewDayPayload<ExtArgs>
+      fields: Prisma.OverviewDayFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.OverviewArticleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload> | null
+          args: Prisma.OverviewDayFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.OverviewArticleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         findFirst: {
-          args: Prisma.OverviewArticleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload> | null
+          args: Prisma.OverviewDayFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.OverviewArticleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         findMany: {
-          args: Prisma.OverviewArticleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+          args: Prisma.OverviewDayFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>[]
         }
         create: {
-          args: Prisma.OverviewArticleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         createMany: {
-          args: Prisma.OverviewArticleCreateManyArgs<ExtArgs>
+          args: Prisma.OverviewDayCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.OverviewArticleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+          args: Prisma.OverviewDayCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>[]
         }
         delete: {
-          args: Prisma.OverviewArticleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         update: {
-          args: Prisma.OverviewArticleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         deleteMany: {
-          args: Prisma.OverviewArticleDeleteManyArgs<ExtArgs>
+          args: Prisma.OverviewDayDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.OverviewArticleUpdateManyArgs<ExtArgs>
+          args: Prisma.OverviewDayUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.OverviewArticleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>[]
+          args: Prisma.OverviewDayUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>[]
         }
         upsert: {
-          args: Prisma.OverviewArticleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewArticlePayload>
+          args: Prisma.OverviewDayUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewDayPayload>
         }
         aggregate: {
-          args: Prisma.OverviewArticleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateOverviewArticle>
+          args: Prisma.OverviewDayAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOverviewDay>
         }
         groupBy: {
-          args: Prisma.OverviewArticleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.OverviewArticleGroupByOutputType>[]
+          args: Prisma.OverviewDayGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewDayGroupByOutputType>[]
         }
         count: {
-          args: Prisma.OverviewArticleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.OverviewArticleCountAggregateOutputType> | number
+          args: Prisma.OverviewDayCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewDayCountAggregateOutputType> | number
+        }
+      }
+    }
+    OverviewBlock: {
+      payload: Prisma.$OverviewBlockPayload<ExtArgs>
+      fields: Prisma.OverviewBlockFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OverviewBlockFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OverviewBlockFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        findFirst: {
+          args: Prisma.OverviewBlockFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OverviewBlockFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        findMany: {
+          args: Prisma.OverviewBlockFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>[]
+        }
+        create: {
+          args: Prisma.OverviewBlockCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        createMany: {
+          args: Prisma.OverviewBlockCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OverviewBlockCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>[]
+        }
+        delete: {
+          args: Prisma.OverviewBlockDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        update: {
+          args: Prisma.OverviewBlockUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        deleteMany: {
+          args: Prisma.OverviewBlockDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OverviewBlockUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OverviewBlockUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>[]
+        }
+        upsert: {
+          args: Prisma.OverviewBlockUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OverviewBlockPayload>
+        }
+        aggregate: {
+          args: Prisma.OverviewBlockAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOverviewBlock>
+        }
+        groupBy: {
+          args: Prisma.OverviewBlockGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewBlockGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OverviewBlockCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OverviewBlockCountAggregateOutputType> | number
         }
       }
     }
@@ -1154,18 +1229,30 @@ export const TopicScalarFieldEnum = {
 export type TopicScalarFieldEnum = (typeof TopicScalarFieldEnum)[keyof typeof TopicScalarFieldEnum]
 
 
-export const OverviewArticleScalarFieldEnum = {
+export const OverviewDayScalarFieldEnum = {
   id: 'id',
-  slug: 'slug',
-  title: 'title',
-  summary: 'summary',
-  body: 'body',
-  category: 'category',
   publishedDate: 'publishedDate',
-  model: 'model'
+  context: 'context',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
-export type OverviewArticleScalarFieldEnum = (typeof OverviewArticleScalarFieldEnum)[keyof typeof OverviewArticleScalarFieldEnum]
+export type OverviewDayScalarFieldEnum = (typeof OverviewDayScalarFieldEnum)[keyof typeof OverviewDayScalarFieldEnum]
+
+
+export const OverviewBlockScalarFieldEnum = {
+  id: 'id',
+  dayId: 'dayId',
+  category: 'category',
+  title: 'title',
+  description: 'description',
+  summary: 'summary',
+  model: 'model',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OverviewBlockScalarFieldEnum = (typeof OverviewBlockScalarFieldEnum)[keyof typeof OverviewBlockScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1394,7 +1481,8 @@ export type GlobalOmitConfig = {
   macroArticle?: Prisma.MacroArticleOmit
   user?: Prisma.UserOmit
   topic?: Prisma.TopicOmit
-  overviewArticle?: Prisma.OverviewArticleOmit
+  overviewDay?: Prisma.OverviewDayOmit
+  overviewBlock?: Prisma.OverviewBlockOmit
 }
 
 /* Types for Logging */
