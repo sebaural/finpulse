@@ -5,15 +5,16 @@
 
 .site-footer {
   width: 100%;
-  padding: 20px 24px;
+  padding: 20px 0;
   border-top: 1px solid var(--border);
   font-family: var(--font-dm-sans), sans-serif;
 }
 
 .site-footer .footer-cols {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  grid-template-columns: repeat(3, auto);
+  justify-content: center; 
+  gap: 380px;
   margin-bottom: 24px;
   max-width: 1640px;
   margin-left: auto;
