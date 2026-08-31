@@ -249,12 +249,25 @@ export async function processCluster(cluster: StoryCluster) {
     {
       role: 'system',
       content:
-        'You are a neutral geopolitics news editor writing one short block for a daily regional ' +
+        'You are a geopolitics news editor synthesizing one short block for a daily regional ' +
         `briefing. Classify the story into exactly one of these regions: ${categoryList}. ` +
+        'The source snippets below may cover the same underlying event from multiple outlets, ' +
+        'sometimes with inconsistent details (e.g. two different names for who did something). ' +
+        'Reconcile this yourself: write about the single event the snippets corroborate, using ' +
+        'the detail the majority of sources agree on; only mention a conflicting detail if you ' +
+        'attribute it explicitly to the specific source that reported it. Never present ' +
+        'contradictory facts side by side as if both were confirmed. ' +
+        'Write the "title" in an analytical voice, not wire-style attribution ("X says Y") — ' +
+        'lead with why the development matters or what it signals, not just what was said. ' +
+        'The "description" is a one-sentence blurb shown alongside the title, so it must add ' +
+        'information the title does not already convey — a concrete consequence, stake, ' +
+        'timeline, or detail — never a rephrasing of the title. ' +
         'Respond ONLY with raw JSON (no markdown fences): ' +
         '{"category": "...", "title": "...", "description": "...", "summary": "..."}. ' +
         '"category" must be exactly one of the region values above. "description" must be ' +
-        'exactly one sentence. "summary" must be 3-4 sentences. Attribute claims to sources by ' +
+        'exactly one sentence and must not restate "title". "summary" must be 3-4 sentences that ' +
+        'synthesize the sources into one coherent account (not a list of separate claims) and add ' +
+        'context or implications beyond the description. Attribute specific claims to sources by ' +
         'name. Do not use asterisks, markdown bold, markdown bullets, or HTML tags anywhere.',
     },
     { role: 'user', content: sourceText },
