@@ -267,8 +267,7 @@ export async function processCluster(cluster: StoryCluster) {
         '"category" must be exactly one of the region values above. "description" must be ' +
         'exactly one sentence and must not restate "title". "summary" must be 3-4 sentences that ' +
         'synthesize the sources into one coherent account (not a list of separate claims) and add ' +
-        'context or implications beyond the description. Attribute specific claims to sources by ' +
-        'name. Do not use asterisks, markdown bold, markdown bullets, or HTML tags anywhere.',
+        'context or implications beyond the description. Do not use asterisks, markdown bold, markdown bullets, or HTML tags anywhere.',
     },
     { role: 'user', content: sourceText },
   ];
