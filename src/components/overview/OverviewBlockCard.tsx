@@ -19,22 +19,22 @@ export default function OverviewBlockCard({ block, isOpen, onToggle }: Props) {
       className={`overview-block-card${isOpen ? ' is-open' : ''}`}
       style={{ '--accent': config.accent } as CSSProperties}
     >
-      <button
-        type="button"
-        className="overview-block-trigger"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-      >
+      <div className="overview-block-trigger" onClick={onToggle}>
         <span className="overview-block-tag">{config.label}</span>
-        <span className="overview-block-title">{block.title}</span>
-        <span className="overview-block-description">{block.description}</span>
-        <span className="overview-block-chevron" aria-hidden="true">
-          {isOpen ? '▴' : '▾'}
-        </span>
-      </button>
-      <div id={panelId} className="overview-block-summary">
-        <p>{block.summary}</p>
+        <h2 className="overview-item-title">{block.title}</h2>
+        <div className="overview-item-desc">{block.description}</div>
+        <button
+          type="button"
+          className="overview-block-chevron"
+          aria-expanded={isOpen}
+          aria-controls={panelId}
+          aria-label={isOpen ? 'Collapse summary' : 'Expand summary'}
+        >
+          <span aria-hidden="true">{isOpen ? '▴' : '▾'}</span>
+        </button>
+      </div>
+      <div id={panelId} className="overview-item-summary">
+        {block.summary}
       </div>
     </div>
   );

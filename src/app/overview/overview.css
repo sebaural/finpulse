@@ -231,12 +231,7 @@
   width: 100%;
   position: relative;
   padding: 18px 44px 18px 22px;
-  background: none;
-  border: none;
-  text-align: left;
   cursor: pointer;
-  color: inherit;
-  font-family: inherit;
 }
 
 .overview-block-tag {
@@ -249,7 +244,7 @@
   margin-bottom: 8px;
 }
 
-.overview-block-title {
+.overview-item-title {
   display: block;
   font-family: 'Gideon Roman', serif;
   font-size: 17px;
@@ -257,10 +252,10 @@
   line-height: 1.4;
   color: var(--text);
   letter-spacing: -0.005em;
-  margin-bottom: 6px;
+  margin: 0 0 6px;
 }
 
-.overview-block-description {
+.overview-item-desc {
   display: block;
   font-size: 13.5px;
   color: var(--text-secondary);
@@ -271,31 +266,33 @@
   position: absolute;
   right: 18px;
   bottom: 14px;
+  background: none;
+  border: none;
+  padding: 0;
   font-size: 14px;
   color: var(--muted);
+  cursor: pointer;
   transition: color 0.15s;
 }
 .overview-block-card.is-open .overview-block-chevron {
   color: var(--accent, var(--gold));
 }
 
-.overview-block-summary {
+.overview-item-summary {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0.2s ease;
-}
-.overview-block-card.is-open .overview-block-summary {
-  max-height: 400px;
-  opacity: 1;
-  visibility: visible;
-}
-.overview-block-summary p {
   padding: 0 22px 20px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
+  transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0.2s ease;
+}
+.overview-block-card.is-open .overview-item-summary {
+  max-height: 400px;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ── Subscribe CTA ── */
