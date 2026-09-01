@@ -206,46 +206,6 @@ export default function HomeClient({
 
             <div className="sections">
 
-              {/* Daily Briefing */}
-              <article className="hub-card" id="daily-briefing">
-                <div className="hub-body">
-                  <div className="icon-frame">
-                    <svg viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Globe with regional markers above a dated archive strip, representing the daily geopolitics briefing">
-                      <circle cx="110" cy="88" r="48" stroke="var(--accent2)" strokeWidth="3" />
-                      <ellipse cx="110" cy="88" rx="18" ry="48" stroke="var(--accent2)" strokeWidth="1.5" opacity="0.5" />
-                      <line x1="62" y1="88" x2="158" y2="88" stroke="var(--accent2)" strokeWidth="1.5" opacity="0.5" />
-                      <circle cx="95" cy="68" r="5" fill="var(--accent)" />
-                      <circle cx="128" cy="72" r="5" fill="var(--accent)" />
-                      <circle cx="100" cy="108" r="5" fill="var(--accent)" />
-                      <circle cx="78" cy="92" r="5" fill="var(--accent)" />
-                      <circle className="ping-ring" cx="140" cy="95" r="8" fill="none" stroke="var(--accent)" strokeWidth="2" />
-                      <circle cx="140" cy="95" r="5" fill="var(--accent)" />
-                      <rect x="41" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
-                      <rect x="65" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
-                      <rect x="89" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
-                      <rect x="113" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
-                      <rect x="137" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
-                      <rect x="161" y="150" width="18" height="18" rx="3" fill="var(--accent)" />
-                    </svg>
-                  </div>
-                  <div className="hub-content">
-                    <h2>Daily Briefing</h2>
-                    <p className="section-desc">
-                      We lead with the day&apos;s biggest geopolitical story,
-                      followed by a rapid roundup of key developments across
-                      the globe. Published every weekday, with a fully
-                      searchable archive.
-                    </p>
-                  </div>
-                  <div className="cta-holder">
-                    <Link className="cta-btn cta-daily-briefing" href="/overview">
-                      Read the Daily Briefing
-                      <svg viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </Link>
-                  </div>
-                </div>
-              </article>
-
               {/* News Pulse */}
               <article className="hub-card reverse" id="news-pulse">
                 <div className="hub-body">
@@ -366,6 +326,46 @@ export default function HomeClient({
                   <div className="cta-holder">
                     <Link className="cta-btn cta-macro-landscape" href="/macro-landscape">
                       Read Today&apos;s Landscape
+                      <svg viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </Link>
+                  </div>
+                </div>
+              </article>
+
+              {/* Daily Briefing */}
+              <article className="hub-card" id="daily-briefing">
+                <div className="hub-body">
+                  <div className="icon-frame">
+                    <svg viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Globe with regional markers above a dated archive strip, representing the daily geopolitics briefing">
+                      <circle cx="110" cy="88" r="48" stroke="var(--accent2)" strokeWidth="3" />
+                      <ellipse cx="110" cy="88" rx="18" ry="48" stroke="var(--accent2)" strokeWidth="1.5" opacity="0.5" />
+                      <line x1="62" y1="88" x2="158" y2="88" stroke="var(--accent2)" strokeWidth="1.5" opacity="0.5" />
+                      <circle cx="95" cy="68" r="5" fill="var(--accent)" />
+                      <circle cx="128" cy="72" r="5" fill="var(--accent)" />
+                      <circle cx="100" cy="108" r="5" fill="var(--accent)" />
+                      <circle cx="78" cy="92" r="5" fill="var(--accent)" />
+                      <circle className="ping-ring" cx="140" cy="95" r="8" fill="none" stroke="var(--accent)" strokeWidth="2" />
+                      <circle cx="140" cy="95" r="5" fill="var(--accent)" />
+                      <rect x="41" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
+                      <rect x="65" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
+                      <rect x="89" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
+                      <rect x="113" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
+                      <rect x="137" y="150" width="18" height="18" rx="3" stroke="var(--accent2)" strokeWidth="1.5" />
+                      <rect x="161" y="150" width="18" height="18" rx="3" fill="var(--accent)" />
+                    </svg>
+                  </div>
+                  <div className="hub-content">
+                    <h2>Daily Briefing</h2>
+                    <p className="section-desc">
+                      We lead with the day&apos;s biggest geopolitical story,
+                      followed by a rapid roundup of key developments across
+                      the globe. Published every weekday, with a fully
+                      searchable archive.
+                    </p>
+                  </div>
+                  <div className="cta-holder">
+                    <Link className="cta-btn cta-daily-briefing" href="/overview">
+                      Read the Daily Briefing
                       <svg viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </Link>
                   </div>
