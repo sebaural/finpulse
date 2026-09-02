@@ -134,7 +134,7 @@ header {
   transform: translateY(1px);
 }
 
-.logo h1 {
+.logo span {
   font-family: 'Cormorant Garamond', serif;
   font-size: 32px;
   font-weight: 700;
