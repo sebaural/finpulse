@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       'svix-timestamp': req.headers.get('svix-timestamp') ?? '',
       'svix-signature': req.headers.get('svix-signature') ?? '',
     };
-    event = new Webhook(secret).verify(body, headers) as ResendEmailReceivedEvent;
+    event = new Webhook(secret).verify(body, headers) as unknown as ResendEmailReceivedEvent;
   } catch (err) {
     console.error('[inbound-webhook] signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
