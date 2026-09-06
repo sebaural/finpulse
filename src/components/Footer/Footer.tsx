@@ -11,6 +11,7 @@ const FOOTER_COLUMNS = [
       { label: 'Tech', href: '/tech' },
       { label: 'Live Feed', href: '/live-feed' },
       { label: 'Macro Landscape', href: '/macro-landscape' },
+      { label: 'Deep-Dive Analysis', href: '/deep-dive-analysis' },
     ],
   },
   {
