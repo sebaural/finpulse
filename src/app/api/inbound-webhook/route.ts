@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { Resend } from 'resend';
 
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY;
+function getResendReceivingClient() {
+  // emails.receiving.forward() requires a full_access API key — the
+  // sending_access RESEND_API_KEY used by api/contact can't call it.
+  const apiKey = process.env.RESEND_RECEIVING_API_KEY;
   if (!apiKey) {
-    throw new Error('RESEND_API_KEY is not configured');
+    throw new Error('RESEND_RECEIVING_API_KEY is not configured');
   }
   return new Resend(apiKey);
 }
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
 
   if (event.type === 'email.received') {
     try {
-      const resend = getResendClient();
+      const resend = getResendReceivingClient();
       await resend.emails.receiving.forward({
         emailId: event.data.email_id,
         to: process.env.INBOUND_NOTIFY_TO!,
