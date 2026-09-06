@@ -4,8 +4,10 @@ import Link from 'next/link';
 import NavMenu from '@/components/topNav/NavMenu';
 import MacroPageClient from '@/components/macro/MacroPageClient';
 import { getLatestMacroResponse } from '@/lib/macro-service';
+import { fetchTopicAnalysis } from '@/lib/topics-service';
 import { buildMetadata, jsonLd, breadcrumbSchema, canonicalUrl } from '@/lib/seo';
 import './macro-landscape.css';
+import '@/app/deep-dive-analysis/deep-dive-teaser.css';
 
 export const metadata: Metadata = buildMetadata({
   title: 'The Macro Landscape',
@@ -25,7 +27,10 @@ const breadcrumbs = breadcrumbSchema([
 ]);
 
 export default async function Page() {
-  const macroInitial = await getLatestMacroResponse();
+  const [macroInitial, { topicAnalysis }] = await Promise.all([
+    getLatestMacroResponse(),
+    fetchTopicAnalysis(),
+  ]);
 
   return (
     <>
@@ -44,10 +49,40 @@ export default async function Page() {
       </header>
 
       <main className="page macro-landscape-page">
-        <div className="main-content">
-          <section className="widget macro-landscape-widget">
-            <MacroPageClient initial={macroInitial} eyebrowAs="h1" />
-          </section>
+        <div className="macro-landscape-layout">
+          <div className="macro-landscape-main">
+            <section className="widget macro-landscape-widget">
+              <MacroPageClient initial={macroInitial} eyebrowAs="h1" />
+            </section>
+          </div>
+
+          <aside className="macro-landscape-aside">
+            <section className="deep-dive-hero">
+              <Link href="/deep-dive-analysis" className="deep-dive-title-link">
+                <h2 className="deep-dive-title">Deep-Dive Analysis</h2>
+              </Link>
+              <p className="deep-dive-hero-desc">
+                Structural forces behind today&apos;s headlines.
+              </p>
+            </section>
+
+            {topicAnalysis.length > 0 ? (
+              <div className="deep-dive-list">
+                {topicAnalysis.map((item) => (
+                  <Link
+                    key={item.id}
+                    className="deep-dive-item"
+                    href={`/topics/${item.topic.slug}/${item.slug}`}
+                  >
+                    <div className="deep-dive-item-source">{item.topic.name}</div>
+                    <div className="deep-dive-item-title">{item.title}</div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="deep-dive-empty">No Deep-Dive briefings yet.</p>
+            )}
+          </aside>
         </div>
       </main>
     </>

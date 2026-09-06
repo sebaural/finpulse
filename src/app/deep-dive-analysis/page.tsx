@@ -7,6 +7,7 @@ import { fetchTopicAnalysis } from '@/lib/topics-service';
 import { getLatestMacroResponse } from '@/lib/macro-service';
 import { buildMetadata, jsonLd, breadcrumbSchema, canonicalUrl } from '@/lib/seo';
 import './deep-dive-analysis.css';
+import './deep-dive-teaser.css';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Deep-Dive Analysis',

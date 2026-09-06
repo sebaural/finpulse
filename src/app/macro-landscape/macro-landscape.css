@@ -6,8 +6,22 @@
   padding: 20px 24px;
 }
 
-.macro-landscape-page .main-content {
-  max-width: 820px;
-  margin: 0 auto;
-  padding: 12px 0 64px;
+.macro-landscape-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 20px;
+}
+
+.macro-landscape-main {
+  min-width: 0;
+}
+
+.macro-landscape-aside {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .macro-landscape-layout {
+    grid-template-columns: 1fr;
+  }
 }
