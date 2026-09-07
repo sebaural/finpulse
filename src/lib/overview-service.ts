@@ -34,21 +34,49 @@ function extractJson(raw: string): string {
 // this just bounds how many RunPod calls one run can fan out to.
 const MAX_CANDIDATE_CLUSTERS = 20;
 
+const PRIORITY_ORDER: Record<StoryCluster['priority'], number> = { high: 1, low: 0 };
+
+function byPriorityThenRecency(a: StoryCluster, b: StoryCluster): number {
+  const rank = PRIORITY_ORDER[b.priority] - PRIORITY_ORDER[a.priority];
+  if (rank !== 0) return rank;
+  return b.representative.publishedAt.getTime() - a.representative.publishedAt.getTime();
+}
+
+// Reserves the single best cluster per region (from clusters a dedicated
+// region feed contributed to) so no region can be crowded out by the global
+// priority cut below — e.g. Africa/East Asia clusters are rarely corroborated
+// by as many Western outlets as US/Europe/Middle East ones, so without this
+// they'd lose the top-N cut on a busy news day even when real regional news
+// exists.
+function reserveOnePerRegion(clusters: StoryCluster[]): StoryCluster[] {
+  const reserved: StoryCluster[] = [];
+  for (const slug of OVERVIEW_CATEGORY_SLUGS) {
+    const candidates = clusters.filter((c) => c.regionHint === slug);
+    if (candidates.length === 0) continue;
+    reserved.push(candidates.sort(byPriorityThenRecency)[0]);
+  }
+  return reserved;
+}
+
 // Called by /api/overview/generate — picks the day's candidate clusters
 export async function selectDailyClusters(): Promise<StoryCluster[]> {
   const rawStories = await fetchWorldNewsFeeds();
   const weighted = clusterAndWeight(rawStories);
 
-  const geopoliticsOnly = weighted.filter((c) =>
-    c.members.some((m) => isGeopoliticsRelevant(m))
+  // A cluster from a dedicated region feed is presumptively on-topic for a
+  // regional briefing without also needing to match the (narrow,
+  // conflict-flavored) geopolitics keyword list.
+  const geopoliticsOnly = weighted.filter(
+    (c) => c.regionHint || c.members.some((m) => isGeopoliticsRelevant(m))
   );
 
-  const ordered = geopoliticsOnly.sort((a, b) => {
-    const rank = { high: 1, low: 0 };
-    return rank[b.priority] - rank[a.priority];
-  });
+  const reserved = reserveOnePerRegion(geopoliticsOnly);
+  const reservedSet = new Set(reserved);
+  const remainder = geopoliticsOnly
+    .filter((c) => !reservedSet.has(c))
+    .sort(byPriorityThenRecency);
 
-  return ordered.slice(0, MAX_CANDIDATE_CLUSTERS);
+  return [...reserved, ...remainder].slice(0, MAX_CANDIDATE_CLUSTERS);
 }
 
 // 'YYYY-MM-DD' (UTC) as a bare Date at UTC midnight, matching how the
@@ -129,29 +157,42 @@ export async function ensureAllCategoriesFilled(dayId: string) {
   );
 }
 
+// Bounds how far back finalizeUnfinishedOverviewDays looks for a stranded
+// day, so the query stays cheap indefinitely — well beyond how long a
+// single missed cron run could plausibly go unnoticed.
+const FINALIZE_LOOKBACK_DAYS = 30;
+
 /**
  * A day only ever receives new writes from same-day QStash jobs, so once a
- * day is no longer "today" its set of blocks is final — this backfills any
- * categories yesterday's run never got a qualifying cluster for. Runs at the
- * start of each day's generate call, before today's own fan-out.
+ * day is no longer "today" its set of blocks is final. This backfills any
+ * region a past day's run never got a qualifying cluster for.
+ *
+ * Scans a bounded window of past days rather than just "yesterday" so that a
+ * single missed cron run (an outage, a failed deploy, etc.) can't
+ * permanently strand a day short of all 5 regions — `ensureAllCategoriesFilled`
+ * is idempotent, so re-checking already-complete days here is a cheap no-op.
+ * Runs at the start of each day's generate call, before today's own fan-out.
  */
-export async function finalizePreviousOverviewDay() {
+export async function finalizeUnfinishedOverviewDays() {
   const prisma = getPrisma();
   const today = todayDateColumn();
-  const yesterday = new Date(today);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const windowStart = new Date(today);
+  windowStart.setUTCDate(windowStart.getUTCDate() - FINALIZE_LOOKBACK_DAYS);
 
-  const day = await prisma.overviewDay.findUnique({ where: { publishedDate: yesterday } });
-  if (day) {
-    await ensureAllCategoriesFilled(day.id);
-  }
+  const days = await prisma.overviewDay.findMany({
+    where: { publishedDate: { gte: windowStart, lt: today } },
+    include: { _count: { select: { blocks: true } } },
+  });
+
+  const unfinished = days.filter((d) => d._count.blocks < OVERVIEW_CATEGORY_SLUGS.length);
+  await Promise.all(unfinished.map((day) => ensureAllCategoriesFilled(day.id)));
 }
 
-// Called by /api/overview/generate — finalizes yesterday's day, then fans
-// today's candidate clusters out to QStash, one job each
+// Called by /api/overview/generate — finalizes any unfinished past days,
+// then fans today's candidate clusters out to QStash, one job each
 export async function enqueueDailyClusters() {
-  await finalizePreviousOverviewDay().catch((err) =>
-    console.error('[overview/generate] failed to finalize previous day', err)
+  await finalizeUnfinishedOverviewDays().catch((err) =>
+    console.error('[overview/generate] failed to finalize previous days', err)
   );
 
   const clusters = await selectDailyClusters();
@@ -221,11 +262,6 @@ function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '');
 }
 
-// Ranks a cluster's own corroboration strength — used to decide whether it's
-// allowed to overwrite a block another cluster already wrote for the same
-// category+day (see the race guard in processCluster below).
-const PRIORITY_RANK: Record<StoryCluster['priority'], number> = { high: 1, low: 0 };
-
 export async function processCluster(cluster: StoryCluster) {
   const prisma = getPrisma();
 
@@ -245,12 +281,22 @@ export async function processCluster(cluster: StoryCluster) {
     (slug) => `"${slug}" (${OVERVIEW_CATEGORIES[slug].label})`
   ).join(', ');
 
+  // When the cluster came from a dedicated region feed, the region is already
+  // known — telling the model outright (rather than asking it to classify)
+  // avoids misclassification for these guaranteed-coverage candidates. It's
+  // still asked to echo "category" back so the schema stays uniform; the
+  // value actually used below is `cluster.regionHint`, not the model's.
+  const regionInstruction = cluster.regionHint
+    ? `This story is from our ${OVERVIEW_CATEGORIES[cluster.regionHint].label} desk — set ` +
+      `"category" to exactly "${cluster.regionHint}".`
+    : `Classify the story into exactly one of these regions: ${categoryList}.`;
+
   const messages = [
     {
       role: 'system',
       content:
         'You are a geopolitics news editor synthesizing one short block for a daily regional ' +
-        `briefing. Classify the story into exactly one of these regions: ${categoryList}. ` +
+        `briefing. ${regionInstruction} ` +
         'The source snippets below may cover the same underlying event from multiple outlets, ' +
         'sometimes with inconsistent details (e.g. two different names for who did something). ' +
         'Reconcile this yourself: write about the single event the snippets corroborate, using ' +
@@ -277,10 +323,14 @@ export async function processCluster(cluster: StoryCluster) {
   const cleanJson = extractJson(choiceContent);
   const parsed = OverviewLlmOutputSchema.parse(JSON.parse(cleanJson));
 
+  // Trust the feed's region over the model's own classification when known —
+  // see regionInstruction above.
+  const category = cluster.regionHint ?? parsed.category;
+
   const day = await getOrCreateOverviewDay(prisma, todayDateColumn());
 
   const existingBlock = await prisma.overviewBlock.findUnique({
-    where: { dayId_category: { dayId: day.id, category: parsed.category } },
+    where: { dayId_category: { dayId: day.id, category } },
   });
 
   // Race guard: independent QStash jobs can classify different raw clusters
@@ -288,16 +338,16 @@ export async function processCluster(cluster: StoryCluster) {
   // (multi-source-corroborated) cluster is allowed to overwrite whatever is
   // already there, so a later `low`-priority job can't clobber an
   // already-corroborated block purely by finishing last.
-  if (existingBlock && PRIORITY_RANK[cluster.priority] < 1) {
+  if (existingBlock && PRIORITY_ORDER[cluster.priority] < 1) {
     console.log(
-      `[overview/process] skipping ${parsed.category} for ${day.publishedDate.toISOString()} — ` +
+      `[overview/process] skipping ${category} for ${day.publishedDate.toISOString()} — ` +
         `block already exists and this cluster's priority ('${cluster.priority}') isn't high enough to replace it`
     );
     return;
   }
 
   await prisma.overviewBlock.upsert({
-    where: { dayId_category: { dayId: day.id, category: parsed.category } },
+    where: { dayId_category: { dayId: day.id, category } },
     update: {
       title: parsed.title,
       description: parsed.description,
@@ -306,7 +356,7 @@ export async function processCluster(cluster: StoryCluster) {
     },
     create: {
       dayId: day.id,
-      category: parsed.category,
+      category,
       title: parsed.title,
       description: parsed.description,
       summary: parsed.summary,

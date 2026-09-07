@@ -9,7 +9,7 @@
       "schedule": "0 12 * * 1-5"
     },
     {
-      "path": "/api/overview/generate", "schedule": "0 6 * * 1-5"
+      "path": "/api/overview/generate", "schedule": "0 6 * * *"
     },
     {
       "path": "/api/pulse/generate?group=1",
