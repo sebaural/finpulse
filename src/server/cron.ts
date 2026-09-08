@@ -17,6 +17,17 @@ export function isCronAuthorized(req: NextRequest): boolean {
   return authHeader === `Bearer ${cronSecret}`;
 }
 
+// Lets an operator pause every cron pipeline by setting CRON_PAUSE_UNTIL to an
+// ISO-8601 timestamp in Vercel's project env vars — no redeploy needed to
+// pause or resume, since process.env is read live on every invocation.
+export function isCronPaused(): boolean {
+  const pauseUntil = process.env.CRON_PAUSE_UNTIL;
+  if (!pauseUntil) return false;
+
+  const until = Date.parse(pauseUntil);
+  return !Number.isNaN(until) && Date.now() < until;
+}
+
 export async function runCronPipeline<T>(
   pipeline: () => Promise<T>,
 ): Promise<NextResponse<{ success: true; article: T } | { error: string; details?: string }>> {

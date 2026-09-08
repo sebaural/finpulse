@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runDailyMacroPipeline } from '@/lib/macro-service';
-import { isCronAuthorized, runCronPipeline } from '@/server/cron';
+import { isCronAuthorized, isCronPaused, runCronPipeline } from '@/server/cron';
 
 // Live web search + generation can take a while; give it the full budget.
 export const maxDuration = 300;
@@ -20,6 +20,9 @@ export async function GET(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
+  }
 
   return runCronPipeline(runDailyMacroPipeline);
 }
@@ -27,6 +30,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
   }
 
   return runCronPipeline(runDailyMacroPipeline);

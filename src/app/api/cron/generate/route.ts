@@ -9,7 +9,7 @@
 //   • Local dev GET (no secret required when NODE_ENV=development)
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isCronAuthorized, runDailyContentPipelines } from '@/server/cron';
+import { isCronAuthorized, isCronPaused, runDailyContentPipelines } from '@/server/cron';
 
 // Four pipelines run back-to-back; give the function the full duration budget.
 export const maxDuration = 300;
@@ -18,6 +18,9 @@ export const maxDuration = 300;
 export async function GET(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
   }
 
   const results = await runDailyContentPipelines();
@@ -28,6 +31,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
   }
 
   const results = await runDailyContentPipelines();

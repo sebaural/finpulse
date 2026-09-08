@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runDailyPulsePipeline } from '@/lib/pulse-service';
-import { isCronAuthorized, runCronPipeline } from '@/server/cron';
+import { isCronAuthorized, isCronPaused, runCronPipeline } from '@/server/cron';
 
 // Dedicated route/budget: pulse's 4 categories run sequentially (see
 // pulse-service.ts) so each category can be told what earlier categories
@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
+  }
 
   const group = parseGroup(req);
   return runCronPipeline(() => runDailyPulsePipeline(group));
@@ -35,6 +38,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (isCronPaused()) {
+    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
   }
 
   const group = parseGroup(req);
