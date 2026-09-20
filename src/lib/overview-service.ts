@@ -281,14 +281,17 @@ export async function processCluster(cluster: StoryCluster) {
     (slug) => `"${slug}" (${OVERVIEW_CATEGORIES[slug].label})`
   ).join(', ');
 
-  // When the cluster came from a dedicated region feed, the region is already
-  // known — telling the model outright (rather than asking it to classify)
-  // avoids misclassification for these guaranteed-coverage candidates. It's
-  // still asked to echo "category" back so the schema stays uniform; the
-  // value actually used below is `cluster.regionHint`, not the model's.
+  // The cluster's regionHint comes from whichever feed contributed *a*
+  // member (overview-ingest.ts) — title-similarity clustering can merge an
+  // unrelated story into a hinted cluster, so the hint is untrustworthy on
+  // its own and must not be handed to the model as a directive. It's passed
+  // along only as context; the model must still classify from the actual
+  // synthesized content, and its answer is what gets used below.
   const regionInstruction = cluster.regionHint
-    ? `This story is from our ${OVERVIEW_CATEGORIES[cluster.regionHint].label} desk — set ` +
-      `"category" to exactly "${cluster.regionHint}".`
+    ? `This story was surfaced via our ${OVERVIEW_CATEGORIES[cluster.regionHint].label} desk feed, ` +
+      `but confirm the region independently from the actual content below before setting ` +
+      `"category" — a feed can occasionally carry a story that is really about a different region. ` +
+      `Classify into exactly one of these regions: ${categoryList}.`
     : `Classify the story into exactly one of these regions: ${categoryList}.`;
 
   const messages = [
@@ -323,9 +326,16 @@ export async function processCluster(cluster: StoryCluster) {
   const cleanJson = extractJson(choiceContent);
   const parsed = OverviewLlmOutputSchema.parse(JSON.parse(cleanJson));
 
-  // Trust the feed's region over the model's own classification when known —
-  // see regionInstruction above.
-  const category = cluster.regionHint ?? parsed.category;
+  // Always trust the model's own classification — see regionInstruction
+  // above for why the feed-derived regionHint can't be trusted outright.
+  const category = parsed.category;
+
+  if (cluster.regionHint && cluster.regionHint !== category) {
+    console.log(
+      `[overview/process] region hint mismatch — feed hinted "${cluster.regionHint}" but model ` +
+        `classified as "${category}" for "${parsed.title}"`
+    );
+  }
 
   const day = await getOrCreateOverviewDay(prisma, todayDateColumn());
 
