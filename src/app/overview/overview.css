@@ -219,7 +219,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent, var(--border));
-  border-radius: 8px;
+  border-radius: 2px;
   transition: border-color 0.15s, background 0.15s;
 }
 .overview-block-card:hover {
@@ -264,10 +264,12 @@
 
 .overview-block-chevron {
   position: absolute;
+  width: 20px;
   right: 18px;
-  bottom: 14px;
-  background: none;
-  border: none;
+  bottom: 18px;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 50%;
   padding: 0;
   font-size: 14px;
   color: var(--muted);
