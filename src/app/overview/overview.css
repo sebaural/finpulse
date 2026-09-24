@@ -266,7 +266,7 @@
   position: absolute;
   width: 20px;
   right: 18px;
-  bottom: 18px;
+  bottom: 0;
   background: #000;
   border: 1px solid var(--border);
   border-radius: 50%;
