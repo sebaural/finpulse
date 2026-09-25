@@ -83,8 +83,8 @@ export default async function OverviewPage({ searchParams }: Props) {
     { name: 'Overview', url: canonicalUrl('/overview') },
   ]);
 
-  const hasPrev = currentPage > 1;
-  const hasNext = currentPage < totalPages;
+  const hasNewer = currentPage > 1;
+  const hasOlder = currentPage < totalPages;
 
   return (
     <>
@@ -118,8 +118,8 @@ export default async function OverviewPage({ searchParams }: Props) {
 
             {totalPages > 1 && (
               <nav className="overview-pager" aria-label="Overview pagination">
-                {hasPrev ? (
-                  <Link href={`/overview?page=${currentPage - 1}`} className="overview-pager-link">
+                {hasOlder ? (
+                  <Link href={`/overview?page=${currentPage + 1}`} className="overview-pager-link">
                     ← Previous
                   </Link>
                 ) : (
@@ -128,8 +128,8 @@ export default async function OverviewPage({ searchParams }: Props) {
                 <span className="overview-pager-status">
                   Page {currentPage} of {totalPages}
                 </span>
-                {hasNext ? (
-                  <Link href={`/overview?page=${currentPage + 1}`} className="overview-pager-link">
+                {hasNewer ? (
+                  <Link href={`/overview?page=${currentPage - 1}`} className="overview-pager-link">
                     Next →
                   </Link>
                 ) : (
