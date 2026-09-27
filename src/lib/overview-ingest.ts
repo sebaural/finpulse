@@ -5,9 +5,9 @@ const parser = new Parser();
 
 interface NewsFeedDescriptor {
   url: string;
-  // Set only for feeds dedicated to one region (e.g. BBC's per-region World
-  // feeds) — general "World" feeds leave this undefined and rely on
-  // downstream keyword filtering + LLM classification instead.
+  // Set only for feeds dedicated to one region (e.g. an outlet's per-region
+  // World section feed) — general "World" feeds leave this undefined and rely
+  // on downstream keyword filtering + LLM classification instead.
   regionHint?: OverviewCategorySlug;
 }
 
@@ -16,17 +16,45 @@ const NEWS_FEEDS: NewsFeedDescriptor[] = [
   { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
   { url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
   { url: 'https://www.economist.com/latest/rss.xml' },
-  { url: 'http://rss.cnn.com/rss/edition.rss' },
   { url: 'https://www.theguardian.com/world/rss' },
   { url: 'https://feeds.npr.org/1001/rss.xml' },
   // Dedicated per-region feeds so every OVERVIEW_CATEGORY_SLUGS region has
   // reliable daily raw material, instead of depending on a general "World"
-  // editor happening to feature it that day.
+  // editor happening to feature it that day. CNN is absent: its edition_*
+  // regional feeds (and edition.rss itself) stopped updating in 2022–23.
+  // BBC
   { url: 'https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml', regionHint: 'us' },
   { url: 'https://feeds.bbci.co.uk/news/world/asia/rss.xml', regionHint: 'east-asia' },
   { url: 'https://feeds.bbci.co.uk/news/world/middle_east/rss.xml', regionHint: 'middle-east' },
   { url: 'https://feeds.bbci.co.uk/news/world/europe/rss.xml', regionHint: 'europe' },
   { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', regionHint: 'africa' },
+  // New York Times
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/US.xml', regionHint: 'us' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/AsiaPacific.xml', regionHint: 'east-asia' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml', regionHint: 'middle-east' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml', regionHint: 'europe' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Africa.xml', regionHint: 'africa' },
+  // The Guardian
+  { url: 'https://www.theguardian.com/us-news/rss', regionHint: 'us' },
+  { url: 'https://www.theguardian.com/world/asia-pacific/rss', regionHint: 'east-asia' },
+  { url: 'https://www.theguardian.com/world/middleeast/rss', regionHint: 'middle-east' },
+  { url: 'https://www.theguardian.com/world/europe-news/rss', regionHint: 'europe' },
+  { url: 'https://www.theguardian.com/world/africa/rss', regionHint: 'africa' },
+  // NPR
+  { url: 'https://feeds.npr.org/1003/rss.xml', regionHint: 'us' },
+  { url: 'https://feeds.npr.org/1125/rss.xml', regionHint: 'east-asia' },
+  { url: 'https://feeds.npr.org/1009/rss.xml', regionHint: 'middle-east' },
+  { url: 'https://feeds.npr.org/1124/rss.xml', regionHint: 'europe' },
+  { url: 'https://feeds.npr.org/1126/rss.xml', regionHint: 'africa' },
+  // The Economist — no Middle East/Africa entry: its only feed for those is
+  // the combined middle-east-and-africa section, which no single hint fits.
+  { url: 'https://www.economist.com/united-states/rss.xml', regionHint: 'us' },
+  { url: 'https://www.economist.com/asia/rss.xml', regionHint: 'east-asia' },
+  { url: 'https://www.economist.com/europe/rss.xml', regionHint: 'europe' },
+  // CNBC — no Middle East/Africa section feeds exist
+  { url: 'https://www.cnbc.com/id/15837362/device/rss/rss.html', regionHint: 'us' },
+  { url: 'https://www.cnbc.com/id/19832390/device/rss/rss.html', regionHint: 'east-asia' },
+  { url: 'https://www.cnbc.com/id/19794221/device/rss/rss.html', regionHint: 'europe' },
 ];
 
 export interface RawStory {
@@ -119,7 +147,7 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
 // Single-linkage clustering by title-word overlap: a story joins the first
 // existing cluster whose "anchor" (first member) shares enough vocabulary
 // with it, otherwise it starts a new cluster. Good enough for a daily batch
-// of a few dozen RSS items across 3 feeds — not meant to scale beyond that.
+// of a few hundred RSS items — not meant to scale far beyond that.
 function groupSimilarStories(stories: RawStory[]): RawStory[][] {
   const candidates = stories.map((story) => ({
     story,
@@ -142,14 +170,25 @@ function groupSimilarStories(stories: RawStory[]): RawStory[][] {
   return clusters.map((cluster) => cluster.map((c) => c.story));
 }
 
+function outletKey(story: RawStory): string {
+  try {
+    return new URL(story.url).hostname.replace(/^www\./, '');
+  } catch {
+    return story.source;
+  }
+}
+
 export function clusterAndWeight(stories: RawStory[]): StoryCluster[] {
   const clusters = groupSimilarStories(stories); // groups of RawStory[]
 
   return clusters.map((members): StoryCluster => {
-    const distinctSources = new Set(members.map((m) => m.source));
+    // Count outlets, not feeds: the same outlet's World + regional feeds carry
+    // different feed titles, so keying on m.source would let one outlet
+    // syndicating a story to two of its feeds self-corroborate.
+    const distinctSources = new Set(members.map(outletKey));
     const sourceCount = distinctSources.size;
 
-    // 2+ of the 3 feeds confirming a story = high priority
+    // 2+ distinct sources confirming a story = high priority
     const priority: StoryCluster['priority'] = sourceCount >= 2 ? 'high' : 'low';
 
     // Prefer BBC/NYT phrasing as the representative snippet over CNBC
