@@ -35,7 +35,29 @@ const MAX_CONSECUTIVE_POLL_FAILURES = 5;
 const JOB_TTL_MS = POLL_MAX_WAIT_MS - 5_000;
 const JOB_EXECUTION_TIMEOUT_MS = 90_000;
 
-async function submitJob(messages: { role: string; content: string }[]): Promise<string> {
+// Extracts the first {...} JSON object from a string, tolerating preamble/fences
+export function extractJson(raw: string): string {
+  const fenceStripped = raw.replace(/```json\n?|\n?```/g, '').trim();
+  const start = fenceStripped.indexOf('{');
+  const end = fenceStripped.lastIndexOf('}');
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error('No JSON object found in model output');
+  }
+  return fenceStripped.slice(start, end + 1);
+}
+
+const DEFAULT_MAX_TOKENS = 1200;
+
+export interface RunpodOptions {
+  // Overview blocks fit comfortably in the default; Pulse's multi-section
+  // analysis needs more room or the JSON gets cut off mid-object.
+  maxTokens?: number;
+}
+
+async function submitJob(
+  messages: { role: string; content: string }[],
+  { maxTokens = DEFAULT_MAX_TOKENS }: RunpodOptions = {},
+): Promise<string> {
   const attempts = 3;
   let lastError: unknown;
 
@@ -54,7 +76,7 @@ async function submitJob(messages: { role: string; content: string }[]): Promise
               model: RUNPOD_MODEL,
               messages,
               temperature: 0.1,
-              max_tokens: 1200,
+              max_tokens: maxTokens,
             },
           },
           // Job-level policy (not endpoint-level): bounds a single worker's
@@ -101,8 +123,11 @@ async function submitJob(messages: { role: string; content: string }[]): Promise
 //
 // Returns the extracted assistant message content as a plain string —
 // callers don't need to know about RunPod's/vLLM's response shape.
-export async function generateWithRunpod(messages: { role: string; content: string }[]): Promise<string> {
-  const jobId = await submitJob(messages);
+export async function generateWithRunpod(
+  messages: { role: string; content: string }[],
+  options: RunpodOptions = {},
+): Promise<string> {
+  const jobId = await submitJob(messages, options);
 
   const deadline = Date.now() + POLL_MAX_WAIT_MS;
   let interval = POLL_INTERVAL_START_MS;

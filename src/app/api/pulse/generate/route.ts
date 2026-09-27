@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runDailyPulsePipeline } from '@/lib/pulse-service';
+import { enqueuePulseCategories } from '@/lib/pulse-service';
 import { isCronAuthorized, isCronPaused, runCronPipeline } from '@/server/cron';
 
-// Dedicated route/budget: pulse's 4 categories run sequentially (see
-// pulse-service.ts) so each category can be told what earlier categories
-// already covered, which costs more wall-clock time than running in parallel.
-// Kept out of the unified /api/cron/generate route so it can't eat into (or be
-// starved by) geopolitics/markets/tech's shared budget.
-//
-// Even with its own budget, all 4 categories sequentially routinely exceed
-// Hobby's hard 300s cap (the 4th — "strategic", now named "information", in
-// iteration order — was getting silently killed mid-flight). vercel.json now fires this route twice,
-// an hour apart, with ?group=1 and ?group=2, each covering 2 categories; see
-// PULSE_GROUPS in pulse-service.ts. An hour (not a few minutes) because Hobby
-// cron precision is only accurate to the hour bucket, not the minute — see
-// vercel.json. Omitting the group (manual/local trigger) still runs all 4
-// sequentially in one shot.
+// Daily cron entry point: ingests the Pulse news feeds, sorts stories into the
+// 4 categories, and enqueues one QStash job per category to
+// /api/pulse/process, where the actual RunPod generation happens (see
+// pulse-service.ts). This route itself only does feed I/O and QStash publishes.
 export const maxDuration = 300;
 
-function parseGroup(req: NextRequest): 1 | 2 | undefined {
-  const raw = req.nextUrl.searchParams.get('group');
-  return raw === '1' || raw === '2' ? Number(raw) as 1 | 2 : undefined;
-}
-
-export async function GET(req: NextRequest) {
+async function handle(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -31,18 +16,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
   }
 
-  const group = parseGroup(req);
-  return runCronPipeline(() => runDailyPulsePipeline(group));
+  return runCronPipeline(() => enqueuePulseCategories());
 }
 
-export async function POST(req: NextRequest) {
-  if (!isCronAuthorized(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  if (isCronPaused()) {
-    return NextResponse.json({ paused: true, until: process.env.CRON_PAUSE_UNTIL });
-  }
-
-  const group = parseGroup(req);
-  return runCronPipeline(() => runDailyPulsePipeline(group));
-}
+export const GET = handle;
+export const POST = handle;

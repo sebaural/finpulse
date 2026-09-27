@@ -1,5 +1,5 @@
 import { fetchWorldNewsFeeds, clusterAndWeight, isGeopoliticsRelevant, StoryCluster } from './overview-ingest';
-import { generateWithRunpod, RUNPOD_MODEL } from './runpod';
+import { extractJson, generateWithRunpod, RUNPOD_MODEL } from './runpod';
 import { getPrisma } from './db';
 import {
   OVERVIEW_CATEGORIES,
@@ -18,16 +18,6 @@ const OverviewLlmOutputSchema = z.object({
   summary: z.string().min(1), // 3-4 sentences
 });
 
-// Extracts the first {...} JSON object from a string, tolerating preamble/fences
-function extractJson(raw: string): string {
-  const fenceStripped = raw.replace(/```json\n?|\n?```/g, '').trim();
-  const start = fenceStripped.indexOf('{');
-  const end = fenceStripped.lastIndexOf('}');
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error('No JSON object found in model output');
-  }
-  return fenceStripped.slice(start, end + 1);
-}
 
 // Only ~5 of these candidates survive as final blocks (one per fixed
 // category, chosen in processCluster), so the cap can sit well above 5 —

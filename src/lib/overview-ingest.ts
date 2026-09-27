@@ -3,7 +3,7 @@ import type { OverviewCategorySlug } from './overview-categories';
 
 const parser = new Parser();
 
-interface NewsFeedDescriptor {
+export interface NewsFeedDescriptor {
   url: string;
   // Set only for feeds dedicated to one region (e.g. an outlet's per-region
   // World section feed) — general "World" feeds leave this undefined and rely
@@ -66,9 +66,21 @@ export interface RawStory {
   regionHint?: OverviewCategorySlug;
 }
 
-export async function fetchWorldNewsFeeds(): Promise<RawStory[]> {
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function fetchWorldNewsFeeds(): Promise<RawStory[]> {
+  return fetchRssStories(NEWS_FEEDS, DAY_MS, '[overview-ingest]');
+}
+
+// Shared RSS fetcher (Overview + Pulse): fetches every feed in parallel,
+// tolerates individual feed failures, and drops items older than maxAgeMs.
+export async function fetchRssStories(
+  feeds: NewsFeedDescriptor[],
+  maxAgeMs: number,
+  logPrefix: string,
+): Promise<RawStory[]> {
   const results = await Promise.allSettled(
-    NEWS_FEEDS.map(async ({ url: feedUrl, regionHint }) => {
+    feeds.map(async ({ url: feedUrl, regionHint }) => {
       // Fetch manually + parseString rather than parser.parseURL(feedUrl):
       // parseURL builds its request with the legacy, deprecated url.parse()
       // (Node DEP0169) under the hood. fetch() uses the WHATWG URL API.
@@ -95,11 +107,11 @@ export async function fetchWorldNewsFeeds(): Promise<RawStory[]> {
     if (r.status === 'fulfilled') {
       stories.push(...r.value);
     } else {
-      console.error('[overview-ingest] feed fetch failed:', r.reason);
+      console.error(`${logPrefix} feed fetch failed:`, r.reason);
     }
   }
 
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - maxAgeMs;
   return stories.filter((s) => s.publishedAt.getTime() >= cutoff);
 }
 
@@ -170,9 +182,15 @@ function groupSimilarStories(stories: RawStory[]): RawStory[][] {
   return clusters.map((cluster) => cluster.map((c) => c.story));
 }
 
+// Hosts that front other outlets' stories (Finnhub serves every Reuters item
+// as a news.google.com link) — key on the reported source name instead, or a
+// Reuters story arriving via both reuters.com and Google News counts twice.
+const REDIRECT_HOSTS = new Set(['news.google.com']);
+
 function outletKey(story: RawStory): string {
   try {
-    return new URL(story.url).hostname.replace(/^www\./, '');
+    const host = new URL(story.url).hostname.replace(/^www\./, '');
+    return REDIRECT_HOSTS.has(host) ? story.source.toLowerCase() : host;
   } catch {
     return story.source;
   }

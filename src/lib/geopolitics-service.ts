@@ -82,13 +82,18 @@ function mapDbToSummary(row: {
   };
 }
 
-async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
+const GEOPOLITICS_NEWSAPI_QUERY =
+  'geopolitics OR "international relations" OR "foreign policy" OR diplomacy';
+
+// Also used by pulse-ingest.ts with per-category queries.
+export async function fetchFromNewsApi(
+  apiKey: string,
+  rawQuery: string = GEOPOLITICS_NEWSAPI_QUERY,
+): Promise<SourceArticle[]> {
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0];
-  const query = encodeURIComponent(
-    'geopolitics OR "international relations" OR "foreign policy" OR diplomacy',
-  );
+  const query = encodeURIComponent(rawQuery);
   const url =
     `https://newsapi.org/v2/everything` +
     `?q=${query}` +
@@ -113,7 +118,8 @@ async function fetchFromNewsApi(apiKey: string): Promise<SourceArticle[]> {
   }));
 }
 
-async function fetchFromFinnhub(apiKey: string): Promise<SourceArticle[]> {
+// Also used by pulse-ingest.ts.
+export async function fetchFromFinnhub(apiKey: string): Promise<SourceArticle[]> {
   const url =
     `https://finnhub.io/api/v1/news` +
     `?category=general` +

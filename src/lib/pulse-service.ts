@@ -1,15 +1,15 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { Client } from '@upstash/qstash';
+import { z } from 'zod';
 import { getPrisma } from '@/lib/db';
+import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
 import { notifyBing } from '@/lib/indexnow';
-import { fetchPulseSummary } from '@/lib/gdelt';
+import type { RawStory } from '@/lib/overview-ingest';
 import { PULSE_CATEGORIES, PULSE_SLUGS } from '@/lib/pulse-categories';
-import {
-  canonicalizeSlug,
-  isSlugTakenAcrossVerticals,
-  parseClaudeJson,
-} from '@/lib/summary-pipeline';
+import { fetchPulseStoriesByCategory, pulseSourceKey, rankPulseClusters } from '@/lib/pulse-ingest';
+import { extractJson, generateWithRunpod, RUNPOD_MODEL } from '@/lib/runpod';
+import { canonicalizeSlug, isSlugTakenAcrossVerticals } from '@/lib/summary-pipeline';
 import { SITE_URL } from '@/lib/seo';
-import type { GdeltSummaryRow, PulseArticle, PulseSlug } from '@/types/pulse';
+import type { PulseArticle, PulseSlug } from '@/types/pulse';
 
 interface PulseArticleDelegateLike {
   findMany: <T = unknown>(...args: unknown[]) => Promise<T[]>;
@@ -53,30 +53,6 @@ function getPulseDelegate(): PulseArticleDelegateLike | null {
     return null;
   }
   return prisma.pulseArticle;
-}
-
-interface ClaudePulseResponse {
-  title: string;
-  slug: string;
-  summary: string;
-  body?: string;
-  sourceUrl?: string;
-  topic?: string;
-}
-
-interface RunTopic {
-  topic: string;
-  title: string;
-}
-
-interface PulseSourceShape {
-  title: string;
-  sourceUrl: string;
-  summaryHint: string;
-  observedStart: Date | null;
-  observedEnd: Date | null;
-  bucketKey: string;
-  metricsHint: string;
 }
 
 const MONTH_TOKENS = new Set([
@@ -173,10 +149,8 @@ function stripDateTokensFromSlug(slug: string): string {
     .join('-');
 }
 
-function regeneratePulseSlug(source: PulseSourceShape, pulseSlug: PulseSlug): string {
-  const tokens = canonicalizeSlug(
-    `${source.title} ${source.summaryHint} ${pulseSlug} ${source.metricsHint}`,
-  )
+function regeneratePulseSlug(title: string, summary: string, pulseSlug: PulseSlug): string {
+  const tokens = canonicalizeSlug(`${title} ${summary} ${pulseSlug}`)
     .split('-')
     .filter((token) => {
       if (!token) return false;
@@ -201,12 +175,6 @@ function regeneratePulseSlug(source: PulseSourceShape, pulseSlug: PulseSlug): st
   return finalTokens.join('-');
 }
 
-function toDateOrNull(value: unknown): Date | null {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 function isUniqueConstraintError(err: unknown): boolean {
   return (
     typeof err === 'object' &&
@@ -229,254 +197,6 @@ function toPulseArticle(row: PulseArticleRow): PulseArticle {
     observedEnd: row.observedEnd?.toISOString() ?? null,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     raw: row.raw,
-  };
-}
-
-function inferSourceUrl(row: GdeltSummaryRow): string {
-  const candidates = [
-    row.url,
-    row.source_url,
-    row.link,
-    row.article_url,
-    row.domain,
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const trimmed = candidate.trim();
-    if (!trimmed) continue;
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-    if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(trimmed)) {
-      return `https://${trimmed}`;
-    }
-  }
-
-  return '';
-}
-
-function inferTitle(row: GdeltSummaryRow, fallbackCategory: string): string {
-  const candidates = [row.title, row.name, row.topic, row.label, row.event_name];
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate.trim();
-    }
-  }
-  return `${fallbackCategory} pulse update`;
-}
-
-function inferSummaryHint(row: GdeltSummaryRow): string {
-  const candidates = [
-    row.summary,
-    row.description,
-    row.snippet,
-    row.topics,
-    row.country,
-    row.region,
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate.trim();
-    }
-    if (Array.isArray(candidate)) {
-      const first = candidate.find((item) => typeof item === 'string' && item.trim());
-      if (typeof first === 'string') return first.trim();
-    }
-  }
-
-  return '';
-}
-
-// GDELT summary rows returned with `group_by: date` carry no explicit
-// timestamp field — the date bucket lives in `key` (e.g. "2026-07-02").
-function getBucketDate(row: GdeltSummaryRow): Date | null {
-  const candidates = [row.key, row.date, row.bucket, row.event_date];
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') continue;
-    const trimmed = candidate.trim();
-    if (!trimmed) continue;
-    const iso = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T00:00:00Z` : trimmed;
-    const d = new Date(iso);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return null;
-}
-
-// Compact, human-readable digest of the aggregate metrics on a date bucket so
-// Claude has real signal to differentiate one day's briefing from the next.
-function inferMetricsHint(row: GdeltSummaryRow): string {
-  const parts: string[] = [];
-  const metrics = (row.metrics ?? {}) as Record<string, { total?: unknown } | undefined>;
-  const push = (label: string, value: unknown) => {
-    if (typeof value === 'number' && Number.isFinite(value)) parts.push(`${label}: ${value}`);
-  };
-
-  push('events', row.event_count);
-  push('articles', row.article_count ?? metrics.article_count?.total);
-  push('fatalities', row.fatalities);
-  push('avg significance', row.avg_significance);
-  push('avg confidence', row.avg_confidence);
-  push('avg market sensitivity', row.avg_market_sensitivity);
-  push('avg systemic importance', row.avg_systemic_importance);
-
-  return parts.join(', ');
-}
-
-function normalizePulseSource(row: GdeltSummaryRow, category: string): PulseSourceShape {
-  const bucketDate = getBucketDate(row);
-  const bucketKey =
-    typeof row.key === 'string' && row.key.trim()
-      ? row.key.trim()
-      : bucketDate
-        ? bucketDate.toISOString().slice(0, 10)
-        : '';
-
-  return {
-    title: inferTitle(row, category),
-    sourceUrl: inferSourceUrl(row),
-    summaryHint: inferSummaryHint(row),
-    observedStart: toDateOrNull(row.observed_start) ?? bucketDate,
-    observedEnd: toDateOrNull(row.observed_end) ?? bucketDate,
-    bucketKey,
-    metricsHint: inferMetricsHint(row),
-  };
-}
-
-function stableSourceKey(row: GdeltSummaryRow, normalized: PulseSourceShape): string {
-  const idCandidates = [row.id, row.event_id, row.source_id, row.url, row.source_url];
-
-  for (const id of idCandidates) {
-    if (typeof id === 'string' && id.trim()) return id.trim().toLowerCase();
-    if (typeof id === 'number') return String(id);
-  }
-
-  // Date-bucketed GDELT summaries have no per-event id or url, so keying on
-  // title+url collapses to a per-category constant — after the first run every
-  // row matches an existing key and nothing new is ever created. The date
-  // bucket (`key`) is the stable per-day identity; syncPulseCategory already
-  // scopes by category, so bucketKey alone is unique per (category, date).
-  if (normalized.bucketKey) {
-    return `${normalized.title.toLowerCase()}::${normalized.bucketKey.toLowerCase()}`;
-  }
-
-  return `${normalized.title.toLowerCase()}::${normalized.sourceUrl.toLowerCase()}`;
-}
-
-async function generatePulseArticleFromSource(
-  source: PulseSourceShape,
-  pulseSlug: PulseSlug,
-  categoryLabel: string,
-  otherTopicsThisRun: RunTopic[] = [],
-): Promise<Required<Pick<ClaudePulseResponse, 'title' | 'slug' | 'summary' | 'topic'>> &
-  Pick<ClaudePulseResponse, 'body' | 'sourceUrl'>> {
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
-    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
-  }
-
-  const client = new Anthropic({ apiKey: anthropicKey });
-
-  const prompt =
-    `You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Your task is to analyze the current political landscape for the Pulse category "${categoryLabel}", identify the single top U.S. political topic driving the highest worldwide engagement right now through the specific lens of this category, and synthesize the discourse into two macro-summaries based on three distinct, opposing perspectives.\n\n` +
-    `### CATEGORY LENS (READ FIRST)\n` +
-    `Different categories will often be tempted to cover the same dominant news event on the same day. You must avoid this. Interpret "top topic" strictly through the lens implied by "${categoryLabel}":\n` +
-    `- If the label suggests geopolitics/national security ("information"), prioritize the angle of international alliances, foreign-policy leverage, or global power balance — not the domestic legislative mechanics.\n` +
-    `- If the label suggests domestic governance ("politics"), prioritize the angle of legislative process, party dynamics, or electoral consequence.\n` +
-    `- If the label suggests markets/fiscal policy ("economy"), prioritize the angle of quantifiable economic impact — spending, taxation, markets, labor, trade.\n` +
-    `- If the label suggests technology/media ("technology"), prioritize the angle of digital platforms, AI governance, media ecosystems, or information warfare.\n` +
-    `- If "${categoryLabel}" doesn't map cleanly onto the above, infer its distinct beat and hold to it.\n` +
-    `Even when one event (e.g., a major bill or crisis) is genuinely dominant across every beat, your job is to find the sub-facet, data point, or stakeholder conflict that is distinctly "${categoryLabel}"'s story — not to restate the same headline other categories would also reach for.\n\n` +
-    (otherTopicsThisRun && otherTopicsThisRun.length
-      ? `### TOPICS ALREADY COVERED THIS RUN (MUST NOT DUPLICATE)\n` +
-        `The following topics and titles have already been generated for other categories today. Do not select the same primary topic as any of these. If your category's most obvious top story overlaps with one of these, you must either (a) select the next-most-significant distinct story for your category's lens, or (b) if the event is truly unavoidable for your beat, cover a materially different sub-facet of it — a different bill provision, different stakeholder, different geography, or different consequence — such that a reader would not perceive it as the same article. Your title's subject noun and structure must also differ from all of these:\n` +
-        otherTopicsThisRun.map((t, i) => `${i + 1}. Topic: "${t.topic}" — Title: "${t.title}"`).join('\n') + `\n\n`
-      : ``) +
-    `Please execute this task using the following structured steps:\n\n` +
-    `### STEP 1: TOPIC IDENTIFICATION\n` +
-    `Identify the top U.S. political topic of today — filtered through the category lens above and checked against the "already covered" list — that is generating the most significant global engagement (e.g., on platforms like X, international news syndicates, and global policy forums). Briefly state the topic and the core event or catalyst behind it in 2-3 sentences, including any relevant data context (e.g., a CBO score, market reaction, or vote count) where genuinely applicable — hedged per Step 5.\n\n` +
-    `### STEP 2: THE 3 OPPOSING PERSPECTIVES\n` +
-    `Break down the global conversation into 3 distinct, prominent, and competing viewpoints driving the highest engagement. For each perspective, provide:\n` +
-    `1. A descriptive title for the faction/viewpoint.\n` +
-    `2. The specific institutional, ideological, or geographic anchor(s) that define this perspective (e.g., "House Republican leadership," "Senate Budget Committee moderates," "finance ministries of the Global South"). This anchor must be explicit and must demarcate the boundaries of the viewpoint so it cannot be confused with another perspective — do not let this collapse into a generic policy-position summary.\n` +
-    `3. The core narrative or thesis statement, reflecting the priorities and worldview of the anchor(s).\n` +
-    `4. The specific arguments or rhetoric they are using to drive engagement, including appeals to their constituency and references to relevant data points.\n\n` +
-    `Ensure these 3 perspectives cover a diverse spectrum (e.g., domestic populist/nationalist, traditional institutionalist/fiscal hawk, global realist/Global South, adversarial/anti-Western, or neutral bystander) — chosen to fit whatever topic is identified in Step 1, not forced into a fixed template. Keep each perspective to a similar length (aim for 80-110 words of body text) so no viewpoint gets disproportionate space.\n\n` +
-    `### STEP 3: THE TWO META-SUMMARIES\n` +
-    `Synthesize those 3 perspectives into two distinct, overarching macro-narratives. These summaries should not just list the viewpoints, but seamlessly weave them into the two primary, competing realities currently clashing on the global stage.\n` +
-    `Keep the two macro-narratives to matched length (within ~15% word count of each other).\n\n` +
-    `### STEP 4: OBJECTIVITY AND LANGUAGE PARITY (CRITICAL)\n` +
-    `Maintain strict analytical objectivity. Do not favor any perspective. Apply these concrete checks before finalizing:\n` +
-    `- Use a symmetrical register across both macro-narratives. Do not describe one side's reasoning with credibility-coded words ("empirical," "data-driven," "evidence shows") while describing the other's only with emotion-coded words ("defiant," "triumphalist," "dismisses"). If you use an emotion word for one side, find the parallel emotional register for the other; if you cite data/evidence for one side's reasoning, cite the data/evidence the other side marshals too.\n` +
-    `- Do not characterize any faction's opponents using that faction's own dismissive framing as if it were your narration (e.g., do not state as fact that a group is "ideologically hostile" — instead attribute that framing explicitly to the faction that holds it).\n` +
-    `- Before writing the final output, mentally re-read both macro-narratives side by side and check: would a reader of either side conclude this treats their view fairly? If not, rebalance the language.\n\n` +
-    `### STEP 5: FACTUAL HEDGING\n` +
-    `When citing specific figures (dollar amounts, percentages, scores, vote counts), hedge appropriately unless you are highly confident the figure is accurate and current — use language like "estimated," "roughly," or "according to [named source]" rather than stating precise figures as bare fact. Do not invent a source attribution (e.g., "per the latest CBO score") unless you are confident such a score exists and says what you're citing. When describing engagement patterns on social media or elsewhere, frame these as illustrative characterizations of discourse style, not as measured/verified engagement data.\n\n` +
-    `### STEP 6: TITLE REQUIREMENTS\n` +
-    `Write a headline for this article that is specific to the actual topic identified in Step 1 — not a generic template.\n` +
-    `- Do NOT use the phrase "Sparks Global," or any close variant of it (e.g., "Ignites Global," "Fuels Worldwide," "Triggers International," "Sets Off Global"). These connector-verb-plus-"Global" constructions are overused and banned.\n` +
-    `- Do NOT use the pattern [Quoted proper noun/nickname] + [verb phrase describing a procedural stage, e.g. "Reaches the Senate Floor," "Heads to [Person]'s Desk," "Hits the Senate Floor"] + [colon] + [abstract subtitle]. This exact template is banned even if the wording varies, because it produces near-identical headlines across categories covering the same event.\n` +
-    `- If your topic shares its central proper noun (a bill name, agency, person) with a title in the "already covered" list above, do not lead the title with that same proper noun in quotes. Lead with your category's distinct angle, stakeholder, or consequence instead.\n` +
-    `- Do NOT structure the title as [Subject] + [connector verb] + "Global" + [abstract noun]. Vary the structure instead — options include a colon-led format ("Topic: What's Actually at Stake"), a direct statement, a named-entity-led format, or a question.\n` +
-    `- Anchor the title in a concrete, specific detail from Step 1 (a name, number, bill, agency, or event) rather than an abstract category label like "Economic Realignment" or "Fiscal Direction."\n` +
-    `- The title must read as distinct from a generic wire-service headline template — assume a reader will see this alongside titles from other categories, including the ones listed in "already covered" above, and it must not share a structural pattern or leading proper noun with any of them.\n\n` +
-    `### CRITICAL OUTPUT RULE\n` +
-    `Respond ONLY with a valid, raw JSON object using the exact key structure below. Do not wrap the JSON in Markdown code fences (e.g., do NOT use \`\`\`json). Do not include any intro, outro, or prose outside the JSON object. Escape all double quotes inside string values using standard JSON escaping (\\"). Do not include any keys other than the ones listed below.\n\n` +
-    `{\n` +
-    `  "topic": "3-6 word noun phrase naming the specific news topic/event identified in Step 1 (e.g. 'Senate reconciliation bill vote'). Internal use only for cross-category duplicate tracking — not shown to readers, so keep it plain and concrete, not headline-styled.",\n` +
-    `  "title": "...",\n` +
-    `  "slug": "url slug exactly 4-5 lowercase words joined by hyphens (max 4 hyphens total); letters and hyphens only; pick descriptive nouns or proper nouns that identify the angle; no stop words; DO NOT include any date component under any circumstances: no month names, years, quarters, days of week, or relative time words (examples: july, 2026, q3, today, weekly, monthly, daily); if a candidate word is date-related, replace it with a non-date noun before finalizing",\n` +
-    `  "summary": "2-3 sentence concise summary of the top topic and the two competing macro-narratives",\n` +
-    `  "body": "HTML fragment only. Do not use *, **, markdown bold, asterisks, bullets, or XML-style wrappers. Use semantic HTML and make each of the 3 Step 2 perspective titles a separate <h2> element. Keep the text beneath each heading in <p> blocks. Use this exact section order:\n\n<h2>Topic analysis</h2>\n<p>[Step 1 content]</p>\n\n<h2>Perspective 1: [title]</h2>\n<p>[anchor, core thesis, and rhetoric]</p>\n\n<h2>Perspective 2: [title]</h2>\n<p>[anchor, core thesis, and rhetoric]</p>\n\n<h2>Perspective 3: [title]</h2>\n<p>[anchor, core thesis, and rhetoric]</p>\n\n<h2>First macro-narrative</h2>\n<p>[1-paragraph synthesis of aligned viewpoints, focusing on underlying ideology, motivations, and global implications]</p>\n\n<h2>Second macro-narrative</h2>\n<p>[1-paragraph synthesis of opposing worldviews, sharply contrasting with the first macro-narrative to reveal the core ideological fault line]</p>"\n` +
-    `}\n\n` +
-    `Input source data:\n` +
-    `Pulse slug: ${pulseSlug}\n` +
-    `Title: ${source.title}\n` +
-    `Date: ${source.bucketKey || 'N/A'}\n` +
-    `Source URL: ${source.sourceUrl || 'N/A'}\n` +
-    `Observed start: ${source.observedStart?.toISOString() ?? 'N/A'}\n` +
-    `Observed end: ${source.observedEnd?.toISOString() ?? 'N/A'}\n` +
-    `Aggregate signal metrics: ${source.metricsHint || 'N/A'}\n` +
-    `Summary hint: ${source.summaryHint || 'N/A'}\n`;
-
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 6000,
-    system:
-      'You are a Senior Political Analyst and Media Researcher specializing in global digital discourse. Maintain strict analytical objectivity and return valid JSON only.',
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  // Surface truncation explicitly instead of falling through to parseClaudeJson's
-  // generic parse error, which was the only signal we had in production when
-  // max_tokens cut the response off mid-object (see macro-service.ts's identical fix).
-  if (response.stop_reason === 'max_tokens') {
-    throw new Error('Claude pulse response was truncated (stop_reason: max_tokens) — consider raising max_tokens');
-  }
-
-  const first = response.content[0];
-  if (first.type !== 'text') {
-    throw new Error('Unexpected response type from Claude');
-  }
-
-  const parsed = parseClaudeJson<ClaudePulseResponse>(first.text);
-  const modelSlug = parsed.slug || parsed.title || source.title;
-  const strippedSlug = stripDateTokensFromSlug(modelSlug);
-  if (strippedSlug !== canonicalizeSlug(modelSlug)) {
-    console.warn(`[pulse-service] removed date-like slug tokens: "${modelSlug}" -> "${strippedSlug}"`);
-  }
-
-  const slugTokens = strippedSlug.split('-').filter(Boolean);
-  const slug = slugTokens.length < 3 ? regeneratePulseSlug(source, pulseSlug) : strippedSlug;
-
-  return {
-    title: parsed.title || source.title,
-    slug,
-    summary: parsed.summary || source.summaryHint || source.title,
-    body: parsed.body || undefined,
-    sourceUrl: parsed.sourceUrl || source.sourceUrl || undefined,
-    topic: parsed.topic || parsed.title || source.title,
   };
 }
 
@@ -546,214 +266,440 @@ export async function getLatestArticlePerCategory(): Promise<Record<PulseSlug, P
   return Object.fromEntries(entries) as Record<PulseSlug, PulseArticle | null>;
 }
 
-// /stories returns individual per-story rows (not date-bucketed summaries), so
-// every row is now a genuinely distinct dedup key — without a cap this loop
-// would create up to `limit` new articles per invocation instead of the
-// intended ~1/category/run. Restores original intent and keeps runtime inside
-// the wall-clock budget PULSE_GROUPS was built around.
-const MAX_NEW_ARTICLES_PER_RUN = 1;
+// ---------------------------------------------------------------------------
+// Generation: news feeds → RunPod (see pulse-ingest.ts for sourcing)
+// ---------------------------------------------------------------------------
+//
+// Mirrors Overview's fan-out: the cron route only ingests + selects sources
+// and enqueues one QStash job per category; /api/pulse/process then runs
+// exactly one RunPod generation per invocation. A RunPod cold start (60-180s)
+// plus a long generation wouldn't fit even two categories sequentially inside
+// the 300s function cap.
 
-export async function syncPulseCategory(
-  pulseSlug: PulseSlug,
-  otherTopicsThisRun: RunTopic[] = [],
-): Promise<{ created: number }> {
+const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
+
+// The primary cluster is what the article is about; a couple of other
+// clusters from the same category go along as background only. Capped so the
+// 8B model's prompt stays small and focused.
+const MAX_PRIMARY_STORIES = 5;
+const MAX_CONTEXT_CLUSTERS = 2;
+const MAX_TOTAL_STORIES = 8;
+
+// Pulse's six-section analysis runs far past RunPod's default completion
+// budget — too low and the JSON is cut off mid-object.
+const PULSE_MAX_TOKENS = 3000;
+
+export interface PulseJobPayload {
+  pulseSlug: PulseSlug;
+  sourceId: string;
+  primary: RawStory[];
+  context: RawStory[];
+}
+
+interface PulseUsedSources {
+  slugs: Set<string>;
+  sourceKeys: Set<string>;
+}
+
+// Everything a category has already been written from: its sourceUrl, the
+// dedup `raw.sourceId`, and every member story recorded in `raw.sources` —
+// so a story that was background yesterday can't become today's headline.
+async function loadUsedSources(pulseSlug: PulseSlug): Promise<PulseUsedSources | null> {
   const pulseArticle = getPulseDelegate();
-  if (!pulseArticle) return { created: 0 };
-
-  const config = PULSE_CATEGORIES[pulseSlug];
-  const payload = await fetchPulseSummary({ category: config.gdeltCategory });
-  const rawRows = Array.isArray(payload.data) ? payload.data : [];
-
-  if (rawRows.length === 0) {
-    console.warn(`[pulse-service] ${pulseSlug}: GDELT returned no rows`);
-    return { created: 0 };
-  }
+  if (!pulseArticle) return null;
 
   const existing = await pulseArticle.findMany<PulseExistingRow>({
     where: { pulseSlug },
     select: { articleSlug: true, sourceUrl: true, raw: true },
   });
 
-  const existingSourceKeys = new Set<string>();
-  const existingSlugs = new Set<string>();
-
+  const used: PulseUsedSources = { slugs: new Set(), sourceKeys: new Set() };
   for (const row of existing) {
-    existingSlugs.add(row.articleSlug);
-    if (row.sourceUrl) existingSourceKeys.add(row.sourceUrl.toLowerCase());
+    used.slugs.add(row.articleSlug);
+    if (row.sourceUrl) used.sourceKeys.add(pulseSourceKey(row.sourceUrl));
 
     const raw = row.raw as Record<string, unknown> | null;
-    const sourceId = raw?.sourceId;
-    if (typeof sourceId === 'string' && sourceId) {
-      existingSourceKeys.add(sourceId.toLowerCase());
+    if (typeof raw?.sourceId === 'string' && raw.sourceId) {
+      used.sourceKeys.add(raw.sourceId.toLowerCase());
     }
-  }
-
-  const seenBatchKeys = new Set<string>();
-  let created = 0;
-  const newUrls: string[] = [];
-
-  for (const rawRow of rawRows) {
-    if (created >= MAX_NEW_ARTICLES_PER_RUN) break;
-
-    const normalized = normalizePulseSource(rawRow, config.gdeltCategory);
-    const sourceKey = stableSourceKey(rawRow, normalized);
-
-    if (!sourceKey || seenBatchKeys.has(sourceKey) || existingSourceKeys.has(sourceKey)) {
-      continue;
-    }
-
-    seenBatchKeys.add(sourceKey);
-
-    const generated = await generatePulseArticleFromSource(
-      normalized,
-      pulseSlug,
-      config.label,
-      otherTopicsThisRun,
-    );
-    if (!generated.slug) {
-      continue;
-    }
-    // Shared across categories in this run (see runDailyPulsePipeline) so later
-    // categories' prompts know what earlier ones already covered.
-    otherTopicsThisRun.push({ topic: generated.topic, title: generated.title });
-
-    // Keep pulse URLs date-free. If a slug collides, disambiguate with a
-    // non-date suffix so the URL shape remains /pulse/{pulseSlug}/{articleSlug}.
-    let articleSlug = generated.slug;
-    if (existingSlugs.has(articleSlug) || (await isSlugTakenAcrossVerticals(articleSlug))) {
-      let nextSlug = `${articleSlug}-${pulseSlug}`;
-      let attempt = 2;
-      while (existingSlugs.has(nextSlug) || (await isSlugTakenAcrossVerticals(nextSlug))) {
-        nextSlug = `${articleSlug}-${pulseSlug}-${attempt}`;
-        attempt += 1;
+    const sources = raw?.sources;
+    if (Array.isArray(sources)) {
+      for (const s of sources) {
+        const url = (s as { url?: unknown })?.url;
+        if (typeof url === 'string' && url) used.sourceKeys.add(pulseSourceKey(url));
       }
-      articleSlug = nextSlug;
     }
+  }
+  return used;
+}
 
-    try {
-      await pulseArticle.create({
-        data: {
-          pulseSlug,
-          articleSlug,
-          title: generated.title,
-          summary: generated.summary,
-          body: generated.body,
-          category: config.gdeltCategory,
-          observedStart: normalized.observedStart,
-          observedEnd: normalized.observedEnd,
-          publishedAt: new Date(),
-          raw: {
-            sourceId: sourceKey,
-            row: rawRow,
-          },
-        },
-      });
+function selectPulseJob(
+  pulseSlug: PulseSlug,
+  stories: RawStory[],
+  used: PulseUsedSources,
+): PulseJobPayload | null {
+  const fresh = rankPulseClusters(stories, pulseSlug).filter(
+    (c) => !c.members.some((m) => used.sourceKeys.has(pulseSourceKey(m.url))),
+  );
+  const [top, ...rest] = fresh;
+  if (!top) return null;
 
-      existingSlugs.add(articleSlug);
-      existingSourceKeys.add(sourceKey);
-      newUrls.push(`${SITE_URL}/pulse/${pulseSlug}/${articleSlug}`);
-      created += 1;
-    } catch (err) {
-      if (isUniqueConstraintError(err)) {
-        existingSourceKeys.add(sourceKey);
-        continue;
+  const primary = [
+    top.representative,
+    ...top.members.filter((m) => m !== top.representative),
+  ].slice(0, MAX_PRIMARY_STORIES);
+  const context = rest
+    .slice(0, MAX_CONTEXT_CLUSTERS)
+    .map((c) => c.representative)
+    .slice(0, Math.max(0, MAX_TOTAL_STORIES - primary.length));
+
+  return { pulseSlug, sourceId: pulseSourceKey(top.representative.url), primary, context };
+}
+
+// VERCEL_URL (injected by Vercel, no protocol) targets this exact deployment;
+// SITE_URL is the local-dev fallback — same as enqueueDailyClusters in
+// overview-service.ts.
+function selfBaseUrl(): string | undefined {
+  return process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.SITE_URL;
+}
+
+// Called by /api/pulse/generate (daily cron).
+export async function enqueuePulseCategories(): Promise<
+  Record<PulseSlug, { enqueued: boolean; reason?: string }>
+> {
+  const storiesBySlug = await fetchPulseStoriesByCategory();
+  const base = selfBaseUrl();
+
+  const entries = await Promise.all(
+    PULSE_SLUGS.map(async (pulseSlug) => {
+      const stories = storiesBySlug[pulseSlug];
+      try {
+        const used = await loadUsedSources(pulseSlug);
+        if (!used) return [pulseSlug, { enqueued: false, reason: 'db unavailable' }] as const;
+
+        const job = selectPulseJob(pulseSlug, stories, used);
+        if (!job) {
+          console.warn(`[pulse-service] ${pulseSlug}: no fresh sources (${stories.length} stories)`);
+          return [pulseSlug, { enqueued: false, reason: 'no fresh sources' }] as const;
+        }
+
+        // x-vercel-protection-bypass: VERCEL_URL sits behind Deployment
+        // Protection, which QStash can't pass without the automation bypass.
+        // timeout must exceed /api/pulse/process's runtime so QStash doesn't
+        // retry (and double-bill RunPod) while the first attempt is running.
+        await qstash.publishJSON({
+          url: `${base}/api/pulse/process`,
+          body: job,
+          headers: { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET! },
+          timeout: '295s',
+        });
+        console.log(
+          `[pulse-service] ${pulseSlug}: ${stories.length} stories → enqueued "${job.primary[0].title}"`,
+        );
+        return [pulseSlug, { enqueued: true }] as const;
+      } catch (err) {
+        console.error(`[pulse-service] ${pulseSlug}: enqueue failed`, err);
+        return [pulseSlug, { enqueued: false, reason: 'enqueue failed' }] as const;
       }
-      throw err;
-    }
-  }
+    }),
+  );
 
-  if (newUrls.length > 0) {
-    await notifyBing(newUrls);
-  }
-
-  console.log(`[pulse-service] ${pulseSlug}: ${rawRows.length} source rows → ${created} created`);
-
-  return { created };
+  return Object.fromEntries(entries) as Record<PulseSlug, { enqueued: boolean; reason?: string }>;
 }
 
-// Pulse sources from GDELT, which is capped at 100 query units/month on the
-// free plan. Four categories run per invocation, so a daily cadence is ~120
-// QU/month — over the cap, which silently zeros out generation once exhausted.
-// Running pulse every other day (~15 days × 4 ≈ 60 QU/month) keeps it under
-// budget. Parity is on the epoch day number so it alternates cleanly across
-// month boundaries (unlike a cron `*/2` day-of-month, which double-fires at the
-// 31st→1st rollover). Enforced here (not by the caller) so it holds regardless
-// of which cron/route invokes runDailyPulsePipeline.
-function shouldRunPulseToday(): boolean {
-  return Math.floor(Date.now() / 86_400_000) % 2 === 0;
+// An 8B model regularly leaks markup into JSON string values ("**bold**",
+// "### Heading", "- bullet", "<p>…</p>"). Left in, it would be escaped and
+// shown as literal text inside the summary or a body section, so strip it
+// before anything is stored. Paragraph breaks (blank lines) are preserved.
+function cleanModelText(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .split(/\n\s*\n/)
+    .map((para) =>
+      para
+        // A markdown heading is a stray label (our sections already have
+        // headings), so drop the whole line rather than merging it into prose.
+        .replace(/^\s{0,3}#{1,6}\s+.*$/gm, '')
+        .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, '')
+        .replace(/\*\*|__|\*|`/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+([.,;:!?])/g, '$1')
+        .trim(),
+    )
+    .filter(Boolean)
+    .join('\n\n');
 }
 
-// Seeds cross-category dedup for categories that aren't part of *this*
-// invocation's group (see PULSE_GROUPS below) by reading back what other
-// groups already published today, rather than only tracking it in-memory.
-// Without this, splitting the run across multiple invocations would blind
-// each group to what the other group already covered.
-async function getTodaysOtherCategoryTopics(excludeSlugs: PulseSlug[]): Promise<RunTopic[]> {
-  const pulseArticle = getPulseDelegate();
-  if (!pulseArticle) return [];
-
-  const startOfDay = new Date();
-  startOfDay.setUTCHours(0, 0, 0, 0);
-
-  try {
-    const rows = await pulseArticle.findMany<{ pulseSlug: string; title: string }>({
-      where: { publishedAt: { gte: startOfDay }, pulseSlug: { notIn: excludeSlugs } },
-      select: { pulseSlug: true, title: true },
-    });
-    return rows.map((row) => ({ topic: row.title, title: row.title }));
-  } catch (err) {
-    console.error('[pulse-service] failed to load today\'s cross-group topics', err);
-    return [];
-  }
+// Title and summary render as plain text (<h1>, <p class="pulse-summary">),
+// so they're a single line: no paragraph breaks, no wrapping quotes, and for
+// the title no trailing period.
+function cleanSingleLine(text: string): string {
+  return cleanModelText(text).replace(/\s*\n\n\s*/g, ' ');
 }
 
-// Four categories run sequentially per invocation (see syncPulseCategory
-// comments) so each category's prompt can see what earlier categories already
-// covered. On Vercel Hobby, maxDuration is hard-capped at 300s and four
-// sequential GDELT-fetch + Claude-opus rounds routinely run ~230-250s for the
-// first three alone — the fourth in iteration order was reliably starved and
-// killed mid-flight before it could write anything (this is what silently
-// zeroed out the "strategic" category — now named "information" — from Aug 3
-// onward). Splitting the run
-// into two groups of two categories, invoked an hour apart by separate cron
-// entries (see vercel.json — Hobby cron precision is only accurate to the
-// hour, so a few-minutes stagger wouldn't be reliable), keeps each invocation
-// comfortably under budget. `group` selects which half runs; omitted
-// (manual/local trigger) runs all four sequentially as before.
-const PULSE_GROUPS: Record<1 | 2, PulseSlug[]> = {
-  1: ['economy', 'technology'],
-  2: ['politics', 'information'],
+function cleanTitle(text: string): string {
+  return cleanSingleLine(text)
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, '')
+    .replace(/\.$/, '')
+    .trim();
+}
+
+const cleanedText = z.string().transform(cleanModelText).pipe(z.string().min(1));
+
+const PulseLlmOutputSchema = z.object({
+  topic: z.string().transform(cleanSingleLine).pipe(z.string().min(1)),
+  // Llama 8B occasionally drops "title" altogether; filled from "topic" below
+  // rather than failing (and re-billing RunPod for) an otherwise complete article.
+  title: z.string().optional().default('').transform(cleanTitle),
+  slug: z.string().optional().default(''),
+  summary: z.string().transform(cleanSingleLine).pipe(z.string().min(1)),
+  topicAnalysis: cleanedText,
+  perspectives: z
+    .array(
+      z.object({
+        title: z.string().transform(cleanSingleLine).pipe(z.string().min(1)),
+        text: cleanedText,
+      }),
+    )
+    .length(3),
+  macroNarrative1: cleanedText,
+  macroNarrative2: cleanedText,
+});
+
+type PulseLlmOutput = z.infer<typeof PulseLlmOutputSchema>;
+
+export function parsePulseLlmOutput(content: string): PulseLlmOutput {
+  const out = PulseLlmOutputSchema.parse(JSON.parse(extractJson(content)));
+  return { ...out, title: out.title || cleanTitle(out.topic) };
+}
+
+// Beats keep the four categories from converging on the same angle.
+const CATEGORY_LENS: Record<PulseSlug, string> = {
+  politics: 'domestic governance — legislative process, party dynamics, electoral consequence',
+  economy: 'quantifiable economic impact — markets, fiscal and monetary policy, trade, labor',
+  technology: 'technology and media — digital platforms, AI governance, cyber, media ecosystems',
+  information:
+    'geopolitics and national security — alliances, foreign-policy leverage, conflict, information warfare',
 };
 
-export async function runDailyPulsePipeline(
-  group?: 1 | 2,
-): Promise<Record<PulseSlug, { created: number }>> {
-  const slugs = group ? PULSE_GROUPS[group] : (Object.keys(PULSE_CATEGORIES) as PulseSlug[]);
-  const allSlugs = Object.keys(PULSE_CATEGORIES) as PulseSlug[];
+// Feed titles/snippets are third-party content — strip stray markup before
+// it's interpolated into the prompt.
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, '');
+}
 
-  if (!shouldRunPulseToday()) {
-    console.log('[pulse-service] skipped today — runs every other day (GDELT quota budget)');
-    return Object.fromEntries(allSlugs.map((slug) => [slug, { created: 0 }])) as Record<
-      PulseSlug,
-      { created: number }
-    >;
+function formatStory(s: RawStory): string {
+  return `- [${s.source}] ${stripHtml(s.title)}: ${stripHtml(s.snippet)}`;
+}
+
+function buildPulseMessages(job: PulseJobPayload) {
+  const label = PULSE_CATEGORIES[job.pulseSlug].label;
+  const system =
+    `You are a senior political analyst writing a "${label}" Pulse briefing. ` +
+    `Your beat is ${CATEGORY_LENS[job.pulseSlug]}; analyze the story strictly through that lens. ` +
+    'Base every factual claim ONLY on the source snippets provided; do not invent figures, quotes, ' +
+    'votes, or sources. When citing numbers, hedge them ("roughly") or attribute them to the outlet ' +
+    'that reported them. NEVER name, quote, or attribute a claim to any organization, official, or ' +
+    'publication (e.g. a chamber of commerce, a union, a state newspaper) unless it appears in the ' +
+    'snippets — describe what a constituency argues ("export-oriented US businesses argue…") ' +
+    'instead of inventing "according to X". ' +
+    'Identify three distinct, competing perspectives on the PRIMARY story, each anchored to a named ' +
+    'institutional, ideological, or geographic constituency (e.g. "House Republican leadership", ' +
+    '"EU finance ministries"), then synthesize them into two opposing macro-narratives of matched ' +
+    'length. Stay strictly neutral: use the same register for every side, and attribute any ' +
+    "dismissive framing to the faction that holds it rather than stating it as fact. " +
+    'The title must be specific to the story (a name, number, or event), must not use "Sparks ' +
+    'Global" or similar "[verb] Global [noun]" constructions, and must not be a generic wire headline. ' +
+    'Respond ONLY with raw JSON (no markdown fences, no text outside the object), with ALL of ' +
+    'these keys, exactly: ' +
+    '{"title": "8-14 word headline anchored on a concrete detail from the sources", ' +
+    '"topic": "3-6 word plain noun phrase naming the story", ' +
+    '"slug": "4-5 lowercase words joined by hyphens, letters only, no dates, months, years or weekdays", ' +
+    '"summary": "2-3 sentences: the story and the two competing macro-narratives", ' +
+    '"topicAnalysis": "1 paragraph: what happened and why it matters for this beat", ' +
+    '"perspectives": [{"title": "name of the faction/viewpoint", "text": "80-110 words: its anchor, core thesis, and arguments"}, {...}, {...}], ' +
+    '"macroNarrative1": "1 paragraph synthesis of the aligned viewpoints", ' +
+    '"macroNarrative2": "1 paragraph synthesis of the opposing worldview, sharply contrasting the first"}. ' +
+    '"perspectives" must contain exactly 3 items. Plain text only inside strings: no HTML, ' +
+    'no markdown, no asterisks.';
+
+  const user =
+    `PRIMARY story (write about this):\n${job.primary.map(formatStory).join('\n')}` +
+    (job.context.length
+      ? `\n\nOther ${label} coverage today (background only — do not make it the subject):\n` +
+        job.context.map(formatStory).join('\n')
+      : '');
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ];
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Models sometimes echo the section label into the title ("Perspective 1: X").
+function cleanPerspectiveTitle(title: string): string {
+  return title.replace(/^\s*perspective\s*\d+\s*[:.\-–—]\s*/i, '').trim();
+}
+
+function paragraphs(text: string): string {
+  return text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${escapeHtml(p)}</p>`)
+    .join('\n');
+}
+
+// Assembled here rather than asked of the model: an 8B model writing HTML
+// inside a JSON string is the least reliable part of the output, and this
+// keeps the exact section structure existing Pulse pages render.
+export function buildPulseBodyHtml(out: PulseLlmOutput): string {
+  const sections = [
+    `<h2>Topic analysis</h2>\n${paragraphs(out.topicAnalysis)}`,
+    ...out.perspectives.map(
+      (p, i) =>
+        `<h2>Perspective ${i + 1}: ${escapeHtml(cleanPerspectiveTitle(p.title))}</h2>\n${paragraphs(p.text)}`,
+    ),
+    `<h2>First macro-narrative</h2>\n${paragraphs(out.macroNarrative1)}`,
+    `<h2>Second macro-narrative</h2>\n${paragraphs(out.macroNarrative2)}`,
+  ];
+  return sections.join('\n\n');
+}
+
+// The exact section structure Pulse pages render inside
+// <article class="pulse-body pulse-body--html">. Checked before every write
+// so a malformed generation fails the job (QStash retries) instead of
+// publishing an article with a missing or reordered section.
+const PULSE_BODY_HEADINGS: RegExp[] = [
+  /^Topic analysis$/,
+  /^Perspective 1: .+$/,
+  /^Perspective 2: .+$/,
+  /^Perspective 3: .+$/,
+  /^First macro-narrative$/,
+  /^Second macro-narrative$/,
+];
+
+export function assertPulseBodyStructure(html: string): void {
+  const headings = [...html.matchAll(/<h2>([\s\S]*?)<\/h2>/g)].map((m) => m[1]);
+  const ok =
+    headings.length === PULSE_BODY_HEADINGS.length &&
+    headings.every((h, i) => PULSE_BODY_HEADINGS[i].test(h));
+  if (!ok) {
+    throw new Error(`Pulse body has unexpected sections: ${JSON.stringify(headings)}`);
+  }
+  // pulse-body--html is only chosen when the body is detected as HTML, and
+  // the page runs it through sanitizeArticleHtml — which must be a no-op here.
+  if (!isHtmlFragment(html) || sanitizeArticleHtml(html) !== html) {
+    throw new Error('Pulse body HTML would be altered by sanitizeArticleHtml');
+  }
+  if (/<p>\s*<\/p>/.test(html)) {
+    throw new Error('Pulse body contains an empty section');
+  }
+}
+
+function resolveArticleSlug(out: PulseLlmOutput, pulseSlug: PulseSlug): string {
+  const modelSlug = out.slug || out.title;
+  const strippedSlug = stripDateTokensFromSlug(modelSlug);
+  if (strippedSlug !== canonicalizeSlug(modelSlug)) {
+    console.warn(`[pulse-service] removed date-like slug tokens: "${modelSlug}" -> "${strippedSlug}"`);
+  }
+  const tokens = strippedSlug.split('-').filter(Boolean);
+  if (tokens.length < 3) return regeneratePulseSlug(out.title, out.summary, pulseSlug);
+  // Enforce the 4-5 word contract even if the model overshoots.
+  return tokens.slice(0, 5).join('-');
+}
+
+function reviveStory(s: RawStory): RawStory {
+  // Dates arrive as ISO strings after the QStash JSON round-trip.
+  return { ...s, publishedAt: new Date(s.publishedAt) };
+}
+
+// Called by /api/pulse/process — exactly one category per invocation.
+export async function processPulseCategory(payload: PulseJobPayload): Promise<{ created: number }> {
+  const job: PulseJobPayload = {
+    ...payload,
+    primary: payload.primary.map(reviveStory),
+    context: payload.context.map(reviveStory),
+  };
+  const { pulseSlug } = job;
+
+  const pulseArticle = getPulseDelegate();
+  if (!pulseArticle) return { created: 0 };
+
+  // QStash retries (or a duplicate cron fire) must not write a second article
+  // from the same source.
+  const used = await loadUsedSources(pulseSlug);
+  if (!used || used.sourceKeys.has(job.sourceId)) {
+    console.log(`[pulse-service] ${pulseSlug}: source already used, skipping (${job.sourceId})`);
+    return { created: 0 };
   }
 
-  // otherTopicsThisRun accumulates across this invocation's categories, seeded
-  // with whatever the other group already published today (empty on a
-  // full/manual run, or on group 1 since it runs first).
-  const otherTopicsThisRun: RunTopic[] = await getTodaysOtherCategoryTopics(slugs);
-  const resultsBySlug = new Map<PulseSlug, { created: number }>();
-  for (const slug of slugs) {
-    try {
-      resultsBySlug.set(slug, await syncPulseCategory(slug, otherTopicsThisRun));
-    } catch (err) {
-      console.error(`[pulse-service] ${slug} pipeline failed`, err);
-      resultsBySlug.set(slug, { created: 0 });
+  const content = await generateWithRunpod(buildPulseMessages(job), {
+    maxTokens: PULSE_MAX_TOKENS,
+  });
+  const out = parsePulseLlmOutput(content);
+  const body = buildPulseBodyHtml(out);
+  assertPulseBodyStructure(body);
+
+  // Keep pulse URLs date-free. If a slug collides, disambiguate with a
+  // non-date suffix so the URL shape remains /pulse/{pulseSlug}/{articleSlug}.
+  let articleSlug = resolveArticleSlug(out, pulseSlug);
+  if (used.slugs.has(articleSlug) || (await isSlugTakenAcrossVerticals(articleSlug))) {
+    let nextSlug = `${articleSlug}-${pulseSlug}`;
+    let attempt = 2;
+    while (used.slugs.has(nextSlug) || (await isSlugTakenAcrossVerticals(nextSlug))) {
+      nextSlug = `${articleSlug}-${pulseSlug}-${attempt}`;
+      attempt += 1;
     }
+    articleSlug = nextSlug;
   }
 
-  return Object.fromEntries(
-    allSlugs.map((slug) => [slug, resultsBySlug.get(slug) ?? { created: 0 }]),
-  ) as Record<PulseSlug, { created: number }>;
+  const sources = [...job.primary, ...job.context];
+  const times = job.primary.map((s) => s.publishedAt.getTime()).filter((t) => !Number.isNaN(t));
+
+  try {
+    await pulseArticle.create({
+      data: {
+        pulseSlug,
+        articleSlug,
+        title: out.title,
+        summary: out.summary,
+        body,
+        sourceUrl: job.primary[0]?.url || null,
+        category: pulseSlug,
+        observedStart: times.length ? new Date(Math.min(...times)) : null,
+        observedEnd: times.length ? new Date(Math.max(...times)) : null,
+        publishedAt: new Date(),
+        raw: {
+          sourceId: job.sourceId,
+          model: RUNPOD_MODEL,
+          topic: out.topic,
+          sources: sources.map((s) => ({
+            title: s.title,
+            url: s.url,
+            source: s.source,
+            publishedAt: s.publishedAt.toISOString(),
+          })),
+        },
+      },
+    });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      console.warn(`[pulse-service] ${pulseSlug}: slug race on "${articleSlug}", skipping`);
+      return { created: 0 };
+    }
+    throw err;
+  }
+
+  await notifyBing([`${SITE_URL}/pulse/${pulseSlug}/${articleSlug}`]);
+  console.log(`[pulse-service] ${pulseSlug}: created "${articleSlug}"`);
+  return { created: 1 };
 }
