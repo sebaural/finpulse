@@ -14,6 +14,7 @@ vi.mock('@/lib/macro-service', () => ({
 // runCronPipeline behavior (success → {success, article}; throw → 500).
 vi.mock('@/server/cron', () => ({
   isCronAuthorized: () => true,
+  isCronPaused: () => false,
   runCronPipeline: async (fn: () => Promise<unknown>) => {
     try {
       const article = await fn();

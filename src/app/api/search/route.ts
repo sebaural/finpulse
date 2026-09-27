@@ -65,10 +65,19 @@ async function fetchPulseResults(q: string): Promise<(SearchResult & { score: nu
 // window (see [slug]/page.tsx, page.tsx, and /api/*/articles/route.ts for
 // each vertical, which all call these with 30). Search must never index more
 // than the detail page can resolve, or results link to 404s.
+// The subset of each vertical's SummaryArticle that search reads.
+interface SearchableSummary {
+  title?: string;
+  summary?: string;
+  tags?: unknown;
+  slug?: string;
+  date?: string;
+}
+
 const SUMMARY_SECTIONS: {
   section: "markets" | "tech" | "geopolitics";
   urlPrefix: string;
-  fetcher: () => Promise<any[]>;
+  fetcher: () => Promise<SearchableSummary[]>;
 }[] = [
   { section: "markets", urlPrefix: "/markets", fetcher: () => getMarketsSummaryArticles(30) },
   { section: "tech", urlPrefix: "/tech", fetcher: () => getTechSummaryArticles(30) },
@@ -80,7 +89,7 @@ async function fetchSummarySectionResults(q: string): Promise<(SearchResult & { 
     SUMMARY_SECTIONS.map(async ({ section, urlPrefix, fetcher }) => ({
       section,
       urlPrefix,
-      items: await fetcher().catch((err) => {
+      items: await fetcher().catch((err): SearchableSummary[] => {
         console.error(`[search] ${section} fetch failed:`, err);
         return [];
       }),
@@ -92,7 +101,9 @@ async function fetchSummarySectionResults(q: string): Promise<(SearchResult & { 
   for (const { items, section, urlPrefix } of buckets) {
     for (const item of items) {
       const title: string = item.title ?? "";
-      const tags: string[] = Array.isArray(item.tags) ? item.tags : [];
+      const tags: string[] = Array.isArray(item.tags)
+        ? item.tags.filter((t): t is string => typeof t === "string")
+        : [];
       const cleanSummary: string = stripMarkdown(item.summary ?? "");
 
       const score =
@@ -133,6 +144,7 @@ export async function GET(req: NextRequest) {
     const results = [...pulseResults, ...summaryResults].sort((a, b) => b.score - a.score);
 
     return NextResponse.json({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- `score` is stripped, not used
       results: results.slice(0, 30).map(({ score, ...r }) => r),
     });
   } catch (err) {

@@ -259,53 +259,6 @@
   color: #d6e0ee;
 }
 
-.pulse-source-link {
-  display: inline-flex;
-  margin-top: 16px;
-  color: var(--pulse-accent);
-}
-
-.pulse-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  background: rgba(4, 6, 9, 0.78);
-  backdrop-filter: blur(3px);
-  display: grid;
-  place-items: center;
-  padding: 16px;
-}
-
-.pulse-modal {
-  width: min(860px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  border: 1px solid var(--pulse-border);
-  border-radius: 10px;
-  background: #121921;
-  color: var(--pulse-text);
-  padding: 22px 20px 24px;
-  position: relative;
-}
-
-.pulse-modal-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: 1px solid var(--pulse-border);
-  background: transparent;
-  color: var(--pulse-text);
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.pulse-modal-close:hover {
-  color: var(--pulse-accent);
-  border-color: var(--pulse-accent);
-}
-
 .pulse-highlights {
   margin: 0 0 20px;
   border-radius: 2px;

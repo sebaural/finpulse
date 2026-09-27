@@ -61,12 +61,3 @@ export function getPulseSourceId(article: PulseArticle): string | null {
   const raw = getPulseRaw(article);
   return typeof raw?.sourceId === 'string' && raw.sourceId.trim() ? raw.sourceId : null;
 }
-
-export interface GdeltSummaryRow {
-  [key: string]: unknown;
-}
-
-export interface GdeltSummaryResponse {
-  data?: GdeltSummaryRow[];
-  meta?: Record<string, unknown>;
-}

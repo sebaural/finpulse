@@ -129,14 +129,13 @@ export async function GET() {
   const uniqueSymbols = [...new Set(allSymbols)];
 
   const quoteMap = new Map<string, FinnhubQuote>();
-  const results = await Promise.allSettled(
+  await Promise.allSettled(
     uniqueSymbols.map(async (sym) => {
       const q = await fetchQuote(sym);
       if (q) quoteMap.set(sym, q);
     }),
   );
 
-  const totalFetched = results.filter((r) => r.status === 'fulfilled').length;
   // Check if we have at least SOME live data (lowered threshold from 3 to 2)
   // This makes the system more resilient to transient API failures
   const anyLive = quoteMap.size >= 2;

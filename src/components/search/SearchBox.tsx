@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { SearchResult } from "@/app/api/search/route";
@@ -33,24 +33,26 @@ export default function SearchBox({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // The query whose request last finished (successfully or not) — loading is
+  // derived from it rather than toggled inside the fetch effect.
+  const [settledQuery, setSettledQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const listboxId = useId();
   const debouncedQuery = useDebounce(query.trim(), 300);
+  const hasSearchableQuery = debouncedQuery.length >= 2;
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
+    // Too short to search: nothing to fetch. Any in-flight request was
+    // already aborted by the previous run's cleanup, and stale results are
+    // hidden via hasSearchableQuery below.
+    if (!hasSearchableQuery) return;
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setIsLoading(true);
 
     fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`, {
       signal: controller.signal,
@@ -59,17 +61,18 @@ export default function SearchBox({
       .then((data) => {
         setResults(data.results ?? []);
         setActiveIndex(-1);
+        setSettledQuery(debouncedQuery);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
           console.error("Search failed:", err);
           setResults([]);
+          setSettledQuery(debouncedQuery);
         }
-      })
-      .finally(() => setIsLoading(false));
+      });
 
     return () => controller.abort();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, hasSearchableQuery]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -81,7 +84,8 @@ export default function SearchBox({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const visibleResults = results.slice(0, maxResults);
+  const isLoading = hasSearchableQuery && settledQuery !== debouncedQuery;
+  const visibleResults = hasSearchableQuery ? results.slice(0, maxResults) : [];
   const showDropdown = isOpen && query.trim().length >= 2;
   const noResults = showDropdown && !isLoading && visibleResults.length === 0;
 
@@ -125,12 +129,13 @@ export default function SearchBox({
         autoFocus={autoFocus}
         aria-label="Search"
         aria-expanded={showDropdown}
+        aria-controls={listboxId}
         aria-autocomplete="list"
         role="combobox"
       />
 
       {showDropdown && (
-        <div className="searchbox-dropdown" role="listbox">
+        <div className="searchbox-dropdown" role="listbox" id={listboxId}>
           {isLoading && <div className="searchbox-status">Searching…</div>}
 
           {noResults && (

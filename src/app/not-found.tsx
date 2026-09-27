@@ -21,7 +21,7 @@ export default function NotFound() {
         <span className="notfound-code">404</span>
         <h1 className="notfound-title">Page not found</h1>
         <p className="notfound-subtitle">
-          The page you're looking for doesn't exist or may have moved.
+          The page you&rsquo;re looking for doesn&rsquo;t exist or may have moved.
         </p>
 
         <div className="notfound-search">

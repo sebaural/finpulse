@@ -88,11 +88,6 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
           ) : article.body ? (
             <article className="pulse-body">{article.body}</article>
           ) : null}
-          {article.sourceUrl ? (
-            <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="pulse-source-link">
-              View source
-            </a>
-          ) : null}
           {schemaMarkup ? (
             <script
               type="application/ld+json"

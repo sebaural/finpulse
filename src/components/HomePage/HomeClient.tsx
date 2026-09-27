@@ -48,17 +48,14 @@ function clientRelativeTime(publishedAt: string | undefined, fallback: string): 
 
 interface HomeClientProps {
   initialArticles: NewsArticle[];
-  initialUsingFallback: boolean;
   pulseLatest: Record<PulseSlug, PulseArticle | null>;
 }
 
 export default function HomeClient({
   initialArticles,
-  initialUsingFallback,
   pulseLatest,
 }: HomeClientProps) {
   const [allArticles, setAllArticles] = useState<NewsArticle[]>(initialArticles);
-  const [showFallbackBanner, setShowFallbackBanner] = useState(initialUsingFallback);
   const [hydrated, setHydrated] = useState(false);
   const [, setTick] = useState(0);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>(staticTickerItems);
@@ -86,9 +83,8 @@ export default function HomeClient({
       });
       if (res.ok) {
         const data = (await res.json()) as NewsResponse;
-        if (Array.isArray(data.articles) && typeof data.usingFallback === 'boolean') {
+        if (Array.isArray(data.articles)) {
           setAllArticles(data.articles);
-          setShowFallbackBanner(data.usingFallback);
         }
       }
     } catch {

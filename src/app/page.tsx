@@ -16,7 +16,7 @@ export const revalidate = 30;
 const homeBreadcrumbs = breadcrumbSchema([{ name: 'Home', url: canonicalUrl('/') }]);
 
 export default async function Page() {
-  const [{ articles, usingFallback }, pulseLatest] = await Promise.all([
+  const [{ articles }, pulseLatest] = await Promise.all([
     getAggregatedNews(),
     getLatestArticlePerCategory(),
   ]);
@@ -29,7 +29,6 @@ export default async function Page() {
       />
       <HomeClient
         initialArticles={articles}
-        initialUsingFallback={usingFallback}
         pulseLatest={pulseLatest}
       />
     </>
