@@ -8,7 +8,7 @@ const PULSE_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
 });
 
 export function getPulseDisplayDateSource(article: Pick<PulseArticle, 'observedStart' | 'publishedAt'>): string | null {
-  return article.observedStart ?? article.publishedAt ?? null;
+  return article.publishedAt ?? article.observedStart ?? null;
 }
 
 export function formatPulseDisplayDate(value: string | null | undefined): string | null {

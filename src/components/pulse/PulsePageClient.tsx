@@ -14,10 +14,10 @@ interface PulsePageClientProps {
   articles: PulseArticle[];
 }
 
-// Same key the row's meta line displays (`observedStart ?? publishedAt`), so the
+// Same key the row's meta line displays (`publishedAt ?? observedStart`), so the
 // sort order always matches the visible date. Missing/invalid dates sort last.
 function articleTimestamp(article: PulseArticle): number {
-  const value = article.observedStart ?? article.publishedAt;
+  const value = article.publishedAt ?? article.observedStart;
   if (!value) return -Infinity;
   const t = new Date(value).getTime();
   return Number.isNaN(t) ? -Infinity : t;

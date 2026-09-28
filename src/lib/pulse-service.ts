@@ -207,7 +207,7 @@ export async function getPulseArticles(pulseSlug: PulseSlug): Promise<PulseArtic
 
     const rows = await pulseArticle.findMany<PulseArticleRow>({
       where: { pulseSlug },
-      orderBy: [{ observedStart: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
     });
     return rows.map(toPulseArticle);
   } catch (error) {
@@ -240,12 +240,12 @@ export async function getPulseArticleBySlug(
   }
 }
 
-// Effective publish time for ordering: the observed date, falling back to the
-// stored publish time. Legacy rows have a null observedStart, so relying on the
-// DB's `observedStart desc` (NULLS FIRST in Postgres) would surface the oldest
-// row as "latest" — compute the max explicitly instead.
+// Effective publish time for ordering: when the article was generated
+// (publishedAt), falling back to observedStart. observedStart is the earliest
+// *source story* time, so a new article built from an older story would
+// otherwise sort below yesterday's and look like it was never generated.
 function pulseArticleTime(article: PulseArticle): number {
-  const value = article.observedStart ?? article.publishedAt;
+  const value = article.publishedAt ?? article.observedStart;
   if (!value) return -Infinity;
   const t = new Date(value).getTime();
   return Number.isNaN(t) ? -Infinity : t;
