@@ -1,0 +1,139 @@
+/* src/components/overview/SubscribeCta/SubscribeCta.css — /overview subscribe
+   CTA: desktop aside, mobile sticky bar, and the mobile modal. */
+
+.overview-subscribe-cta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.overview-cta-text {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+.overview-cta-text span {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
+}
+.overview-cta-input-group {
+  display: flex;
+  gap: 8px;
+}
+.overview-cta-input-group input {
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  min-width: 200px;
+}
+.overview-cta-input-group input::placeholder {
+  color: var(--muted);
+}
+.overview-cta-input-group input:focus {
+  border-color: var(--gold);
+}
+.overview-cta-button {
+  padding: 8px 18px;
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.overview-cta-button:hover {
+  opacity: 0.85;
+}
+
+/* Stacked layout for narrow containers (desktop aside + mobile modal). */
+.overview-aside .overview-subscribe-cta,
+.overview-subscribe-modal .overview-subscribe-cta {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+.overview-aside .overview-cta-input-group,
+.overview-subscribe-modal .overview-cta-input-group {
+  flex-direction: column;
+}
+.overview-aside .overview-cta-input-group input,
+.overview-subscribe-modal .overview-cta-input-group input {
+  min-width: 0;
+  width: 100%;
+}
+
+/* ── Mobile sticky bar (shown ≤1024px) ── */
+.overview-subscribe-bar {
+  display: none;
+  position: sticky;
+  top: 56px; /* below the sticky site header */
+  z-index: 50;
+  background: var(--bg);
+  padding: 10px 0;
+  margin-bottom: 16px;
+}
+.overview-subscribe-bar .overview-cta-button {
+  width: 100%;
+  padding: 12px 18px;
+}
+/* Kept in this file (after the display:none above) so cascade order can't
+   hide the bar — overview.css may load before or after this stylesheet. */
+@media (max-width: 1024px) {
+  .overview-subscribe-bar {
+    display: block;
+  }
+}
+
+/* ── Modal ── */
+.overview-subscribe-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100; /* above the site header (1000) */
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.overview-subscribe-modal {
+  position: relative;
+  width: min(480px, calc(100vw - 32px));
+}
+.overview-subscribe-modal .overview-subscribe-cta {
+  padding: 36px 24px 24px;
+}
+.overview-subscribe-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+.overview-subscribe-modal-close:hover {
+  color: var(--text);
+}

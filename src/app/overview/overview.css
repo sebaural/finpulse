@@ -25,14 +25,29 @@
   font-family: 'Fira Sans', sans-serif;
 }
 
-/* ── Main content ── */
-.overview-main {
-  padding: 40px 20px 80px;
-  max-width: 900px;
+/* ── Layout: header row, then main + subscribe aside ── */
+.overview-layout {
+  max-width: 1240px;
   margin: 0 auto;
+  padding: 40px 20px 80px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  column-gap: 32px;
+  align-items: start;
+}
+
+.overview-main {
+  min-width: 0;
+}
+
+/* Starts on the same row as .overview-controls, so their tops align. */
+.overview-aside {
+  position: sticky;
+  top: 72px; /* clears the sticky site header */
 }
 
 .overview-page-header {
+  grid-column: 1 / -1;
   margin-bottom: 24px;
 }
 
@@ -297,67 +312,6 @@
   visibility: visible;
 }
 
-/* ── Subscribe CTA ── */
-.overview-subscribe-cta {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 22px 24px;
-  margin: 36px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.overview-cta-text {
-  font-size: 14px;
-  color: var(--text);
-  font-weight: 500;
-}
-.overview-cta-text span {
-  color: var(--muted);
-  font-weight: 400;
-  font-size: 12px;
-  display: block;
-  margin-top: 2px;
-}
-.overview-cta-input-group {
-  display: flex;
-  gap: 8px;
-}
-.overview-cta-input-group input {
-  padding: 8px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
-  min-width: 200px;
-}
-.overview-cta-input-group input::placeholder {
-  color: var(--muted);
-}
-.overview-cta-button {
-  padding: 8px 18px;
-  background: var(--gold);
-  color: var(--bg);
-  border: none;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-.overview-cta-button:hover {
-  opacity: 0.85;
-}
-
 /* ── Pagination ── */
 .overview-pager {
   display: flex;
@@ -398,9 +352,20 @@
   letter-spacing: 0.05em;
 }
 
+/* Tablet/mobile: drop the aside, show the sticky subscribe bar instead. */
+@media (max-width: 1024px) {
+  .overview-layout {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 900px;
+  }
+  .overview-aside {
+    display: none;
+  }
+}
+
 /* Mobile */
 @media (max-width: 640px) {
-  .overview-main {
+  .overview-layout {
     padding: 24px 16px 60px;
   }
   .overview-search-box {
@@ -408,17 +373,6 @@
   }
   .overview-block-trigger {
     padding: 14px 40px 14px 16px;
-  }
-  .overview-subscribe-cta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .overview-cta-input-group {
-    flex-direction: column;
-    width: 100%;
-  }
-  .overview-cta-input-group input {
-    min-width: 100%;
   }
   .overview-pager {
     flex-wrap: wrap;

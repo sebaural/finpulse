@@ -5,26 +5,10 @@ import type { OverviewCategorySlug } from '@/lib/overview-categories';
 import type { OverviewDayView } from '@/types/overview';
 import OverviewControls from './OverviewControls';
 import OverviewBlockCard from './OverviewBlockCard';
+import MobileSubscribeBar from './SubscribeCta/MobileSubscribeBar';
 
 interface Props {
   days: OverviewDayView[];
-}
-
-function OverviewSubscribeCta() {
-  return (
-    <form className="overview-subscribe-cta" onSubmit={(e) => e.preventDefault()}>
-      <div className="overview-cta-text">
-        Get this briefing in your inbox every weekday
-        <span>Free. No spam. Unsubscribe anytime.</span>
-      </div>
-      <div className="overview-cta-input-group">
-        <input type="email" placeholder="your@email.com" />
-        <button type="submit" className="overview-cta-button">
-          Subscribe
-        </button>
-      </div>
-    </form>
-  );
 }
 
 export default function OverviewFeed({ days }: Props) {
@@ -66,6 +50,8 @@ export default function OverviewFeed({ days }: Props) {
         onCategoryChange={setActiveCategory}
       />
 
+      <MobileSubscribeBar />
+
       {filteredDays.length === 0 ? (
         <div className="overview-no-results">No briefings match your search or filter.</div>
       ) : (
@@ -91,8 +77,6 @@ export default function OverviewFeed({ days }: Props) {
           ))}
         </div>
       )}
-
-      <OverviewSubscribeCta />
     </>
   );
 }

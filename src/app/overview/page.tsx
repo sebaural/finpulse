@@ -8,6 +8,7 @@ import type { OverviewCategorySlug } from '@/lib/overview-categories';
 import type { OverviewDayView } from '@/types/overview';
 import SiteHeader from '@/components/SiteHeader';
 import OverviewFeed from '@/components/overview/OverviewFeed';
+import SubscribeCta from '@/components/overview/SubscribeCta/SubscribeCta';
 import './overview.css';
 
 export const metadata: Metadata = buildMetadata({
@@ -105,7 +106,7 @@ export default async function OverviewPage({ searchParams }: Props) {
             </p>
           </div>
         ) : (
-          <main className="overview-main">
+          <div className="overview-layout">
             <div className="overview-page-header">
               <h1 className="overview-headline">Daily Global Geopolitics Briefing</h1>
               <p className="overview-subtitle">
@@ -114,30 +115,36 @@ export default async function OverviewPage({ searchParams }: Props) {
               </p>
             </div>
 
-            <OverviewFeed days={dayViews} />
+            <main className="overview-main">
+              <OverviewFeed days={dayViews} />
 
-            {totalPages > 1 && (
-              <nav className="overview-pager" aria-label="Overview pagination">
-                {hasOlder ? (
-                  <Link href={`/overview?page=${currentPage + 1}`} className="overview-pager-link">
-                    ← Previous
-                  </Link>
-                ) : (
-                  <span className="overview-pager-disabled">← Previous</span>
-                )}
-                <span className="overview-pager-status">
-                  Page {currentPage} of {totalPages}
-                </span>
-                {hasNewer ? (
-                  <Link href={`/overview?page=${currentPage - 1}`} className="overview-pager-link">
-                    Next →
-                  </Link>
-                ) : (
-                  <span className="overview-pager-disabled">Next →</span>
-                )}
-              </nav>
-            )}
-          </main>
+              {totalPages > 1 && (
+                <nav className="overview-pager" aria-label="Overview pagination">
+                  {hasOlder ? (
+                    <Link href={`/overview?page=${currentPage + 1}`} className="overview-pager-link">
+                      ← Previous
+                    </Link>
+                  ) : (
+                    <span className="overview-pager-disabled">← Previous</span>
+                  )}
+                  <span className="overview-pager-status">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  {hasNewer ? (
+                    <Link href={`/overview?page=${currentPage - 1}`} className="overview-pager-link">
+                      Next →
+                    </Link>
+                  ) : (
+                    <span className="overview-pager-disabled">Next →</span>
+                  )}
+                </nav>
+              )}
+            </main>
+
+            <aside className="overview-aside">
+              <SubscribeCta />
+            </aside>
+          </div>
         )}
       </div>
     </>
