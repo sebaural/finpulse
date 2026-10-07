@@ -3,34 +3,53 @@ import { getPrisma } from '@/lib/db';
 type Vertical = 'geopolitics' | 'markets' | 'tech' | 'pulse';
 
 /**
- * Cross-vertical slug uniqueness guard.
+ * Slug uniqueness guard across all article tables.
  *
- * Prisma enforces uniqueness within each table (via the unique title) but slug
- * is shared across the three article tables with no cross-table constraint. The
- * edge router (get_article_topic_mapping) resolves a slug to a single topic, so
- * the same slug living in two verticals is ambiguous. Call before creating a new
- * article; pass `exclude` to skip the vertical you're writing into.
+ * Slug has no unique constraint in any table (only title is unique), and the
+ * same slug is ambiguous both across verticals and within one: /topics/ and
+ * legacy routes resolve a slug with findFirst, so a second row with that slug
+ * is unreachable. Every table is checked, including the one being written
+ * into; pass `ignore` to skip the row being updated so it doesn't collide with
+ * itself.
  */
 export async function isSlugTakenAcrossVerticals(
   slug: string,
-  exclude?: Vertical,
+  ignore?: { vertical: Vertical; id: string },
 ): Promise<boolean> {
   const prisma = getPrisma();
+  const notId = (vertical: Vertical) =>
+    ignore?.vertical === vertical ? { id: { not: ignore.id } } : {};
   const [geo, mkt, tech, pulse] = await Promise.all([
-    exclude === 'geopolitics'
-      ? null
-      : prisma.geopoliticsArticle.findFirst({ where: { slug }, select: { id: true } }),
-    exclude === 'markets'
-      ? null
-      : prisma.marketsArticle.findFirst({ where: { slug }, select: { id: true } }),
-    exclude === 'tech'
-      ? null
-      : prisma.techArticle.findFirst({ where: { slug }, select: { id: true } }),
-    exclude === 'pulse'
-      ? null
-      : prisma.pulseArticle.findFirst({ where: { articleSlug: slug }, select: { id: true } }),
+    prisma.geopoliticsArticle.findFirst({ where: { slug, ...notId('geopolitics') }, select: { id: true } }),
+    prisma.marketsArticle.findFirst({ where: { slug, ...notId('markets') }, select: { id: true } }),
+    prisma.techArticle.findFirst({ where: { slug, ...notId('tech') }, select: { id: true } }),
+    prisma.pulseArticle.findFirst({ where: { articleSlug: slug, ...notId('pulse') }, select: { id: true } }),
   ]);
   return !!(geo || mkt || tech || pulse);
+}
+
+/**
+ * Returns `base` if it's free, otherwise the first free slug in the sequence
+ * `{base}-{vertical}`, `{base}-{vertical}-2`, `{base}-{vertical}-3`, ...
+ * Disambiguates rather than dropping the article, so a day's content is never
+ * silently lost. Pass `ownId` when updating an existing row.
+ */
+export async function resolveUniqueSlug(
+  base: string,
+  vertical: Exclude<Vertical, 'pulse'>,
+  ownId?: string,
+): Promise<string> {
+  const ignore = ownId ? { vertical, id: ownId } : undefined;
+  let candidate = base;
+  let attempt = 1;
+  while (await isSlugTakenAcrossVerticals(candidate, ignore)) {
+    candidate = attempt === 1 ? `${base}-${vertical}` : `${base}-${vertical}-${attempt}`;
+    attempt += 1;
+  }
+  if (candidate !== base) {
+    console.warn(`[pipeline] Slug collision: "${base}" — disambiguating as "${candidate}"`);
+  }
+  return candidate;
 }
 
 // ---------------------------------------------------------------------------

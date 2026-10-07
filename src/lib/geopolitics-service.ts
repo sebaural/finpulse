@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -302,20 +302,15 @@ export async function saveSummaryArticle(
   let row: Awaited<ReturnType<typeof prisma.geopoliticsArticle.create>>;
 
   if (existing) {
+    // A same-day re-run may produce a new slug; check it against every other
+    // row (but not this one) before overwriting.
+    const slug = await resolveUniqueSlug(payload.slug, 'geopolitics', existing.id);
     row = await prisma.geopoliticsArticle.update({
       where: { id: existing.id },
-      data: payload,
+      data: { ...payload, slug },
     });
   } else {
-    // Cross-vertical slug collision guard. Disambiguate rather than drop the
-    // article so the day's content is never silently lost.
-    let slug = payload.slug;
-    if (await isSlugTakenAcrossVerticals(slug, 'geopolitics')) {
-      console.warn(
-        `[pipeline] Cross-vertical slug collision: "${slug}" — disambiguating as "${slug}-geopolitics"`,
-      );
-      slug = `${slug}-geopolitics`;
-    }
+    const slug = await resolveUniqueSlug(payload.slug, 'geopolitics');
     row = await prisma.geopoliticsArticle.create({ data: { ...payload, slug } });
   }
 

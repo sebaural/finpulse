@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/tech';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -270,20 +270,15 @@ export async function saveTechSummaryArticle(
   let row: Awaited<ReturnType<typeof prisma.techArticle.create>>;
 
   if (existing) {
+    // A same-day re-run may produce a new slug; check it against every other
+    // row (but not this one) before overwriting.
+    const slug = await resolveUniqueSlug(payload.slug, 'tech', existing.id);
     row = await prisma.techArticle.update({
       where: { id: existing.id },
-      data: payload,
+      data: { ...payload, slug },
     });
   } else {
-    // Cross-vertical slug collision guard. Disambiguate rather than drop the
-    // article so the day's content is never silently lost.
-    let slug = payload.slug;
-    if (await isSlugTakenAcrossVerticals(slug, 'tech')) {
-      console.warn(
-        `[pipeline] Cross-vertical slug collision: "${slug}" — disambiguating as "${slug}-tech"`,
-      );
-      slug = `${slug}-tech`;
-    }
+    const slug = await resolveUniqueSlug(payload.slug, 'tech');
     row = await prisma.techArticle.create({ data: { ...payload, slug } });
   }
 
