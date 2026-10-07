@@ -16,12 +16,15 @@ export function getPrisma(): PrismaClient {
   }
 
   const prisma = new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    // Cap the pool per instance: Fluid Compute reuses instances across
+    // requests, and the Supabase pooler allows only 200 client connections.
+    adapter: new PrismaPg({ connectionString, max: 5 }),
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = prisma;
-  }
+  // Cache in every environment. Caching only outside production created a
+  // new, never-closed pool on every call in prod, which exhausted the pooler
+  // (EMAXCONN) and turned crawled pages into 404s/500s.
+  globalForPrisma.prisma = prisma;
 
   return prisma;
 }

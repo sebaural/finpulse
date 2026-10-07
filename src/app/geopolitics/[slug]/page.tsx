@@ -2,7 +2,8 @@
 
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getSummaryArticles } from '@/lib/geopolitics-service';
+import { cache } from 'react';
+import { getSummaryArticles, getSummaryArticleBySlug } from '@/lib/geopolitics-service';
 import { fetchArticleBySlug } from '@/lib/topics-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import GeopoliticsPageClient from '@/components/geopolitics/GeopoliticsPageClient';
@@ -21,15 +22,26 @@ import '@/components/geopolitics/geopolitics.css';
 
 export const revalidate = 3600;
 
+// The latest 30 feed the client's article switcher. Older articles are looked
+// up directly by slug and prepended, so every stored article stays reachable.
+const loadArticles = cache(async (slug: string) => {
+  const canonicalSlug = canonicalizeSlug(slug);
+  const articles = await getSummaryArticles(30);
+  const inList = articles.find((a) => canonicalizeSlug(a.slug) === canonicalSlug);
+  if (inList) return { articles, article: inList };
+  const article = await getSummaryArticleBySlug(slug);
+  return article
+    ? { articles: [article, ...articles], article }
+    : { articles, article: undefined };
+});
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const canonicalSlug = canonicalizeSlug(slug);
-  const articles = await getSummaryArticles(30);
-  const article = articles.find((a) => canonicalizeSlug(a.slug) === canonicalSlug);
+  const { article } = await loadArticles(slug);
 
   if (!article) {
     return { title: 'Article not found' };
@@ -54,9 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function GeopoliticsArticlePage({ params }: Props) {
   const { slug } = await params;
-  const canonicalSlug = canonicalizeSlug(slug);
-  const articles = await getSummaryArticles(30);
-  const article = articles.find((a) => canonicalizeSlug(a.slug) === canonicalSlug);
+  const { articles, article } = await loadArticles(slug);
 
   if (!article) {
     notFound();

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { PulsePageClient } from '@/components/pulse/PulsePageClient';
 import { PULSE_CATEGORIES, PULSE_SLUGS, resolvePulseSlug } from '@/lib/pulse-categories';
 import { getPulseArticles } from '@/lib/pulse-service';
-import { buildMetadata } from '@/lib/seo';
+import { breadcrumbSchema, buildMetadata, canonicalUrl, jsonLd } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,20 @@ export default async function PulsePage({ params }: PulsePageProps) {
   const config = PULSE_CATEGORIES[pulseSlug];
   const articles = await getPulseArticles(pulseSlug);
 
-  return <PulsePageClient config={config} articles={articles} />;
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Home', url: canonicalUrl('/') },
+    { name: `${config.label} Pulse`, url: canonicalUrl(`/pulse/${pulseSlug}`) },
+  ]);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+      />
+      <PulsePageClient config={config} articles={articles} />
+    </>
+  );
 }
 
 export function generateStaticParams() {

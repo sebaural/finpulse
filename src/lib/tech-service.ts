@@ -315,6 +315,22 @@ export async function getTechSummaryArticleByDate(date: string): Promise<Summary
   }
 }
 
+// Direct slug lookup so article routes resolve any stored article, not just
+// the latest N rows (older sitemap URLs were 404ing).
+export async function getTechSummaryArticleBySlug(slug: string): Promise<SummaryArticle | null> {
+  try {
+    const prisma = getPrisma();
+    const canonical = canonicalizeSlug(slug);
+    const row = await prisma.techArticle.findFirst({
+      where: { slug: { in: Array.from(new Set([slug, canonical])) } },
+    });
+    return row ? mapDbToSummary(row) : null;
+  } catch (error) {
+    console.error('[tech-service] failed to load summary article by slug', error);
+    return null;
+  }
+}
+
 export async function runDailyTechPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopTechArticles();
 

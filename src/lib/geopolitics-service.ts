@@ -347,6 +347,22 @@ export async function getSummaryArticleByDate(date: string): Promise<SummaryArti
   }
 }
 
+// Direct slug lookup so article routes resolve any stored article, not just
+// the latest N rows (older sitemap URLs were 404ing).
+export async function getSummaryArticleBySlug(slug: string): Promise<SummaryArticle | null> {
+  try {
+    const prisma = getPrisma();
+    const canonical = canonicalizeSlug(slug);
+    const row = await prisma.geopoliticsArticle.findFirst({
+      where: { slug: { in: Array.from(new Set([slug, canonical])) } },
+    });
+    return row ? mapDbToSummary(row) : null;
+  } catch (error) {
+    console.error('[geopolitics-service] failed to load summary article by slug', error);
+    return null;
+  }
+}
+
 export async function runDailyGeopoliticsPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopGeopoliticsArticles();
 

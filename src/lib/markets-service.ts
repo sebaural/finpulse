@@ -337,6 +337,22 @@ export async function getMarketsSummaryArticleByDate(date: string): Promise<Summ
   }
 }
 
+// Direct slug lookup so article routes resolve any stored article, not just
+// the latest N rows (older sitemap URLs were 404ing).
+export async function getMarketsSummaryArticleBySlug(slug: string): Promise<SummaryArticle | null> {
+  try {
+    const prisma = getPrisma();
+    const canonical = canonicalizeSlug(slug);
+    const row = await prisma.marketsArticle.findFirst({
+      where: { slug: { in: Array.from(new Set([slug, canonical])) } },
+    });
+    return row ? mapDbToSummary(row) : null;
+  } catch (error) {
+    console.error('[markets-service] failed to load summary article by slug', error);
+    return null;
+  }
+}
+
 export async function runDailyMarketsPipeline(): Promise<SummaryArticle> {
   const articles = await fetchTopMarketsArticles();
 

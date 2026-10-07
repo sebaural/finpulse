@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchTopicBySlug } from '@/lib/topics-service';
 import NavMenu from '@/components/topNav/NavMenu';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL, breadcrumbSchema, canonicalUrl, jsonLd } from '@/lib/seo';
 import '@/components/geopolitics/geopolitics.css';
 
 // Next.js 16: params is async and must be awaited.
@@ -43,63 +43,74 @@ export default async function TopicHubPage({ params }: Props) {
     ...topic.techArticles,
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Home', url: canonicalUrl('/') },
+    { name: topic.name, url: canonicalUrl(`/topics/${topicSlug}`) },
+  ]);
+
   return (
-    <div className="geo-root">
-      {/* Geopolitics-style dark top nav (kept inside geo-root for the theme). */}
-      <div
-        className="geo-top-nav"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '6px 24px',
-          borderBottom: '1px solid #1e2530',
-          background: '#111418',
-        }}
-      >
-        <Link
-          href="/"
-          className="logo"
-          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+      />
+      <div className="geo-root">
+        {/* Geopolitics-style dark top nav (kept inside geo-root for the theme). */}
+        <div
+          className="geo-top-nav"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 24px',
+            borderBottom: '1px solid #1e2530',
+            background: '#111418',
+          }}
         >
-          <Image
-            src="/macrostance-logo.png"
-            alt="MacroStance mark"
-            className="logo-mark"
-            width={40}
-            height={40}
-            priority
-          />
-          <span>MacroStance</span>
-        </Link>
-        <NavMenu variant="dark" />
+          <Link
+            href="/"
+            className="logo"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Image
+              src="/macrostance-logo.png"
+              alt="MacroStance mark"
+              className="logo-mark"
+              width={40}
+              height={40}
+              priority
+            />
+            <span>MacroStance</span>
+          </Link>
+          <NavMenu variant="dark" />
+        </div>
+
+        <main className="geo-main">
+          <article>
+            <h1 className="geo-headline">{topic.name}</h1>
+            <hr className="geo-rule" />
+            {topic.description && <p className="geo-tagline">{topic.description}</p>}
+
+            {briefings.length === 0 ? (
+              <p>No briefings published in this topic yet.</p>
+            ) : (
+              <>
+                <h2 className="geo-sources-title">Briefings</h2>
+                <div className="geo-sources-grid">
+                  {briefings.map((b) => (
+                    <div key={`${topicSlug}-${b.slug}`} className="geo-source-card">
+                      <p className="geo-source-name">{formatDate(b.createdAt)}</p>
+                      <Link href={`/topics/${topicSlug}/${b.slug}`} className="geo-source-link">
+                        {b.title}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </article>
+        </main>
       </div>
-
-      <main className="geo-main">
-        <article>
-          <h1 className="geo-headline">{topic.name}</h1>
-          <hr className="geo-rule" />
-          {topic.description && <p className="geo-tagline">{topic.description}</p>}
-
-          {briefings.length === 0 ? (
-            <p>No briefings published in this topic yet.</p>
-          ) : (
-            <>
-              <h2 className="geo-sources-title">Briefings</h2>
-              <div className="geo-sources-grid">
-                {briefings.map((b) => (
-                  <div key={`${topicSlug}-${b.slug}`} className="geo-source-card">
-                    <p className="geo-source-name">{formatDate(b.createdAt)}</p>
-                    <Link href={`/topics/${topicSlug}/${b.slug}`} className="geo-source-link">
-                      {b.title}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </article>
-      </main>
-    </div>
+    </>
   );
 }

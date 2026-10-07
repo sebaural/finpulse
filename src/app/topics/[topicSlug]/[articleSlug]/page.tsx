@@ -7,12 +7,22 @@ import { fetchArticleBySlug } from '@/lib/topics-service';
 import AuthorBioCard from '@/components/author/AuthorBioCard';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
 import NavMenu from '@/components/topNav/NavMenu';
-import { SITE_URL } from '@/lib/seo';
+import { generateArticleMetadata } from '@/lib/metadata';
+import {
+  SITE_URL,
+  breadcrumbSchema,
+  canonicalUrl,
+  jsonLd,
+  newsArticleSchema,
+} from '@/lib/seo';
+import { truncateDescription } from '@/lib/stripMarkdown';
 import '@/components/geopolitics/geopolitics.css';
 import './topics.css';
 
 // Next.js 16: params is async and must be awaited.
 type Props = { params: Promise<{ topicSlug: string; articleSlug: string }> };
+
+const SECTION_LABEL = { geopolitics: 'Geopolitics', markets: 'Markets', tech: 'Technology' } as const;
 
 interface SourceArticleLike {
   source?: string;
@@ -73,13 +83,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = await fetchArticleBySlug(articleSlug);
   if (!article || !article.data.topic) return {};
 
-  return {
-    title: `${article.data.title}`,
-    description: `Institutional macro analysis covering structural trends inside ${article.data.topic.name}.`,
-    alternates: {
-      canonical: `${SITE_URL}/topics/${topicSlug}/${articleSlug}`,
-    },
-  };
+  const tags = Array.isArray(article.data.tags) ? (article.data.tags as string[]) : [];
+
+  return generateArticleMetadata({
+    section: article.type,
+    title: article.data.title,
+    summary: truncateDescription(article.data.summary, 160),
+    slug: articleSlug,
+    publishedTime: article.data.createdAt.toISOString(),
+    modifiedTime: article.data.updatedAt.toISOString(),
+    tags,
+    canonicalUrl: canonicalUrl(`/topics/${topicSlug}/${articleSlug}`),
+  });
 }
 
 export default async function ArticleSpokePage({ params }: Props) {
@@ -101,24 +116,18 @@ export default async function ArticleSpokePage({ params }: Props) {
     ? (data.sourceArticles as SourceArticleLike[])
     : [];
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'AnalysisNewsArticle',
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': pageUrl,
-    },
-    headline: data.title,
-    datePublished: data.createdAt.toISOString(),
-    dateModified: data.updatedAt.toISOString(),
-    publisher: {
-      '@type': 'Organization',
-      name: 'MacroStance',
-      url: SITE_URL,
-      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
-    },
-    backstory:
-      'This intelligence brief was built via primary sources, data analysis, and cross-border economic monitoring pipelines.',
+  const articleSchema = {
+    ...newsArticleSchema({
+      title: data.title,
+      description: truncateDescription(data.summary, 300),
+      url: pageUrl,
+      image: [`${SITE_URL}/macrostance_X.png`],
+      datePublished: data.createdAt.toISOString(),
+      dateModified: data.updatedAt.toISOString(),
+      section: SECTION_LABEL[article.type],
+      tags,
+      backstory: keyPoints[0],
+    }),
     about: {
       '@type': 'Thing',
       name: topic.name,
@@ -126,11 +135,21 @@ export default async function ArticleSpokePage({ params }: Props) {
     },
   };
 
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Home', url: canonicalUrl('/') },
+    { name: topic.name, url: canonicalUrl(`/topics/${topicSlug}`) },
+    { name: data.title, url: pageUrl },
+  ]);
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
       <div className="geo-root topics-root">
         {/* Geopolitics-style dark top nav (kept inside geo-root for the theme). */}

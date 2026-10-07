@@ -7,7 +7,7 @@ import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-d
 import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
 import { getPulseArticleBySlug, getLatestArticlePerCategory } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
-import { canonicalUrl } from '@/lib/seo';
+import { breadcrumbSchema, canonicalUrl, jsonLd } from '@/lib/seo';
 import { getPulseSchemaMarkup } from '@/types/pulse';
 import '@/components/pulse/pulse.css';
 
@@ -49,10 +49,19 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
   if (!article) notFound();
   const breadcrumbDate = formatPulseDisplayDate(getPulseDisplayDateSource(article));
   const schemaMarkup = getPulseSchemaMarkup(article);
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Home', url: canonicalUrl('/') },
+    { name: `${config.label} Pulse`, url: canonicalUrl(`/pulse/${pulseSlug}`) },
+    { name: article.title, url: canonicalUrl(`/pulse/${pulseSlug}/${articleSlug}`) },
+  ]);
   const pulseLatest = await getLatestArticlePerCategory();
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+      />
       <PulseHeader />
       <main className="pulse-page pulse-article-page">
 
