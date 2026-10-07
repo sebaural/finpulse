@@ -124,7 +124,17 @@ export async function GET() {
   xml += markets.map((r) => buildEntry('markets', r)).join('');
   xml += tech.map((r) => buildEntry('tech', r)).join('');
   xml += pulse.map(buildPulseEntry).join('');
-  xml += [...geoTopics, ...marketTopics, ...techTopics].map(buildTopicEntry).join('');
+  // Some verticals hold several rows with the same slug under one topic; they
+  // all resolve to a single /topics/ URL, so emit each URL only once.
+  const seenTopicUrls = new Set<string>();
+  const topicRows = [...geoTopics, ...marketTopics, ...techTopics].filter((r) => {
+    if (!r.topic || !r.slug) return false;
+    const key = `${r.topic.slug}/${r.slug}`;
+    if (seenTopicUrls.has(key)) return false;
+    seenTopicUrls.add(key);
+    return true;
+  });
+  xml += topicRows.map(buildTopicEntry).join('');
   xml += `</urlset>`;
 
   // Note: the route itself no longer has a top-level try/catch. It doesn't

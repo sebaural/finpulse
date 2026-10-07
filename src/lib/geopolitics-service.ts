@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildTopicDirective, canonicalizeSlug, getTopicChoices, isSlugTakenAcrossVerticals, parseClaudeJson, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -352,9 +352,12 @@ export async function getSummaryArticleByDate(date: string): Promise<SummaryArti
 export async function getSummaryArticleBySlug(slug: string): Promise<SummaryArticle | null> {
   try {
     const prisma = getPrisma();
-    const canonical = canonicalizeSlug(slug);
+    // Route params can arrive percent-encoded (d%C3%A9tente) while stored
+    // slugs may keep accents (détente), so try every plausible spelling.
+    const decoded = safeDecodeSlug(slug);
+    const candidates = [slug, decoded, decoded.normalize('NFC'), canonicalizeSlug(slug)];
     const row = await prisma.geopoliticsArticle.findFirst({
-      where: { slug: { in: Array.from(new Set([slug, canonical])) } },
+      where: { slug: { in: Array.from(new Set(candidates)) } },
     });
     return row ? mapDbToSummary(row) : null;
   } catch (error) {

@@ -111,7 +111,7 @@ interface SourceArticleLike {
   description?: string;
 }
 
-function safeDecodeSlug(slug: string): string {
+export function safeDecodeSlug(slug: string): string {
   try {
     return decodeURIComponent(slug);
   } catch {
