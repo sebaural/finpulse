@@ -193,7 +193,7 @@ export default function HomeClient({
           <div className="main-content">
 
             <section className="hero">
-              <h1>Real-time intelligence at the intersection of markets, policy, and technology.</h1>
+              <h1>Real-time intelligence on markets, policy, and tech.</h1>
               <p>
                 Real-time news and expert analysis that transforms complex
                 global developments into clear breakdowns.
