@@ -235,19 +235,48 @@ function stripFences(text: string): string {
   return cleaned;
 }
 
-function extractJsonText(content: Anthropic.Messages.ContentBlock[]): string {
-  // The final answer is a text block; web search / thinking blocks precede it.
-  // Walk from the end and return the last text block that actually holds a JSON
-  // object. Taking the *last* text block unconditionally is fragile: the model
-  // sometimes ends its turn with a trailing commentary block ("Let me now …")
-  // AFTER the JSON, which would otherwise be parsed and fail.
+/** Concatenated text of the final answer: every text block after the last web-search block. */
+export function finalAnswerText(content: Anthropic.Messages.ContentBlock[]): string {
+  let start = 0;
   for (let i = content.length - 1; i >= 0; i--) {
-    const block = content[i];
-    if (block.type === 'text' && stripFences(block.text).startsWith('{')) {
-      return block.text;
+    const type = content[i].type;
+    if (type === 'server_tool_use' || type === 'web_search_tool_result') {
+      start = i + 1;
+      break;
     }
   }
-  throw new Error('No JSON object found in Claude response text blocks');
+  return content
+    .slice(start)
+    .map((block) => (block.type === 'text' ? block.text : ''))
+    .join('');
+}
+
+export function extractJsonText(content: Anthropic.Messages.ContentBlock[]): string {
+  // With web search enabled the final answer is usually split across SEVERAL
+  // text blocks (citations break it into chunks), and the model sometimes adds
+  // a prose lead-in before the JSON or a trailing commentary after it. Picking a
+  // single block that "starts with {" failed intermittently (missing days
+  // 2026-10-06 / 2026-10-09), so join the final answer and slice the outermost
+  // {...} span instead.
+  const text = stripFences(finalAnswerText(content));
+  const first = text.indexOf('{');
+  const last = text.lastIndexOf('}');
+  if (first === -1 || last <= first) {
+    throw new Error('No JSON object found in Claude response text blocks');
+  }
+  return text.slice(first, last + 1);
+}
+
+/** Log enough of a failed response to diagnose it inside Vercel's short log window. */
+function logMacroResponseFailure(response: Anthropic.Messages.Message, err: unknown): void {
+  const text = finalAnswerText(response.content);
+  console.error('[macro-service] could not parse macro response', {
+    error: err instanceof Error ? err.message : String(err),
+    stopReason: response.stop_reason,
+    blockTypes: response.content.map((b) => b.type),
+    textHead: text.slice(0, 500),
+    textTail: text.slice(-500),
+  });
 }
 
 // Each multi-turn web-search round trip is a separate network call that can
@@ -327,7 +356,14 @@ export async function generateMacroArticle(): Promise<{
     throw new Error('Claude did not finish the macro turn after 5 continuations (still paused)');
   }
 
-  const parsed = parseClaudeJson<ClaudeMacroResponse>(extractJsonText(response.content));
+  let parsed: ClaudeMacroResponse;
+  try {
+    parsed = parseClaudeJson<ClaudeMacroResponse>(extractJsonText(response.content));
+  } catch (err) {
+    logMacroResponseFailure(response, err);
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`${message} (stop_reason: ${response.stop_reason})`);
+  }
 
   // Validate the four keys are present and body is non-empty HTML.
   const missing = (['title', 'slug', 'publishedDate', 'body'] as const).filter(
