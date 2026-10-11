@@ -114,7 +114,7 @@ export default function GeopoliticsPageClient({ articles, initialArticleId }: Pr
         {/* ── Top nav bar ── */}
         <div className="geo-top-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 24px', borderBottom: '1px solid #1e2530', background: '#111418' }}>
           <Link href="/" className="logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <Image src="/macrostance-logo-512.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
             <span>MacroStance</span>
           </Link>
           <NavMenu variant="dark" />

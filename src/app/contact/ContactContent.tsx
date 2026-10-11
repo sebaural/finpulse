@@ -224,7 +224,7 @@ export default function ContactContent() {
           <aside className="contact-details-card" aria-label="Contact information">
             <div className="contact-logo-row">
               <Image
-                src="/macrostance-logo.png"
+                src="/macrostance-logo-512.png"
                 alt="MacroStance logo"
                 width={48}
                 height={48}

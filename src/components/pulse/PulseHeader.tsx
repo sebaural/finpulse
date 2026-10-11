@@ -9,7 +9,7 @@ export default function PulseHeader() {
   return (
     <header>
       <div className="header-inner"><Link href="/" className="logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <Image src="/macrostance-logo-512.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
             <span className='pulse-logo-text'>MacroStance</span>
           </Link>
         <NavMenu />

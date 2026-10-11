@@ -10,8 +10,7 @@ import {
   SITE_NAME,
   DEFAULT_OG_IMAGE,
   jsonLd,
-  newsMediaOrganizationSchema,
-  webSiteSchema,
+  siteEntityGraph,
 } from '@/lib/seo';
 import './globals.css';
 
@@ -84,9 +83,14 @@ export const metadata: Metadata = {
     images: [DEFAULT_OG_IMAGE],
   },
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    // Derived from public/macrostance-logo-512.png. Google Search favicons
+    // must be a multiple of 48px.
+    icon: [
+      { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicon-48.png',
+    apple: { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
   },
   category: 'finance',
   verification: {
@@ -109,11 +113,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLd(newsMediaOrganizationSchema()) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLd(webSiteSchema()) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(siteEntityGraph()) }}
         />
         <link rel="describedby" href="/llms.txt" type="text/plain" />
         <GTMScript />

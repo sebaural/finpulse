@@ -181,7 +181,7 @@ export default function HomeClient({
       <header>
         <div className="header-inner">
           <div className="logo">
-            <Image src="/macrostance-logo.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
+            <Image src="/macrostance-logo-512.png" alt="MacroStance mark" className="logo-mark" width={40} height={40} priority />
             <span>MacroStance</span>
           </div>
           <NavMenu />

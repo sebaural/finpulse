@@ -10,7 +10,7 @@ export default function SiteHeader() {
       <div className="header-inner">
         <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
           <Image
-            src="/macrostance-logo.png"
+            src="/macrostance-logo-512.png"
             alt="MacroStance mark"
             className="logo-mark"
             width={40}

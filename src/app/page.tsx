@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import HomeClient from '@/components/HomePage/HomeClient';
 import { getAggregatedNews } from '@/server/news';
 import { getLatestArticlePerCategory } from '@/lib/pulse-service';
-import { canonicalUrl } from '@/lib/seo';
+import { canonicalUrl, homepageSchemaGraph, jsonLd } from '@/lib/seo';
 
 // Only `alternates` is set here (rather than a full buildMetadata() call) so
 // the homepage keeps inheriting its richer title/robots/openGraph/twitter
@@ -20,9 +20,15 @@ export default async function Page() {
   ]);
 
   return (
-    <HomeClient
-      initialArticles={articles}
-      pulseLatest={pulseLatest}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(homepageSchemaGraph()) }}
+      />
+      <HomeClient
+        initialArticles={articles}
+        pulseLatest={pulseLatest}
+      />
+    </>
   );
 }

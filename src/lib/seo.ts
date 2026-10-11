@@ -2,11 +2,17 @@ import type { Metadata } from 'next';
 
 export const SITE_URL = 'https://macrostance.com';
 export const SITE_NAME = 'MacroStance';
-export const SITE_LOGO = `${SITE_URL}/macrostance-logo.png`;
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/macrostance-logo.png`;
+// Square publisher logo — Google requires ≥112×112; keep width/height in sync
+// with the actual file in public/.
+export const SITE_LOGO = `${SITE_URL}/macrostance-logo-512.png`;
+export const SITE_LOGO_WIDTH = 1024;
+export const SITE_LOGO_HEIGHT = 1024;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/macrostance_X.png`;
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
+export const LOGO_ID = `${SITE_URL}/#logo`;
+export const HOMEPAGE_ID = `${SITE_URL}/#webpage`;
 export const AUTHOR_SEBASTIAN_ID = `${SITE_URL}/#sebastian-pereira`;
 export const AUTHOR_SEBASTIAN_SLUG = 'sebastian-pereira';
 
@@ -91,14 +97,23 @@ export function newsMediaOrganizationSchema() {
     url: SITE_URL,
     logo: {
       '@type': 'ImageObject',
+      '@id': LOGO_ID,
       url: SITE_LOGO,
-      width: 512,
-      height: 512,
+      contentUrl: SITE_LOGO,
+      width: SITE_LOGO_WIDTH,
+      height: SITE_LOGO_HEIGHT,
+      caption: SITE_NAME,
     },
+    image: { '@id': LOGO_ID },
     foundingDate: '2024',
     description: SITE_DESCRIPTION,
+    // Publisher-trust policies (schema.org NewsMediaOrganization / Trust Project).
+    publishingPrinciples: canonicalUrl('/editorial-standards'),
+    ethicsPolicy: canonicalUrl('/editorial-standards'),
+    correctionsPolicy: canonicalUrl('/editorial-standards'),
+    actionableFeedbackPolicy: canonicalUrl('/contact'),
+    masthead: canonicalUrl('/about'),
     sameAs: [
-      'https://www.linkedin.com/company/macrostance',
       'https://x.com/macrostance',
       'https://www.crunchbase.com/organization/macrostance',
     ],
@@ -107,12 +122,14 @@ export function newsMediaOrganizationSchema() {
         '@type': 'ContactPoint',
         contactType: 'customer service',
         email: 'hello@macrostance.com',
+        url: canonicalUrl('/contact'),
         availableLanguage: ['English'],
       },
       {
         '@type': 'ContactPoint',
         contactType: 'press',
         email: 'press@macrostance.com',
+        url: canonicalUrl('/contact'),
         availableLanguage: ['English'],
       },
     ],
@@ -141,18 +158,51 @@ export function webSiteSchema() {
     '@type': 'WebSite',
     '@id': WEBSITE_ID,
     name: SITE_NAME,
+    alternateName: 'MacroStance Financial News',
     url: SITE_URL,
     description: SITE_DESCRIPTION,
     inLanguage: 'en-US',
     publisher: publisherRef(),
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+  };
+}
+
+/** Drop a node's own `@context` so it can be nested inside an `@graph`. */
+function graphNode<T extends Record<string, unknown>>(node: T) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { '@context': _ctx, ...rest } = node;
+  return rest;
+}
+
+/** Sitewide publisher entity graph (Organization + WebSite), emitted from the root layout. */
+export function siteEntityGraph() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [graphNode(newsMediaOrganizationSchema()), graphNode(webSiteSchema())],
+  };
+}
+
+/**
+ * Homepage-only graph: the WebPage node for `/` plus the founder's Person node,
+ * so the Organization's `founder` reference resolves on the homepage.
+ */
+export function homepageSchemaGraph() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': HOMEPAGE_ID,
+        url: `${SITE_URL}/`,
+        name: 'Real-Time Financial News & Market Headlines | MacroStance',
+        description: SITE_DESCRIPTION,
+        inLanguage: 'en-US',
+        isPartOf: websiteRef(),
+        about: publisherRef(),
+        publisher: publisherRef(),
+        primaryImageOfPage: { '@id': LOGO_ID },
       },
-      'query-input': 'required name=search_term_string',
-    },
+      graphNode(sebastianPereiraSchema()),
+    ],
   };
 }
 

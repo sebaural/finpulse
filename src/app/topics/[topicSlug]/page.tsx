@@ -73,7 +73,7 @@ export default async function TopicHubPage({ params }: Props) {
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <Image
-              src="/macrostance-logo.png"
+              src="/macrostance-logo-512.png"
               alt="MacroStance mark"
               className="logo-mark"
               width={40}
