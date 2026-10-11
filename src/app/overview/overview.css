@@ -279,11 +279,12 @@
 
 .overview-block-chevron {
   position: absolute;
-  width: 20px;
+  width: 30px;
+  height: 30px;
   right: 18px;
   bottom: 0;
   background: #000;
-  border: 1px solid var(--border);
+  border: 1px solid var(--muted);
   border-radius: 50%;
   padding: 0;
   font-size: 14px;
