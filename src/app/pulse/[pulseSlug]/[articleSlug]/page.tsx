@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import PulseHeader from '@/components/pulse/PulseHeader';
 import { PULSE_CATEGORIES, resolvePulseSlug } from '@/lib/pulse-categories';
 import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
 import { isHtmlFragment, sanitizeArticleHtml } from '@/lib/article-html';
-import { getPulseArticleBySlug, getLatestArticlePerCategory } from '@/lib/pulse-service';
+import {
+  findPulseArticleByArticleSlug,
+  getPulseArticleBySlug,
+  getLatestArticlePerCategory,
+} from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { breadcrumbSchema, canonicalUrl, jsonLd } from '@/lib/seo';
 import { getPulseSchemaMarkup } from '@/types/pulse';
@@ -19,13 +23,25 @@ interface ArticlePageProps {
   params: Promise<{ pulseSlug: string; articleSlug: string }>;
 }
 
+// Articles that moved category (e.g. information→technology rename) 308 to their
+// current URL instead of soft-404ing (200 + Next's auto "noindex"). Called from
+// generateMetadata too, which Next resolves before streaming for crawlers, so
+// Googlebot gets a real redirect status rather than a meta refresh.
+async function redirectIfMoved(rawPulseSlug: string, articleSlug: string): Promise<void> {
+  const moved = await findPulseArticleByArticleSlug(articleSlug);
+  if (moved && moved.pulseSlug !== resolvePulseSlug(rawPulseSlug)) {
+    permanentRedirect(`/pulse/${moved.pulseSlug}/${articleSlug}`);
+  }
+}
+
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { pulseSlug: rawPulseSlug, articleSlug } = await params;
   const pulseSlug = resolvePulseSlug(rawPulseSlug);
-  if (!pulseSlug) return {};
-
-  const article = await getPulseArticleBySlug(pulseSlug, articleSlug);
-  if (!article) return {};
+  const article = pulseSlug ? await getPulseArticleBySlug(pulseSlug, articleSlug) : null;
+  if (!pulseSlug || !article) {
+    await redirectIfMoved(rawPulseSlug, articleSlug);
+    return {};
+  }
 
   return generateArticleMetadata({
     section: 'pulse',
@@ -42,11 +58,12 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 export default async function PulseArticlePage({ params }: ArticlePageProps) {
   const { pulseSlug: rawPulseSlug, articleSlug } = await params;
   const pulseSlug = resolvePulseSlug(rawPulseSlug);
-  if (!pulseSlug) notFound();
+  const article = pulseSlug ? await getPulseArticleBySlug(pulseSlug, articleSlug) : null;
+  if (!pulseSlug || !article) {
+    await redirectIfMoved(rawPulseSlug, articleSlug);
+    notFound();
+  }
   const config = PULSE_CATEGORIES[pulseSlug];
-
-  const article = await getPulseArticleBySlug(pulseSlug, articleSlug);
-  if (!article) notFound();
   const breadcrumbDate = formatPulseDisplayDate(getPulseDisplayDateSource(article));
   const schemaMarkup = getPulseSchemaMarkup(article);
   const breadcrumbs = breadcrumbSchema([

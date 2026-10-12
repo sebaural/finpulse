@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { fetchArticleBySlug } from '@/lib/topics-service';
 import AuthorBioCard from '@/components/author/AuthorBioCard';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
@@ -82,6 +82,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { topicSlug, articleSlug } = await params;
   const article = await fetchArticleBySlug(articleSlug);
   if (!article || !article.data.topic) return {};
+  // Redirect here too: Next resolves metadata before streaming for crawlers,
+  // so Googlebot gets a real 308 instead of a soft-404 / meta refresh.
+  if (article.data.topic.slug !== topicSlug) {
+    permanentRedirect(`/topics/${article.data.topic.slug}/${articleSlug}`);
+  }
 
   const tags = Array.isArray(article.data.tags) ? (article.data.tags as string[]) : [];
 
@@ -101,10 +106,14 @@ export default async function ArticleSpokePage({ params }: Props) {
   const { topicSlug, articleSlug } = await params;
   const article = await fetchArticleBySlug(articleSlug);
 
-  // 404 when the article is missing, has no topic, or the topic slug in the URL
-  // doesn't match the article's actual topic (prevents duplicate-content URLs).
-  if (!article || !article.data.topic || article.data.topic.slug !== topicSlug) {
+  // 404 when the article is missing or has no topic. If the topic slug in the URL
+  // doesn't match the article's current topic (it was reassigned), 308 to the
+  // canonical URL — avoids duplicate content without soft-404ing old links.
+  if (!article || !article.data.topic) {
     notFound();
+  }
+  if (article.data.topic.slug !== topicSlug) {
+    permanentRedirect(`/topics/${article.data.topic.slug}/${articleSlug}`);
   }
 
   const { data } = article;

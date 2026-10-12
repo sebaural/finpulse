@@ -240,6 +240,30 @@ export async function getPulseArticleBySlug(
   }
 }
 
+// Category-agnostic lookup so URLs from a renamed/moved category (e.g. the
+// 2026-08-24 information→technology rename) can 301 to the article's current home.
+export async function findPulseArticleByArticleSlug(
+  articleSlug: string,
+): Promise<PulseArticle | null> {
+  try {
+    const pulseArticle = getPulseDelegate();
+    if (!pulseArticle) return null;
+
+    const [row] = await pulseArticle.findMany<PulseArticleRow>({
+      where: { articleSlug },
+      orderBy: { publishedAt: 'desc' },
+      take: 1,
+    });
+    return row ? toPulseArticle(row) : null;
+  } catch (error) {
+    console.error('[pulse-service] failed to look up pulse article by slug', error);
+    if (shouldThrowPulseReadErrors()) {
+      throw error;
+    }
+    return null;
+  }
+}
+
 // Effective publish time for ordering: when the article was generated
 // (publishedAt), falling back to observedStart. observedStart is the earliest
 // *source story* time, so a new article built from an older story would
