@@ -101,6 +101,63 @@ export function buildTopicDirective(choices: TopicChoice[]): string {
   );
 }
 
+type BriefingVertical = Exclude<Vertical, 'pulse'>;
+
+// What each daily briefing leads with. All three pipelines read the same macro
+// headlines, so without lanes they publish three near-identical articles a day
+// (Fed + Iran sanctions + earnings), which Google treats as duplicate content.
+const VERTICAL_LANES: Record<BriefingVertical, string> = {
+  geopolitics:
+    'states, conflicts, alliances, sanctions and diplomacy. Do NOT lead with central-bank ' +
+    'policy, CPI data or corporate earnings — mention them only as consequences.',
+  markets:
+    'asset prices, rates, earnings, macro data and capital flows. Do NOT lead with diplomacy ' +
+    'or technology products — mention them only through their market impact.',
+  tech:
+    'technology companies, semiconductors, AI, platforms and tech regulation. Do NOT lead with ' +
+    'sanctions, oil or inflation prints — mention them only as they affect the tech sector.',
+};
+
+/**
+ * Titles the OTHER briefing verticals published in the last 24h. The cron runs
+ * the pipelines sequentially, so later verticals see earlier ones' output.
+ */
+export async function getRecentBriefingTitles(
+  vertical: BriefingVertical,
+  hours = 24,
+): Promise<string[]> {
+  try {
+    const prisma = getPrisma();
+    const where = { createdAt: { gte: new Date(Date.now() - hours * 3600_000) } };
+    const select = { title: true } as const;
+    const [geo, mkt, tech] = await Promise.all([
+      vertical === 'geopolitics' ? [] : prisma.geopoliticsArticle.findMany({ where, select }),
+      vertical === 'markets' ? [] : prisma.marketsArticle.findMany({ where, select }),
+      vertical === 'tech' ? [] : prisma.techArticle.findMany({ where, select }),
+    ]);
+    return [...geo, ...mkt, ...tech].map((r) => r.title);
+  } catch (error) {
+    console.error('[pipeline] failed to load recent briefing titles', error);
+    return [];
+  }
+}
+
+/** Prompt block keeping each vertical in its own lane and off today's other briefings. */
+export function buildLaneDirective(vertical: BriefingVertical, otherTitles: string[]): string {
+  const others = otherTitles.length
+    ? `Today's other MacroStance briefings already cover:\n` +
+      otherTitles.map((t) => `  - ${t}`).join('\n') +
+      `\nChoose a different lead story and a different angle from these; do not repeat their\n` +
+      `headline themes.\n`
+    : '';
+  return (
+    `EDITORIAL LANE:\n` +
+    `This is the ${vertical} briefing. Lead with ${VERTICAL_LANES[vertical]}\n` +
+    others +
+    `\n`
+  );
+}
+
 /**
  * Find-or-create a topic hub by slug and return its id (or null on failure).
  * Slug is globally unique, so a hub minted under one vertical is reused across

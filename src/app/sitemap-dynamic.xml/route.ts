@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { SITE_URL } from '@/lib/seo';
-import { toSlug } from '@/lib/summary-pipeline';
+import { canonicalizeSlug, toSlug } from '@/lib/summary-pipeline';
 
 // Revalidate every 12 hours on Vercel
 export const revalidate = 43200;
@@ -12,7 +12,8 @@ function buildEntry(
   section: 'geopolitics' | 'markets' | 'tech',
   row: ArticleRow,
 ): string {
-  const slug = row.slug || toSlug(row.title);
+  // The legacy page's canonical uses the accent-free form (détente → detente).
+  const slug = row.slug ? canonicalizeSlug(row.slug) : toSlug(row.title);
   const loc = `${SITE_URL}/${section}/${slug}`;
   const mod = row.updatedAt.toISOString();
   return (
@@ -118,12 +119,6 @@ export async function GET() {
       ),
     ]);
 
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  xml += geopolitics.map((r) => buildEntry('geopolitics', r)).join('');
-  xml += markets.map((r) => buildEntry('markets', r)).join('');
-  xml += tech.map((r) => buildEntry('tech', r)).join('');
-  xml += pulse.map(buildPulseEntry).join('');
   // Some verticals hold several rows with the same slug under one topic; they
   // all resolve to a single /topics/ URL, so emit each URL only once.
   const seenTopicUrls = new Set<string>();
@@ -134,6 +129,20 @@ export async function GET() {
     seenTopicUrls.add(key);
     return true;
   });
+
+  // A topic-less legacy row whose slug is shared with a topic-linked row
+  // renders that row, so its canonical points at /topics/ — listing it would
+  // submit a non-canonical URL. Only self-canonical legacy URLs go in.
+  const topicLinkedSlugs = new Set(topicRows.map((r) => canonicalizeSlug(r.slug)));
+  const selfCanonical = (r: ArticleRow) =>
+    !r.slug || !topicLinkedSlugs.has(canonicalizeSlug(r.slug));
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  xml += geopolitics.filter(selfCanonical).map((r) => buildEntry('geopolitics', r)).join('');
+  xml += markets.filter(selfCanonical).map((r) => buildEntry('markets', r)).join('');
+  xml += tech.filter(selfCanonical).map((r) => buildEntry('tech', r)).join('');
+  xml += pulse.map(buildPulseEntry).join('');
   xml += topicRows.map(buildTopicEntry).join('');
   xml += `</urlset>`;
 

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/tech';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -159,7 +159,10 @@ export async function generateTechSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
-  const topicChoices = await getTopicChoices('tech');
+  const [topicChoices, otherTitles] = await Promise.all([
+    getTopicChoices('tech'),
+    getRecentBriefingTitles('tech'),
+  ]);
 
   const articlesText = articles
     .map(
@@ -195,6 +198,7 @@ export async function generateTechSummaryArticle(
     `    semiconductor supply chains, equity multiples, and incumbent moats. Reference\n` +
     `    specific companies, models, chip families, or product lines where possible.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildLaneDirective('tech', otherTitles) +
     buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +

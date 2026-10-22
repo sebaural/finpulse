@@ -6,6 +6,7 @@ import { notifyBing } from '@/lib/indexnow';
 import type { RawStory } from '@/lib/overview-ingest';
 import { PULSE_CATEGORIES, PULSE_SLUGS } from '@/lib/pulse-categories';
 import { fetchPulseStoriesByCategory, pulseSourceKey, rankPulseClusters } from '@/lib/pulse-ingest';
+import { assertPulseQuality } from '@/lib/pulse-quality';
 import { extractJson, generateWithRunpod, RUNPOD_MODEL } from '@/lib/runpod';
 import { canonicalizeSlug, isSlugTakenAcrossVerticals } from '@/lib/summary-pipeline';
 import { SITE_URL } from '@/lib/seo';
@@ -15,6 +16,7 @@ interface PulseArticleDelegateLike {
   findMany: <T = unknown>(...args: unknown[]) => Promise<T[]>;
   findUnique: <T = unknown>(...args: unknown[]) => Promise<T | null>;
   create: <T = unknown>(...args: unknown[]) => Promise<T>;
+  update: <T = unknown>(...args: unknown[]) => Promise<T>;
 }
 
 interface PulseArticleRow {
@@ -240,6 +242,54 @@ export async function getPulseArticleBySlug(
   }
 }
 
+export interface PulseArticleLink {
+  articleSlug: string;
+  title: string;
+}
+
+export interface PulseNeighbours {
+  newer: PulseArticleLink | null;
+  older: PulseArticleLink | null;
+  related: PulseArticleLink[];
+}
+
+// Server-rendered links from each article to its neighbours in the category,
+// so every Pulse article is reachable through crawlable links rather than only
+// through the sitemap (the list page's "load more" is client-side).
+export async function getPulseNeighbours(
+  pulseSlug: PulseSlug,
+  articleSlug: string,
+  relatedCount = 5,
+): Promise<PulseNeighbours> {
+  const empty: PulseNeighbours = { newer: null, older: null, related: [] };
+  try {
+    const pulseArticle = getPulseDelegate();
+    if (!pulseArticle) return empty;
+
+    const rows = await pulseArticle.findMany<PulseArticleLink>({
+      where: { pulseSlug },
+      select: { articleSlug: true, title: true },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+    const index = rows.findIndex((r) => r.articleSlug === articleSlug);
+    if (index === -1) return { ...empty, related: rows.slice(0, relatedCount) };
+
+    const newer = rows[index - 1] ?? null;
+    const older = rows[index + 1] ?? null;
+    // Nearest articles on both sides, excluding the newer/older ones already linked.
+    const related: PulseArticleLink[] = [];
+    for (let step = 2; related.length < relatedCount && step < rows.length; step += 1) {
+      for (const r of [rows[index + step], rows[index - step]]) {
+        if (r && related.length < relatedCount) related.push(r);
+      }
+    }
+    return { newer, older, related };
+  } catch (error) {
+    console.error('[pulse-service] failed to load pulse neighbours', error);
+    return empty;
+  }
+}
+
 // Category-agnostic lookup so URLs from a renamed/moved category (e.g. the
 // 2026-08-24 information→technology rename) can 301 to the article's current home.
 export async function findPulseArticleByArticleSlug(
@@ -268,7 +318,7 @@ export async function findPulseArticleByArticleSlug(
 // (publishedAt), falling back to observedStart. observedStart is the earliest
 // *source story* time, so a new article built from an older story would
 // otherwise sort below yesterday's and look like it was never generated.
-function pulseArticleTime(article: PulseArticle): number {
+export function pulseArticleTime(article: PulseArticle): number {
   const value = article.publishedAt ?? article.observedStart;
   if (!value) return -Infinity;
   const t = new Date(value).getTime();
@@ -516,6 +566,12 @@ function formatStory(s: RawStory): string {
   return `- [${s.source}] ${stripHtml(s.title)}: ${stripHtml(s.snippet)}`;
 }
 
+// What the quality gate checks the analysis against: the primary story only,
+// since background clusters must not become the subject.
+function pulseSourceText(job: PulseJobPayload): string {
+  return job.primary.map((s) => `${stripHtml(s.title)} ${stripHtml(s.snippet)}`).join('\n');
+}
+
 function buildPulseMessages(job: PulseJobPayload) {
   const label = PULSE_CATEGORIES[job.pulseSlug].label;
   const system =
@@ -524,14 +580,19 @@ function buildPulseMessages(job: PulseJobPayload) {
     'Base every factual claim ONLY on the source snippets provided; do not invent figures, quotes, ' +
     'votes, or sources. When citing numbers, hedge them ("roughly") or attribute them to the outlet ' +
     'that reported them. NEVER name, quote, or attribute a claim to any organization, official, or ' +
-    'publication (e.g. a chamber of commerce, a union, a state newspaper) unless it appears in the ' +
-    'snippets — describe what a constituency argues ("export-oriented US businesses argue…") ' +
-    'instead of inventing "according to X". ' +
-    'Identify three distinct, competing perspectives on the PRIMARY story, each anchored to a named ' +
-    'institutional, ideological, or geographic constituency (e.g. "House Republican leadership", ' +
-    '"EU finance ministries"), then synthesize them into two opposing macro-narratives of matched ' +
-    'length. Stay strictly neutral: use the same register for every side, and attribute any ' +
-    "dismissive framing to the faction that holds it rather than stating it as fact. " +
+    'publication unless it appears in the snippets — describe what a constituency argues instead ' +
+    'of inventing "according to X". ' +
+    'Identify three distinct, competing perspectives on the PRIMARY story. Each must belong to a ' +
+    'constituency that is directly affected by THIS story and is named in, or clearly implied by, ' +
+    'the snippets; when the story is outside the United States, at least two of the three must be ' +
+    'from the country or region where it happens. Then synthesize them into two opposing ' +
+    'macro-narratives of matched length. Stay strictly neutral: use the same register for every ' +
+    'side, and attribute any dismissive framing to the faction that holds it rather than stating ' +
+    'it as fact. ' +
+    'Be concrete: the topicAnalysis must say who did what, where, and repeat at least one specific ' +
+    'name, place, or number from the snippets. Every paragraph must contain information specific ' +
+    'to this story; never write generic filler such as "this matters for the beat", "adds to the ' +
+    'complexity", or "this perspective is supported by the fact that". ' +
     'The title must be specific to the story (a name, number, or event), must not use "Sparks ' +
     'Global" or similar "[verb] Global [noun]" constructions, and must not be a generic wire headline. ' +
     'Respond ONLY with raw JSON (no markdown fences, no text outside the object), with ALL of ' +
@@ -670,6 +731,7 @@ export async function processPulseCategory(payload: PulseJobPayload): Promise<{ 
     maxTokens: PULSE_MAX_TOKENS,
   });
   const out = parsePulseLlmOutput(content);
+  assertPulseQuality(out, pulseSourceText(job));
   const body = buildPulseBodyHtml(out);
   assertPulseBodyStructure(body);
 
@@ -726,4 +788,91 @@ export async function processPulseCategory(payload: PulseJobPayload): Promise<{ 
   await notifyBing([`${SITE_URL}/pulse/${pulseSlug}/${articleSlug}`]);
   console.log(`[pulse-service] ${pulseSlug}: created "${articleSlug}"`);
   return { created: 1 };
+}
+
+interface StoredPulseSource {
+  title?: unknown;
+  url?: unknown;
+  source?: unknown;
+  publishedAt?: unknown;
+}
+
+function storedSourceToStory(s: StoredPulseSource): RawStory | null {
+  if (typeof s.title !== 'string' || typeof s.url !== 'string') return null;
+  return {
+    title: s.title,
+    url: s.url,
+    source: typeof s.source === 'string' ? s.source : '',
+    publishedAt: new Date(typeof s.publishedAt === 'string' ? s.publishedAt : Date.now()),
+    // Feed snippets weren't stored; the headline stands in for it.
+    snippet: s.title,
+  };
+}
+
+export interface PulseRegenerateResult {
+  id: string;
+  url: string;
+  dryRun: boolean;
+  before: { title: string; summary: string | null };
+  after: { title: string; summary: string; body: string };
+}
+
+// Rewrites an already-published article in place from its stored raw.sources
+// with the current prompt + quality gate. articleSlug and publishedAt are kept,
+// so the URL and its position in the archive don't change. Used to repair the
+// articles that copied the old prompt's examples (see pulse-quality.ts).
+export async function regeneratePulseArticle(
+  id: string,
+  { dryRun = false }: { dryRun?: boolean } = {},
+): Promise<PulseRegenerateResult> {
+  const pulseArticle = getPulseDelegate();
+  if (!pulseArticle) throw new Error('db unavailable');
+
+  const row = await pulseArticle.findUnique<PulseArticleRow & { id: string }>({ where: { id } });
+  if (!row) throw new Error(`pulse article ${id} not found`);
+
+  const raw = (row.raw ?? {}) as Record<string, unknown>;
+  const stories = (Array.isArray(raw.sources) ? raw.sources : [])
+    .map((s) => storedSourceToStory(s as StoredPulseSource))
+    .filter((s): s is RawStory => s !== null);
+  if (!stories.length) throw new Error(`pulse article ${id} has no stored sources`);
+
+  // Primary vs context membership wasn't stored; the first entry is always
+  // the primary cluster's representative (see selectPulseJob).
+  const [primary, ...context] = stories;
+  const job: PulseJobPayload = {
+    pulseSlug: row.pulseSlug as PulseSlug,
+    sourceId: typeof raw.sourceId === 'string' ? raw.sourceId : pulseSourceKey(primary.url),
+    primary: [primary],
+    context: context.slice(0, MAX_TOTAL_STORIES - 1),
+  };
+
+  const content = await generateWithRunpod(buildPulseMessages(job), {
+    maxTokens: PULSE_MAX_TOKENS,
+  });
+  const out = parsePulseLlmOutput(content);
+  assertPulseQuality(out, pulseSourceText(job));
+  const body = buildPulseBodyHtml(out);
+  assertPulseBodyStructure(body);
+
+  if (!dryRun) {
+    await pulseArticle.update({
+      where: { id },
+      data: {
+        title: out.title,
+        summary: out.summary,
+        body,
+        raw: { ...raw, model: RUNPOD_MODEL, topic: out.topic, regeneratedAt: new Date().toISOString() },
+      },
+    });
+    console.log(`[pulse-service] regenerated ${row.pulseSlug}/${row.articleSlug}`);
+  }
+
+  return {
+    id,
+    url: `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`,
+    dryRun,
+    before: { title: row.title, summary: row.summary },
+    after: { title: out.title, summary: out.summary, body },
+  };
 }

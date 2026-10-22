@@ -110,12 +110,6 @@
   padding: 20px;
 }
 
-.pulse-load-more {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
 .pulse-load-more-btn {
   border: 1px solid var(--pulse-border);
   background: linear-gradient(180deg, var(--pulse-surface), var(--pulse-surface2));
@@ -361,3 +355,107 @@
 
 }
 
+
+/* Newer/older + "More in" links under each Pulse article */
+.pulse-article-nav {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pulse-border);
+}
+
+.pulse-article-nav-adjacent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.pulse-article-nav-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--pulse-border);
+  border-radius: 2px;
+  color: var(--pulse-text);
+  text-decoration: none;
+}
+
+.pulse-article-nav-link--older {
+  grid-column: 2;
+  text-align: right;
+}
+
+.pulse-article-nav-link:hover {
+  border-color: var(--pulse-accent);
+  color: var(--pulse-accent);
+}
+
+.pulse-article-nav-label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--pulse-muted);
+}
+
+.pulse-article-nav-heading {
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.pulse-article-nav-list {
+  margin: 0 0 20px;
+  padding-left: 18px;
+}
+
+.pulse-article-nav-list li {
+  margin-bottom: 8px;
+}
+
+.pulse-article-nav-list a,
+.pulse-article-nav-all {
+  color: var(--pulse-accent);
+  text-decoration: none;
+}
+
+.pulse-article-nav-list a:hover,
+.pulse-article-nav-all:hover {
+  text-decoration: underline;
+}
+
+.pulse-article-nav-all {
+  font-family: 'Inconsolata', monospace;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .pulse-article-nav-adjacent {
+    grid-template-columns: 1fr;
+  }
+
+  .pulse-article-nav-link--older {
+    grid-column: auto;
+  }
+}
+
+.pulse-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.pulse-pagination > :last-child {
+  justify-self: end;
+}
+
+.pulse-pagination .pulse-load-more-btn {
+  text-decoration: none;
+}
+
+.pulse-pagination-status {
+  font-family: 'Inconsolata', monospace;
+  font-size: 14px;
+  color: var(--pulse-muted);
+}

@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -159,7 +159,10 @@ export async function generateMarketsSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
-  const topicChoices = await getTopicChoices('markets');
+  const [topicChoices, otherTitles] = await Promise.all([
+    getTopicChoices('markets'),
+    getRecentBriefingTitles('markets'),
+  ]);
 
   const articlesText = articles
     .map(
@@ -217,6 +220,7 @@ const prompt =
     `    spreads, and volatility, referencing specific indices, yields, or sectors named in the\n` +
     `    articles rather than illustrative examples.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildLaneDirective('markets', otherTitles) +
     buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +

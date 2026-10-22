@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/geopolitics';
-import { buildTopicDirective, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
 
 // ---------------------------------------------------------------------------
 // NewsAPI response shape
@@ -177,7 +177,10 @@ export async function generateSummaryArticle(
 
   const client = new Anthropic({ apiKey: anthropicKey });
 
-  const topicChoices = await getTopicChoices('geopolitics');
+  const [topicChoices, otherTitles] = await Promise.all([
+    getTopicChoices('geopolitics'),
+    getRecentBriefingTitles('geopolitics'),
+  ]);
 
   const articlesText = articles
     .map(
@@ -226,6 +229,7 @@ export async function generateSummaryArticle(
     `    markets, currency stability, trade blocs, or financial systems. Reference specific\n` +
     `    economic figures, indices, or market sectors where possible.\n` +
     `- Tone: academic yet accessible — objective, analytical, data-driven.\n\n` +
+    buildLaneDirective('geopolitics', otherTitles) +
     buildTopicDirective(topicChoices) +
     `Required JSON shape:\n` +
     `{\n` +

@@ -9,6 +9,7 @@ import {
   findPulseArticleByArticleSlug,
   getPulseArticleBySlug,
   getLatestArticlePerCategory,
+  getPulseNeighbours,
 } from '@/lib/pulse-service';
 import { generateArticleMetadata } from '@/lib/metadata';
 import { breadcrumbSchema, canonicalUrl, jsonLd } from '@/lib/seo';
@@ -71,7 +72,10 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
     { name: `${config.label} Pulse`, url: canonicalUrl(`/pulse/${pulseSlug}`) },
     { name: article.title, url: canonicalUrl(`/pulse/${pulseSlug}/${articleSlug}`) },
   ]);
-  const pulseLatest = await getLatestArticlePerCategory();
+  const [pulseLatest, neighbours] = await Promise.all([
+    getLatestArticlePerCategory(),
+    getPulseNeighbours(pulseSlug, articleSlug),
+  ]);
 
   return (
     <>
@@ -114,6 +118,47 @@ export default async function PulseArticlePage({ params }: ArticlePageProps) {
           ) : article.body ? (
             <article className="pulse-body">{article.body}</article>
           ) : null}
+          <nav className="pulse-article-nav" aria-label={`More ${config.label} Pulse articles`}>
+            {neighbours.newer || neighbours.older ? (
+              <div className="pulse-article-nav-adjacent">
+                {neighbours.newer ? (
+                  <Link
+                    href={`/pulse/${pulseSlug}/${neighbours.newer.articleSlug}`}
+                    className="pulse-article-nav-link pulse-article-nav-link--newer"
+                    rel="prev"
+                  >
+                    <span className="pulse-article-nav-label">← Newer</span>
+                    <span>{neighbours.newer.title}</span>
+                  </Link>
+                ) : null}
+                {neighbours.older ? (
+                  <Link
+                    href={`/pulse/${pulseSlug}/${neighbours.older.articleSlug}`}
+                    className="pulse-article-nav-link pulse-article-nav-link--older"
+                    rel="next"
+                  >
+                    <span className="pulse-article-nav-label">Older →</span>
+                    <span>{neighbours.older.title}</span>
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+            {neighbours.related.length > 0 ? (
+              <>
+                <h2 className="pulse-article-nav-heading">More in {config.label} Pulse</h2>
+                <ul className="pulse-article-nav-list">
+                  {neighbours.related.map((link) => (
+                    <li key={link.articleSlug}>
+                      <Link href={`/pulse/${pulseSlug}/${link.articleSlug}`}>{link.title}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            <Link href={`/pulse/${pulseSlug}`} className="pulse-article-nav-all">
+              All {config.label} Pulse articles →
+            </Link>
+          </nav>
           {schemaMarkup ? (
             <script
               type="application/ld+json"

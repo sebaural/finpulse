@@ -1,47 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import PulseHeader from '@/components/pulse/PulseHeader';
 import { formatPulseDisplayDate, getPulseDisplayDateSource } from '@/lib/pulse-date';
 import type { PulseArticle, PulseCategoryConfig } from '@/types/pulse';
 import './pulse.css';
 
-const PAGE_SIZE = 18;
-
+// `articles` is one server-sorted page (newest first); paging uses real
+// ?page=N links so crawlers can reach every article, not a client "load more".
 interface PulsePageClientProps {
   config: PulseCategoryConfig;
   articles: PulseArticle[];
-}
-
-// Same key the row's meta line displays (`publishedAt ?? observedStart`), so the
-// sort order always matches the visible date. Missing/invalid dates sort last.
-function articleTimestamp(article: PulseArticle): number {
-  const value = article.publishedAt ?? article.observedStart;
-  if (!value) return -Infinity;
-  const t = new Date(value).getTime();
-  return Number.isNaN(t) ? -Infinity : t;
+  totalCount: number;
+  newerHref: string | null;
+  olderHref: string | null;
+  page: number;
+  pageCount: number;
 }
 
 function formatMetaDate(article: PulseArticle): string {
   return formatPulseDisplayDate(getPulseDisplayDateSource(article)) ?? 'No timestamp';
 }
 
-export function PulsePageClient({ config, articles }: PulsePageClientProps) {
+export function PulsePageClient({
+  config,
+  articles,
+  totalCount,
+  newerHref,
+  olderHref,
+  page,
+  pageCount,
+}: PulsePageClientProps) {
   const title = useMemo(() => `${config.label} Pulse`, [config.label]);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-
-  // Latest date first (descending), regardless of the order the server sends.
-  const sortedArticles = useMemo(
-    () => [...articles].sort((a, b) => articleTimestamp(b) - articleTimestamp(a)),
-    [articles],
-  );
-
-  const visibleArticles = useMemo(
-    () => sortedArticles.slice(0, visibleCount),
-    [sortedArticles, visibleCount],
-  );
-  const remaining = sortedArticles.length - visibleArticles.length;
 
   return (
     <>
@@ -56,12 +47,12 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
             </p>
           </div>
 
-          {articles.length === 0 ? (
+          {totalCount === 0 ? (
             <p className="pulse-empty">No updates yet for this category.</p>
           ) : (
             <>
               <ul className="pulse-article-list">
-                {visibleArticles.map((article) => (
+                {articles.map((article) => (
                   <li key={article.articleSlug} className="pulse-article-item">
                     <Link
                       className="pulse-article-link"
@@ -74,16 +65,26 @@ export function PulsePageClient({ config, articles }: PulsePageClientProps) {
                 ))}
               </ul>
 
-              {remaining > 0 ? (
-                <div className="pulse-load-more">
-                  <button
-                    type="button"
-                    className="pulse-load-more-btn"
-                    onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-                  >
-                    Load more ({remaining} more)
-                  </button>
-                </div>
+              {pageCount > 1 ? (
+                <nav className="pulse-pagination" aria-label={`${title} pages`}>
+                  {newerHref ? (
+                    <Link href={newerHref} className="pulse-load-more-btn" rel="prev">
+                      ← Newer
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="pulse-pagination-status">
+                    Page {page} of {pageCount}
+                  </span>
+                  {olderHref ? (
+                    <Link href={olderHref} className="pulse-load-more-btn" rel="next">
+                      Older →
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                </nav>
               ) : null}
             </>
           )}
