@@ -16,7 +16,6 @@ interface PulseArticleDelegateLike {
   findMany: <T = unknown>(...args: unknown[]) => Promise<T[]>;
   findUnique: <T = unknown>(...args: unknown[]) => Promise<T | null>;
   create: <T = unknown>(...args: unknown[]) => Promise<T>;
-  update: <T = unknown>(...args: unknown[]) => Promise<T>;
 }
 
 interface PulseArticleRow {
@@ -788,91 +787,4 @@ export async function processPulseCategory(payload: PulseJobPayload): Promise<{ 
   await notifyBing([`${SITE_URL}/pulse/${pulseSlug}/${articleSlug}`]);
   console.log(`[pulse-service] ${pulseSlug}: created "${articleSlug}"`);
   return { created: 1 };
-}
-
-interface StoredPulseSource {
-  title?: unknown;
-  url?: unknown;
-  source?: unknown;
-  publishedAt?: unknown;
-}
-
-function storedSourceToStory(s: StoredPulseSource): RawStory | null {
-  if (typeof s.title !== 'string' || typeof s.url !== 'string') return null;
-  return {
-    title: s.title,
-    url: s.url,
-    source: typeof s.source === 'string' ? s.source : '',
-    publishedAt: new Date(typeof s.publishedAt === 'string' ? s.publishedAt : Date.now()),
-    // Feed snippets weren't stored; the headline stands in for it.
-    snippet: s.title,
-  };
-}
-
-export interface PulseRegenerateResult {
-  id: string;
-  url: string;
-  dryRun: boolean;
-  before: { title: string; summary: string | null };
-  after: { title: string; summary: string; body: string };
-}
-
-// Rewrites an already-published article in place from its stored raw.sources
-// with the current prompt + quality gate. articleSlug and publishedAt are kept,
-// so the URL and its position in the archive don't change. Used to repair the
-// articles that copied the old prompt's examples (see pulse-quality.ts).
-export async function regeneratePulseArticle(
-  id: string,
-  { dryRun = false }: { dryRun?: boolean } = {},
-): Promise<PulseRegenerateResult> {
-  const pulseArticle = getPulseDelegate();
-  if (!pulseArticle) throw new Error('db unavailable');
-
-  const row = await pulseArticle.findUnique<PulseArticleRow & { id: string }>({ where: { id } });
-  if (!row) throw new Error(`pulse article ${id} not found`);
-
-  const raw = (row.raw ?? {}) as Record<string, unknown>;
-  const stories = (Array.isArray(raw.sources) ? raw.sources : [])
-    .map((s) => storedSourceToStory(s as StoredPulseSource))
-    .filter((s): s is RawStory => s !== null);
-  if (!stories.length) throw new Error(`pulse article ${id} has no stored sources`);
-
-  // Primary vs context membership wasn't stored; the first entry is always
-  // the primary cluster's representative (see selectPulseJob).
-  const [primary, ...context] = stories;
-  const job: PulseJobPayload = {
-    pulseSlug: row.pulseSlug as PulseSlug,
-    sourceId: typeof raw.sourceId === 'string' ? raw.sourceId : pulseSourceKey(primary.url),
-    primary: [primary],
-    context: context.slice(0, MAX_TOTAL_STORIES - 1),
-  };
-
-  const content = await generateWithRunpod(buildPulseMessages(job), {
-    maxTokens: PULSE_MAX_TOKENS,
-  });
-  const out = parsePulseLlmOutput(content);
-  assertPulseQuality(out, pulseSourceText(job));
-  const body = buildPulseBodyHtml(out);
-  assertPulseBodyStructure(body);
-
-  if (!dryRun) {
-    await pulseArticle.update({
-      where: { id },
-      data: {
-        title: out.title,
-        summary: out.summary,
-        body,
-        raw: { ...raw, model: RUNPOD_MODEL, topic: out.topic, regeneratedAt: new Date().toISOString() },
-      },
-    });
-    console.log(`[pulse-service] regenerated ${row.pulseSlug}/${row.articleSlug}`);
-  }
-
-  return {
-    id,
-    url: `${SITE_URL}/pulse/${row.pulseSlug}/${row.articleSlug}`,
-    dryRun,
-    before: { title: row.title, summary: row.summary },
-    after: { title: out.title, summary: out.summary, body },
-  };
 }
