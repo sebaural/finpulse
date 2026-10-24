@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/x-poster",
-      "schedule": "0 17 * * 1-5"
-    },
-    {
       "path": "/api/cron/generate",
       "schedule": "0 15 * * *"
     },
