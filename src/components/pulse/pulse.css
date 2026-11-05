@@ -204,6 +204,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  .pulse-article-sidebar-content {
+    margin-top: 30px;
+  }
+}
+
 .pulse-article-page .pulse-summary {
   margin: 12px 0 16px;
   line-height: 1.55;
@@ -358,6 +364,8 @@
 
 /* Newer/older + "More in" links under each Pulse article */
 .pulse-article-nav {
+  display: flex;
+  flex-direction: column;
   margin-top: 40px;
   padding-top: 24px;
   border-top: 1px solid var(--pulse-border);
