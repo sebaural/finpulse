@@ -489,3 +489,28 @@
     font-size: 3.5em;
   }
 }
+
+/* Cross-link between a daily briefing (/{vertical}/{slug}) and its
+   storyline analysis (/topics/{topic}/{slug}). The legacy variant renders
+   outside .geo-root, so every var() carries a fallback. */
+.geo-crosslink {
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, #1e2530);
+}
+.geo-crosslink a {
+  color: var(--accent, #c9a227);
+  text-decoration: none;
+}
+.geo-crosslink a:hover {
+  text-decoration: underline;
+}
+.geo-crosslink--legacy {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  background: #0d1014;
+}

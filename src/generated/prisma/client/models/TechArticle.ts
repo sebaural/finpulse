@@ -34,6 +34,8 @@ export type TechArticleMinAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   topicId: string | null
+  topicTitle: string | null
+  topicSummary: string | null
 }
 
 export type TechArticleMaxAggregateOutputType = {
@@ -46,6 +48,8 @@ export type TechArticleMaxAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   topicId: string | null
+  topicTitle: string | null
+  topicSummary: string | null
 }
 
 export type TechArticleCountAggregateOutputType = {
@@ -61,6 +65,9 @@ export type TechArticleCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   topicId: number
+  topicTitle: number
+  topicSummary: number
+  topicKeyPoints: number
   _all: number
 }
 
@@ -75,6 +82,8 @@ export type TechArticleMinAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   topicId?: true
+  topicTitle?: true
+  topicSummary?: true
 }
 
 export type TechArticleMaxAggregateInputType = {
@@ -87,6 +96,8 @@ export type TechArticleMaxAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   topicId?: true
+  topicTitle?: true
+  topicSummary?: true
 }
 
 export type TechArticleCountAggregateInputType = {
@@ -102,6 +113,9 @@ export type TechArticleCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   topicId?: true
+  topicTitle?: true
+  topicSummary?: true
+  topicKeyPoints?: true
   _all?: true
 }
 
@@ -190,6 +204,9 @@ export type TechArticleGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   topicId: string | null
+  topicTitle: string | null
+  topicSummary: string | null
+  topicKeyPoints: runtime.JsonValue | null
   _count: TechArticleCountAggregateOutputType | null
   _min: TechArticleMinAggregateOutputType | null
   _max: TechArticleMaxAggregateOutputType | null
@@ -226,6 +243,9 @@ export type TechArticleWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicTitle?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicSummary?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicKeyPoints?: Prisma.JsonNullableFilter<"TechArticle">
   topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }
 
@@ -242,6 +262,9 @@ export type TechArticleOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicSummary?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicKeyPoints?: Prisma.SortOrderInput | Prisma.SortOrder
   topic?: Prisma.TopicOrderByWithRelationInput
 }
 
@@ -261,6 +284,9 @@ export type TechArticleWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicTitle?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicSummary?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicKeyPoints?: Prisma.JsonNullableFilter<"TechArticle">
   topic?: Prisma.XOR<Prisma.TopicNullableScalarRelationFilter, Prisma.TopicWhereInput> | null
 }, "id" | "title">
 
@@ -277,6 +303,9 @@ export type TechArticleOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicTitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicSummary?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicKeyPoints?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TechArticleCountOrderByAggregateInput
   _max?: Prisma.TechArticleMaxOrderByAggregateInput
   _min?: Prisma.TechArticleMinOrderByAggregateInput
@@ -298,6 +327,9 @@ export type TechArticleScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TechArticle"> | Date | string
   topicId?: Prisma.StringNullableWithAggregatesFilter<"TechArticle"> | string | null
+  topicTitle?: Prisma.StringNullableWithAggregatesFilter<"TechArticle"> | string | null
+  topicSummary?: Prisma.StringNullableWithAggregatesFilter<"TechArticle"> | string | null
+  topicKeyPoints?: Prisma.JsonNullableWithAggregatesFilter<"TechArticle">
 }
 
 export type TechArticleCreateInput = {
@@ -312,6 +344,9 @@ export type TechArticleCreateInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   topic?: Prisma.TopicCreateNestedOneWithoutTechArticlesInput
 }
 
@@ -328,6 +363,9 @@ export type TechArticleUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   topicId?: string | null
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUpdateInput = {
@@ -342,6 +380,9 @@ export type TechArticleUpdateInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   topic?: Prisma.TopicUpdateOneWithoutTechArticlesNestedInput
 }
 
@@ -358,6 +399,9 @@ export type TechArticleUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleCreateManyInput = {
@@ -373,6 +417,9 @@ export type TechArticleCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   topicId?: string | null
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUpdateManyMutationInput = {
@@ -387,6 +434,9 @@ export type TechArticleUpdateManyMutationInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUncheckedUpdateManyInput = {
@@ -402,6 +452,9 @@ export type TechArticleUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleCountOrderByAggregateInput = {
@@ -417,6 +470,9 @@ export type TechArticleCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
+  topicTitle?: Prisma.SortOrder
+  topicSummary?: Prisma.SortOrder
+  topicKeyPoints?: Prisma.SortOrder
 }
 
 export type TechArticleMaxOrderByAggregateInput = {
@@ -429,6 +485,8 @@ export type TechArticleMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
+  topicTitle?: Prisma.SortOrder
+  topicSummary?: Prisma.SortOrder
 }
 
 export type TechArticleMinOrderByAggregateInput = {
@@ -441,6 +499,8 @@ export type TechArticleMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
+  topicTitle?: Prisma.SortOrder
+  topicSummary?: Prisma.SortOrder
 }
 
 export type TechArticleListRelationFilter = {
@@ -507,6 +567,9 @@ export type TechArticleCreateWithoutTopicInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUncheckedCreateWithoutTopicInput = {
@@ -521,6 +584,9 @@ export type TechArticleUncheckedCreateWithoutTopicInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleCreateOrConnectWithoutTopicInput = {
@@ -565,6 +631,9 @@ export type TechArticleScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TechArticle"> | Date | string
   topicId?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicTitle?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicSummary?: Prisma.StringNullableFilter<"TechArticle"> | string | null
+  topicKeyPoints?: Prisma.JsonNullableFilter<"TechArticle">
 }
 
 export type TechArticleCreateManyTopicInput = {
@@ -579,6 +648,9 @@ export type TechArticleCreateManyTopicInput = {
   date: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  topicTitle?: string | null
+  topicSummary?: string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUpdateWithoutTopicInput = {
@@ -593,6 +665,9 @@ export type TechArticleUpdateWithoutTopicInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUncheckedUpdateWithoutTopicInput = {
@@ -607,6 +682,9 @@ export type TechArticleUncheckedUpdateWithoutTopicInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type TechArticleUncheckedUpdateManyWithoutTopicInput = {
@@ -621,6 +699,9 @@ export type TechArticleUncheckedUpdateManyWithoutTopicInput = {
   date?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topicTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicSummary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicKeyPoints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 
@@ -638,6 +719,9 @@ export type TechArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   createdAt?: boolean
   updatedAt?: boolean
   topicId?: boolean
+  topicTitle?: boolean
+  topicSummary?: boolean
+  topicKeyPoints?: boolean
   topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
@@ -654,6 +738,9 @@ export type TechArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   createdAt?: boolean
   updatedAt?: boolean
   topicId?: boolean
+  topicTitle?: boolean
+  topicSummary?: boolean
+  topicKeyPoints?: boolean
   topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
@@ -670,6 +757,9 @@ export type TechArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   createdAt?: boolean
   updatedAt?: boolean
   topicId?: boolean
+  topicTitle?: boolean
+  topicSummary?: boolean
+  topicKeyPoints?: boolean
   topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }, ExtArgs["result"]["techArticle"]>
 
@@ -686,9 +776,12 @@ export type TechArticleSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   topicId?: boolean
+  topicTitle?: boolean
+  topicSummary?: boolean
+  topicKeyPoints?: boolean
 }
 
-export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt" | "topicId", ExtArgs["result"]["techArticle"]>
+export type TechArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "summary" | "keyPoints" | "sourceArticles" | "region" | "tags" | "date" | "createdAt" | "updatedAt" | "topicId" | "topicTitle" | "topicSummary" | "topicKeyPoints", ExtArgs["result"]["techArticle"]>
 export type TechArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.TechArticle$topicArgs<ExtArgs>
 }
@@ -717,6 +810,9 @@ export type $TechArticlePayload<ExtArgs extends runtime.Types.Extensions.Interna
     createdAt: Date
     updatedAt: Date
     topicId: string | null
+    topicTitle: string | null
+    topicSummary: string | null
+    topicKeyPoints: runtime.JsonValue | null
   }, ExtArgs["result"]["techArticle"]>
   composites: {}
 }
@@ -1153,6 +1249,9 @@ export interface TechArticleFieldRefs {
   readonly createdAt: Prisma.FieldRef<"TechArticle", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TechArticle", 'DateTime'>
   readonly topicId: Prisma.FieldRef<"TechArticle", 'String'>
+  readonly topicTitle: Prisma.FieldRef<"TechArticle", 'String'>
+  readonly topicSummary: Prisma.FieldRef<"TechArticle", 'String'>
+  readonly topicKeyPoints: Prisma.FieldRef<"TechArticle", 'Json'>
 }
     
 

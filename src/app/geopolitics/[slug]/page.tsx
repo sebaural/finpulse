@@ -1,6 +1,7 @@
 // src/app/geopolitics/[slug]/page.tsx
 
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { getSummaryArticles, getSummaryArticleBySlug } from '@/lib/geopolitics-service';
@@ -49,7 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Topic-linked articles canonicalize to their /topics/ hub home.
   const linked = await fetchArticleBySlug(article.slug, 'geopolitics');
-  const topicSlug = linked?.data.topic?.slug;
+  // Rows with their own /topics/ storyline copy are distinct pages, so this
+  // briefing stays self-canonical; rows without it still point at /topics/.
+  const hasTopicCopy = !!linked?.data.topicSummary;
+  const topicSlug = hasTopicCopy ? undefined : linked?.data.topic?.slug;
 
   return generateArticleMetadata({
     section: 'geopolitics',
@@ -74,7 +78,10 @@ export default async function GeopoliticsArticlePage({ params }: Props) {
 
   // Topic-linked articles point their canonical/JSON-LD URL at the /topics/ hub.
   const linked = await fetchArticleBySlug(article.slug, 'geopolitics');
-  const topicSlug = linked?.data.topic?.slug;
+  // Rows with their own /topics/ storyline copy are distinct pages, so this
+  // briefing stays self-canonical; rows without it still point at /topics/.
+  const hasTopicCopy = !!linked?.data.topicSummary;
+  const topicSlug = hasTopicCopy ? undefined : linked?.data.topic?.slug;
   const articleUrl = topicSlug
     ? canonicalUrl(`/topics/${topicSlug}/${article.slug}`)
     : canonicalUrl(`/geopolitics/${article.slug}`);
@@ -109,6 +116,13 @@ export default async function GeopoliticsArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
       <GeopoliticsPageClient articles={articles} initialArticleId={article.id} />
+      {hasTopicCopy && linked?.data.topic && (
+        <p className="geo-crosslink geo-crosslink--legacy">
+          <Link href={`/topics/${linked.data.topic.slug}/${linked.data.slug}`}>
+            {`Topic analysis: ${linked.data.topic.name} →`}
+          </Link>
+        </p>
+      )}
       <AuthorBioCard />
       <RelatedBriefings currentSlug={article.slug} currentTags={article.tags} />
     </>

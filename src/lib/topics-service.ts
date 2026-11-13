@@ -56,6 +56,70 @@ export const fetchArticleBySlug = cache(async (slug: string, vertical?: Vertical
   return null;
 });
 
+export interface StorylineSource {
+  source?: string;
+  url: string;
+  title?: string;
+  /** YYYY-MM-DD of the briefing that cited it. */
+  date: string;
+}
+
+/**
+ * Sources across a topic's storyline: the current briefing's sources plus
+ * those of the previous `previous` briefings in the same topic (all verticals),
+ * deduped by URL, newest first. Shown on /topics article pages instead of the
+ * single-briefing source list used by the legacy /{vertical}/{slug} page.
+ */
+export async function fetchStorylineSources(
+  topicId: string,
+  current: { date: string; createdAt: Date; sourceArticles: unknown },
+  previous = 4,
+  cap = 12,
+): Promise<StorylineSource[]> {
+  type Row = { date: string; createdAt: Date; sourceArticles: unknown };
+  let earlier: Row[] = [];
+  try {
+    const prisma = getPrisma();
+    const args = {
+      where: { topicId, createdAt: { lt: current.createdAt } },
+      select: { date: true, createdAt: true, sourceArticles: true },
+      orderBy: { createdAt: 'desc' as const },
+      take: previous,
+    };
+    const [geo, mkt, tech] = await Promise.all([
+      prisma.geopoliticsArticle.findMany(args),
+      prisma.marketsArticle.findMany(args),
+      prisma.techArticle.findMany(args),
+    ]);
+    earlier = [...geo, ...mkt, ...tech]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, previous);
+  } catch (error) {
+    console.error('[topics-service] failed to load storyline sources', error);
+  }
+
+  const seen = new Set<string>();
+  const out: StorylineSource[] = [];
+  for (const row of [current, ...earlier]) {
+    const list = Array.isArray(row.sourceArticles) ? row.sourceArticles : [];
+    for (const raw of list as Array<{ url?: unknown; title?: unknown; source?: unknown }>) {
+      const url = typeof raw?.url === 'string' ? raw.url.trim() : '';
+      if (!url || url.includes('rt.com')) continue;
+      const key = url.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        url,
+        title: typeof raw.title === 'string' ? raw.title : undefined,
+        source: typeof raw.source === 'string' ? raw.source : undefined,
+        date: row.date,
+      });
+      if (out.length >= cap) return out;
+    }
+  }
+  return out;
+}
+
 /**
  * Fetch a topic by slug together with all of its linked articles across the
  * three verticals. Cache-wrapped so generateMetadata and the hub page share a

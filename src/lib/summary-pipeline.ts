@@ -1,4 +1,6 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from '@/lib/db';
+import { Prisma } from '@/generated/prisma/client/client';
 
 type Vertical = 'geopolitics' | 'markets' | 'tech' | 'pulse';
 
@@ -178,6 +180,162 @@ export async function upsertTopic(choice: TopicChoice, vertical: Vertical): Prom
     console.error(`[pipeline] topic upsert failed for slug "${slug}"`, error);
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Topic "storyline" copy — distinct text for /topics/{topic}/{slug}
+// ---------------------------------------------------------------------------
+
+export interface TopicCopy {
+  topicTitle: string;
+  topicSummary: string;
+  topicKeyPoints: string[];
+}
+
+export interface RecentTopicArticle {
+  title: string;
+  date: string;
+  keyPoints: string[];
+}
+
+/**
+ * Earlier briefings in the same topic hub (all three verticals), newest first.
+ * Feeds the storyline prompt so the /topics copy can trace how the topic got here.
+ */
+export async function getRecentTopicArticles(
+  topicId: string,
+  excludeId?: string,
+  limit = 5,
+): Promise<RecentTopicArticle[]> {
+  try {
+    const prisma = getPrisma();
+    const where = { topicId, ...(excludeId ? { id: { not: excludeId } } : {}) };
+    const select = { title: true, date: true, keyPoints: true, createdAt: true } as const;
+    const args = { where, select, orderBy: { createdAt: 'desc' as const }, take: limit };
+    const [geo, mkt, tech] = await Promise.all([
+      prisma.geopoliticsArticle.findMany(args),
+      prisma.marketsArticle.findMany(args),
+      prisma.techArticle.findMany(args),
+    ]);
+    return [...geo, ...mkt, ...tech]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit)
+      .map((r) => ({
+        title: r.title,
+        date: r.date,
+        keyPoints: Array.isArray(r.keyPoints) ? (r.keyPoints as string[]) : [],
+      }));
+  } catch (error) {
+    console.error('[pipeline] failed to load recent topic articles', error);
+    return [];
+  }
+}
+
+/**
+ * Second Claude call: writes the /topics version of a briefing from a
+ * different angle (the topic's ongoing storyline) so the topic URL and the
+ * legacy /{vertical}/{slug} URL don't carry duplicate text. Returns null on any
+ * failure — the article still saves, and pages fall back to the daily copy.
+ */
+export async function generateTopicCopy(input: {
+  vertical: BriefingVertical;
+  topicId: string;
+  excludeId?: string;
+  title: string;
+  keyPoints: string[];
+}): Promise<TopicCopy | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const prisma = getPrisma();
+    const [topic, earlier] = await Promise.all([
+      prisma.topic.findUnique({ where: { id: input.topicId }, select: { name: true } }),
+      getRecentTopicArticles(input.topicId, input.excludeId),
+    ]);
+    if (!topic) return null;
+
+    const earlierBlock = earlier.length
+      ? earlier
+          .map((a) => `- ${a.date}: ${a.title}\n` + a.keyPoints.slice(0, 3).map((p) => `    • ${p}`).join('\n'))
+          .join('\n')
+      : '- (no earlier briefings in this topic yet)';
+
+    const prompt =
+      `You are writing the TOPIC page version of today's MacroStance ${input.vertical} briefing.\n` +
+      `Topic hub: "${topic.name}".\n\n` +
+      `Today's daily briefing (already published on another page — do NOT restate it):\n` +
+      `Title: ${input.title}\n` +
+      input.keyPoints.map((p) => `- ${p}`).join('\n') +
+      `\n\nEarlier briefings in this topic:\n${earlierBlock}\n\n` +
+      `Write a storyline analysis: how today's development moves the "${topic.name}" story\n` +
+      `forward, measured against what came before. Rules:\n` +
+      `- Different angle from the daily briefing: the arc of the topic, not today's event recap.\n` +
+      `- Never copy or paraphrase a sentence or takeaway from the daily briefing above.\n` +
+      `- Reference earlier briefings by their date where relevant.\n` +
+      `- Do not invent statistics, quotes or named sources.\n` +
+      `- topicSummary: max 600 words, plain text, exactly these section headers on their own\n` +
+      `  lines (no markdown, no asterisks), paragraphs separated by blank lines:\n` +
+      `  WHAT CHANGED\n  HOW WE GOT HERE\n  SIGNALS TO WATCH\n` +
+      `- topicTitle: a headline about the topic's trajectory, clearly different from today's title.\n` +
+      `- topicKeyPoints: 4-6 topic-level implications (not daily facts).\n\n` +
+      `Respond with PURE JSON only:\n` +
+      `{ "topicTitle": "...", "topicSummary": "...", "topicKeyPoints": ["..."] }`;
+
+    const client = new Anthropic({ apiKey });
+    const response = await client.messages.create(
+      {
+        model: 'claude-opus-5-5',
+        max_tokens: 4000,
+        output_config: { effort: 'low' },
+        system:
+          'You are a senior macro editor who tracks long-running stories across many daily ' +
+          'briefings. You always respond with valid JSON only — never markdown fences.',
+        messages: [{ role: 'user', content: prompt }],
+      },
+      // The daily cron runs all pipelines inside one 300s function; cap this call.
+      { timeout: 90_000, maxRetries: 1 },
+    );
+
+    if (response.stop_reason !== 'end_turn') {
+      console.warn(`[pipeline] topic copy skipped: stop_reason=${response.stop_reason}`);
+      return null;
+    }
+    const text = response.content.find((b) => b.type === 'text');
+    if (!text || text.type !== 'text') return null;
+
+    const parsed = parseClaudeJson<Partial<TopicCopy>>(text.text);
+    const keyPoints = Array.isArray(parsed.topicKeyPoints)
+      ? parsed.topicKeyPoints.filter((p): p is string => typeof p === 'string' && p.trim() !== '')
+      : [];
+    if (!parsed.topicTitle?.trim() || !parsed.topicSummary?.trim() || keyPoints.length === 0) {
+      console.warn('[pipeline] topic copy skipped: incomplete JSON');
+      return null;
+    }
+    // Same headline as the daily page would defeat the purpose.
+    if (parsed.topicTitle.trim().toLowerCase() === input.title.trim().toLowerCase()) return null;
+
+    return {
+      topicTitle: parsed.topicTitle.trim(),
+      topicSummary: parsed.topicSummary.replace(/\*\*/g, '').trim(),
+      topicKeyPoints: keyPoints,
+    };
+  } catch (error) {
+    console.error('[pipeline] topic copy generation failed', error);
+    return null;
+  }
+}
+
+/**
+ * Row fields for the topic copy. Always sets all three, so a same-day re-run
+ * that fails to produce copy clears the previous run's (now mismatched) text.
+ */
+export function topicCopyFields(copy: TopicCopy | null) {
+  return {
+    topicTitle: copy?.topicTitle ?? null,
+    topicSummary: copy?.topicSummary ?? null,
+    topicKeyPoints: copy ? copy.topicKeyPoints : Prisma.DbNull,
+  };
 }
 
 interface SourceArticleLike {

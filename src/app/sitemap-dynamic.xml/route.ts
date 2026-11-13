@@ -91,7 +91,14 @@ export async function GET() {
   // concurrently via Promise.all around the already-caught promises — so
   // this Promise.all can never reject, since every individual promise
   // resolves to either real rows or an empty array on failure.
-  const [geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics] =
+  // Topic-linked rows that have their own /topics/ storyline copy: the legacy
+  // briefing URL is then a distinct, self-canonical page and is listed too.
+  const distinctWhere = { topicId: { not: null }, topicSummary: { not: null } };
+
+  const [
+    geopolitics, markets, tech, pulse, geoTopics, marketTopics, techTopics,
+    geoDistinct, marketDistinct, techDistinct,
+  ] =
     await Promise.all([
       // topicId: null — topic-linked rows are submitted only via buildTopicEntry
       // below, at their canonical /topics/... URL, so we never double-submit
@@ -116,6 +123,15 @@ export async function GET() {
       ),
       safeQuery<TopicArticleRow>('tech-topics', () =>
         prisma.techArticle.findMany({ where: topicWhere, select: topicSelect }),
+      ),
+      safeQuery<ArticleRow>('geopolitics-distinct', () =>
+        prisma.geopoliticsArticle.findMany({ where: distinctWhere, select, orderBy: { updatedAt: 'desc' } }),
+      ),
+      safeQuery<ArticleRow>('markets-distinct', () =>
+        prisma.marketsArticle.findMany({ where: distinctWhere, select, orderBy: { updatedAt: 'desc' } }),
+      ),
+      safeQuery<ArticleRow>('tech-distinct', () =>
+        prisma.techArticle.findMany({ where: distinctWhere, select, orderBy: { updatedAt: 'desc' } }),
       ),
     ]);
 
@@ -142,6 +158,9 @@ export async function GET() {
   xml += geopolitics.filter(selfCanonical).map((r) => buildEntry('geopolitics', r)).join('');
   xml += markets.filter(selfCanonical).map((r) => buildEntry('markets', r)).join('');
   xml += tech.filter(selfCanonical).map((r) => buildEntry('tech', r)).join('');
+  xml += geoDistinct.map((r) => buildEntry('geopolitics', r)).join('');
+  xml += marketDistinct.map((r) => buildEntry('markets', r)).join('');
+  xml += techDistinct.map((r) => buildEntry('tech', r)).join('');
   xml += pulse.map(buildPulseEntry).join('');
   xml += topicRows.map(buildTopicEntry).join('');
   xml += `</urlset>`;

@@ -1129,7 +1129,10 @@ export const GeopoliticsArticleScalarFieldEnum = {
   date: 'date',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  topicId: 'topicId'
+  topicId: 'topicId',
+  topicTitle: 'topicTitle',
+  topicSummary: 'topicSummary',
+  topicKeyPoints: 'topicKeyPoints'
 } as const
 
 export type GeopoliticsArticleScalarFieldEnum = (typeof GeopoliticsArticleScalarFieldEnum)[keyof typeof GeopoliticsArticleScalarFieldEnum]
@@ -1147,7 +1150,10 @@ export const MarketsArticleScalarFieldEnum = {
   date: 'date',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  topicId: 'topicId'
+  topicId: 'topicId',
+  topicTitle: 'topicTitle',
+  topicSummary: 'topicSummary',
+  topicKeyPoints: 'topicKeyPoints'
 } as const
 
 export type MarketsArticleScalarFieldEnum = (typeof MarketsArticleScalarFieldEnum)[keyof typeof MarketsArticleScalarFieldEnum]
@@ -1165,7 +1171,10 @@ export const TechArticleScalarFieldEnum = {
   date: 'date',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  topicId: 'topicId'
+  topicId: 'topicId',
+  topicTitle: 'topicTitle',
+  topicSummary: 'topicSummary',
+  topicKeyPoints: 'topicKeyPoints'
 } as const
 
 export type TechArticleScalarFieldEnum = (typeof TechArticleScalarFieldEnum)[keyof typeof TechArticleScalarFieldEnum]

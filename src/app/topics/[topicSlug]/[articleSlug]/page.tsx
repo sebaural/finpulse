@@ -3,7 +3,8 @@ import type { ReactElement } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { fetchArticleBySlug } from '@/lib/topics-service';
+import { fetchArticleBySlug, fetchStorylineSources } from '@/lib/topics-service';
+import { canonicalizeSlug } from '@/lib/summary-pipeline';
 import AuthorBioCard from '@/components/author/AuthorBioCard';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
 import NavMenu from '@/components/topNav/NavMenu';
@@ -23,6 +24,31 @@ import './topics.css';
 type Props = { params: Promise<{ topicSlug: string; articleSlug: string }> };
 
 const SECTION_LABEL = { geopolitics: 'Geopolitics', markets: 'Markets', tech: 'Technology' } as const;
+
+/**
+ * The /topics page shows its own storyline copy when the pipeline produced it,
+ * so this URL and the legacy /{vertical}/{slug} briefing carry different text.
+ * Older rows (no topic copy) fall back to the shared daily copy.
+ */
+function topicView(data: {
+  title: string;
+  summary: string;
+  keyPoints: unknown;
+  topicTitle: string | null;
+  topicSummary: string | null;
+  topicKeyPoints: unknown;
+}) {
+  const ownKeyPoints = Array.isArray(data.topicKeyPoints) ? (data.topicKeyPoints as string[]) : [];
+  if (data.topicTitle && data.topicSummary && ownKeyPoints.length > 0) {
+    return { distinct: true, title: data.topicTitle, summary: data.topicSummary, keyPoints: ownKeyPoints };
+  }
+  return {
+    distinct: false,
+    title: data.title,
+    summary: data.summary,
+    keyPoints: Array.isArray(data.keyPoints) ? (data.keyPoints as string[]) : [],
+  };
+}
 
 interface SourceArticleLike {
   source?: string;
@@ -53,6 +79,10 @@ const ARTICLE_HEADERS = [
   'BEST CASE:',
   'BASE CASE:',
   'WORST CASE:',
+  // Storyline (topic copy) sections
+  'WHAT CHANGED',
+  'HOW WE GOT HERE',
+  'SIGNALS TO WATCH',
 ];
 
 function renderSummary(summary: string): ReactElement[] {
@@ -89,11 +119,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const tags = Array.isArray(article.data.tags) ? (article.data.tags as string[]) : [];
+  const view = topicView(article.data);
 
   return generateArticleMetadata({
     section: article.type,
-    title: article.data.title,
-    summary: truncateDescription(article.data.summary, 160),
+    title: view.title,
+    summary: truncateDescription(view.summary, 160),
     slug: articleSlug,
     publishedTime: article.data.createdAt.toISOString(),
     modifiedTime: article.data.updatedAt.toISOString(),
@@ -119,16 +150,23 @@ export default async function ArticleSpokePage({ params }: Props) {
   const { data } = article;
   const topic = data.topic!;
   const pageUrl = `${SITE_URL}/topics/${topicSlug}/${articleSlug}`;
-  const keyPoints = Array.isArray(data.keyPoints) ? (data.keyPoints as string[]) : [];
+  const view = topicView(data);
+  const keyPoints = view.keyPoints;
   const tags = Array.isArray(data.tags) ? (data.tags as string[]) : [];
   const sourceArticles = Array.isArray(data.sourceArticles)
     ? (data.sourceArticles as SourceArticleLike[])
     : [];
+  // Distinct pages list sources across the whole storyline; legacy rows keep
+  // the single-briefing list (their legacy URL canonicalizes here anyway).
+  const storylineSources = view.distinct
+    ? await fetchStorylineSources(topic.id, data)
+    : [];
+  const dailyBriefingPath = `/${article.type}/${canonicalizeSlug(data.slug)}`;
 
   const articleSchema = {
     ...newsArticleSchema({
-      title: data.title,
-      description: truncateDescription(data.summary, 300),
+      title: view.title,
+      description: truncateDescription(view.summary, 300),
       url: pageUrl,
       image: [`${SITE_URL}/macrostance_X.png`],
       datePublished: data.createdAt.toISOString(),
@@ -137,6 +175,7 @@ export default async function ArticleSpokePage({ params }: Props) {
       tags,
       backstory: keyPoints[0],
     }),
+    ...(view.distinct ? { '@type': 'AnalysisNewsArticle' } : {}),
     about: {
       '@type': 'Thing',
       name: topic.name,
@@ -147,7 +186,7 @@ export default async function ArticleSpokePage({ params }: Props) {
   const breadcrumbs = breadcrumbSchema([
     { name: 'Home', url: canonicalUrl('/') },
     { name: topic.name, url: canonicalUrl(`/topics/${topicSlug}`) },
-    { name: data.title, url: pageUrl },
+    { name: view.title, url: pageUrl },
   ]);
 
   return (
@@ -200,10 +239,10 @@ export default async function ArticleSpokePage({ params }: Props) {
               <span className="geo-article-date">{formatFullDate(data.date)}</span>
             </div>
 
-            <h1 className="geo-headline">{data.title}</h1>
+            <h1 className="geo-headline">{view.title}</h1>
             <hr className="geo-rule" />
 
-            <div className="geo-body">{renderSummary(data.summary)}</div>
+            <div className="geo-body">{renderSummary(view.summary)}</div>
 
             {keyPoints.length > 0 && (
               <section className="geo-takeaways">
@@ -225,7 +264,38 @@ export default async function ArticleSpokePage({ params }: Props) {
               </div>
             )}
 
-            {sourceArticles.length > 0 && (
+            {view.distinct && (
+              <p className="geo-crosslink">
+                <Link href={dailyBriefingPath} className="geo-source-link">
+                  {`Read the day's ${SECTION_LABEL[article.type]} briefing: ${data.title} →`}
+                </Link>
+              </p>
+            )}
+
+            {view.distinct && storylineSources.length > 0 && (
+              <section>
+                <h2 className="geo-sources-title">Sources Across This Storyline</h2>
+                <div className="geo-sources-grid">
+                  {storylineSources.map((src) => (
+                    <div key={src.url} className="geo-source-card">
+                      <p className="geo-source-name">
+                        {src.source ? `${src.source} · ${src.date}` : src.date}
+                      </p>
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="geo-source-link"
+                      >
+                        {src.title ?? src.url}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {!view.distinct && sourceArticles.length > 0 && (
               <section>
                 <h2 className="geo-sources-title">Source Articles</h2>
                 <div className="geo-sources-grid">

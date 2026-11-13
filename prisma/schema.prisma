@@ -25,6 +25,13 @@ model GeopoliticsArticle {
   topicId String? @map("topic_id")
   topic   Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
+  // Distinct "storyline" copy for /topics/{topic}/{slug}, so that URL and the
+  // legacy /{vertical}/{slug} URL carry different text and can both be indexed.
+  // Null on rows generated before 2026-11-13 unless backfilled.
+  topicTitle     String? @map("topic_title")
+  topicSummary   String? @map("topic_summary") @db.Text
+  topicKeyPoints Json?   @map("topic_key_points")
+
   @@index([date])
   @@index([createdAt])
   @@index([slug])
@@ -47,6 +54,11 @@ model MarketsArticle {
   topicId String? @map("topic_id")
   topic   Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
+  // See GeopoliticsArticle.topicSummary.
+  topicTitle     String? @map("topic_title")
+  topicSummary   String? @map("topic_summary") @db.Text
+  topicKeyPoints Json?   @map("topic_key_points")
+
   @@index([date])
   @@index([createdAt])
   @@index([slug])
@@ -68,6 +80,11 @@ model TechArticle {
 
   topicId String? @map("topic_id")
   topic   Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  // See GeopoliticsArticle.topicSummary.
+  topicTitle     String? @map("topic_title")
+  topicSummary   String? @map("topic_summary") @db.Text
+  topicKeyPoints Json?   @map("topic_key_points")
 
   @@index([date])
   @@index([createdAt])

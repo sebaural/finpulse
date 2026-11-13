@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
-import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic } from '@/lib/summary-pipeline';
+import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic, generateTopicCopy, topicCopyFields } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -279,6 +279,18 @@ export async function saveMarketsSummaryArticle(
   // nullable, so a topic hiccup never blocks the article from saving.
   const topicId = data.topic ? await upsertTopic(data.topic, 'markets') : null;
 
+  // Distinct storyline copy for the /topics/ URL (null on failure — the
+  // article still saves and the topic page falls back to the daily copy).
+  const topicCopy = topicId
+    ? await generateTopicCopy({
+        vertical: 'markets',
+        topicId,
+        excludeId: existing?.id,
+        title: data.title,
+        keyPoints: data.keyPoints,
+      })
+    : null;
+
   const payload = {
     title: data.title,
     slug: canonicalizeSlug(data.slug || data.title),
@@ -291,6 +303,7 @@ export async function saveMarketsSummaryArticle(
     tags: data.tags,
     date: data.date,
     topicId,
+    ...topicCopyFields(topicCopy),
   };
 
   let row: Awaited<ReturnType<typeof prisma.marketsArticle.create>>;
@@ -345,9 +358,20 @@ export async function getMarketsSummaryArticleBySlug(slug: string): Promise<Summ
     // slugs may keep accents (détente), so try every plausible spelling.
     const decoded = safeDecodeSlug(slug);
     const candidates = [slug, decoded, decoded.normalize('NFC'), canonicalizeSlug(slug)];
-    const row = await prisma.marketsArticle.findFirst({
+    let row = await prisma.marketsArticle.findFirst({
       where: { slug: { in: Array.from(new Set(candidates)) } },
     });
+    if (!row) {
+      // Sitemap and canonical URLs use the accent-free form (détente → detente)
+      // while the stored slug may keep the accent, so no candidate above
+      // matches. Only stored slugs with non-ASCII characters can differ from
+      // their canonical form, so scan just those (slug column only).
+      const target = canonicalizeSlug(slug);
+      const accented = await prisma.$queryRaw<{ id: string; slug: string }[]>`
+        SELECT id, slug FROM markets_articles WHERE slug ~ '[^a-z0-9-]'`;
+      const hit = accented.find((r) => canonicalizeSlug(r.slug) === target);
+      if (hit) row = await prisma.marketsArticle.findUnique({ where: { id: hit.id } });
+    }
     return row ? mapDbToSummary(row) : null;
   } catch (error) {
     console.error('[markets-service] failed to load summary article by slug', error);
