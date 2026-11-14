@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { Client } from '@upstash/qstash';
+import { extractJson, generateWithRunpod } from '@/lib/runpod';
 import { getPrisma } from '@/lib/db';
 import { Prisma } from '@/generated/prisma/client/client';
 
@@ -231,99 +232,398 @@ export async function getRecentTopicArticles(
   }
 }
 
+// The /topics article's own Title, Summary and Key points are generated on
+// RunPod (Llama 3.1 8B, same endpoint as Pulse/Overview) by a QStash job that
+// runs after the daily briefing is saved. A cold RunPod worker can take minutes,
+// which would not fit inside the shared 300s /api/cron/generate function, so
+// saveSummaryArticle only enqueues; /api/topics/process does the generation.
+
+const TOPIC_SECTION_HEADERS = ['WHAT CHANGED', 'HOW WE GOT HERE', 'SIGNALS TO WATCH'] as const;
+
+// Distinctness thresholds vs the daily /{vertical}/{slug} copy.
+const MAX_TITLE_JACCARD = 0.5;
+const SHINGLE_SIZE = 8;
+const MAX_SHINGLE_OVERLAP = 0.03;
+
+// The in-job retry only runs if the first attempt finished within this time.
+// A warm Llama 8B call for ~1800 tokens takes about 60-90s.
+const SECOND_ATTEMPT_CUTOFF_MS = 120_000;
+
+const TITLE_STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'for', 'with', 'as', 'at', 'by',
+  'from', 'is', 'are', 'its', 'it', 'how', 'why', 'what', 'amid', 'over', 'into', 'vs',
+]);
+
+function words(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function titleJaccard(a: string, b: string): number {
+  const ta = new Set(words(a).filter((w) => !TITLE_STOP_WORDS.has(w)));
+  const tb = new Set(words(b).filter((w) => !TITLE_STOP_WORDS.has(w)));
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let inter = 0;
+  for (const w of ta) if (tb.has(w)) inter++;
+  return inter / (ta.size + tb.size - inter);
+}
+
+function shingles(text: string, n = SHINGLE_SIZE): Set<string> {
+  const w = words(text);
+  const out = new Set<string>();
+  for (let i = 0; i + n <= w.length; i++) out.add(w.slice(i, i + n).join(' '));
+  return out;
+}
+
+/** Share of the topic text's 8-word shingles that also appear in the daily copy. */
+function shingleOverlap(topicText: string, dailyText: string): number {
+  const topic = shingles(topicText);
+  if (topic.size === 0) return 0;
+  const daily = shingles(dailyText);
+  let hits = 0;
+  for (const s of topic) if (daily.has(s)) hits++;
+  return hits / topic.size;
+}
+
+export interface DistinctnessReport {
+  ok: boolean;
+  titleJaccard: number;
+  summaryOverlap: number;
+  copiedKeyPoint: string | null;
+}
+
 /**
- * Second Claude call: writes the /topics version of a briefing from a
- * different angle (the topic's ongoing storyline) so the topic URL and the
- * legacy /{vertical}/{slug} URL don't carry duplicate text. Returns null on any
- * failure — the article still saves, and pages fall back to the daily copy.
+ * The /topics article must not duplicate the daily /{vertical}/{slug} article:
+ * a different headline and different wording, enforced here rather than only
+ * requested in the prompt.
+ */
+export function checkTopicCopyDistinct(
+  copy: TopicCopy,
+  daily: { title: string; summary: string; keyPoints: string[] },
+): DistinctnessReport {
+  const tj = titleJaccard(copy.topicTitle, daily.title);
+  const sameTitle = copy.topicTitle.trim().toLowerCase() === daily.title.trim().toLowerCase();
+  const dailyText = [daily.summary, ...daily.keyPoints].join('\n');
+  const topicText = [copy.topicSummary, ...copy.topicKeyPoints].join('\n');
+  const overlap = shingleOverlap(topicText, dailyText);
+  const norm = (s: string) => words(s).join(' ');
+  const topicNorm = norm(topicText);
+  const copiedKeyPoint =
+    daily.keyPoints.find((p) => {
+      const n = norm(p);
+      return n.split(' ').length >= 5 && topicNorm.includes(n);
+    }) ?? null;
+  return {
+    ok: !sameTitle && tj < MAX_TITLE_JACCARD && overlap <= MAX_SHINGLE_OVERLAP && !copiedKeyPoint,
+    titleJaccard: Number(tj.toFixed(3)),
+    summaryOverlap: Number(overlap.toFixed(3)),
+    copiedKeyPoint,
+  };
+}
+
+/**
+ * Llama 8B leaks markdown/HTML into JSON strings. Strip it, but keep the three
+ * section headers as their own blocks — the /topics page splits the summary on
+ * blank lines and renders those headers as <h2>.
+ */
+export function cleanTopicSummary(text: string): string {
+  let t = text
+    .replace(/\r\n/g, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\*\*|__|`/g, '')
+    .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, '');
+  // Put each header on its own block, whatever the model did around it
+  // ("WHAT CHANGED: text", "What changed\ntext", "...text. HOW WE GOT HERE ...").
+  // Case-sensitive on purpose: "what changed" mid-sentence is prose, not a header.
+  for (const h of TOPIC_SECTION_HEADERS) {
+    const re = new RegExp(`\\s*\\b${h.replace(/ /g, '\\s+')}\\b\\s*[:—–-]?\\s*`, 'g');
+    t = t.replace(re, `\n\n${h}\n\n`);
+  }
+  return t
+    .split(/\n\s*\n/)
+    .map((p) => p.replace(/\s+/g, ' ').replace(/\s+([.,;:!?])/g, '$1').trim())
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+function cleanLine(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\*\*|__|\*|`/g, '')
+    .replace(/^\s*#+\s*/, '')
+    .replace(/^\s*(?:[-•]|\d+[.)])\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildTopicCopyMessages(input: {
+  vertical: BriefingVertical;
+  topicName: string;
+  title: string;
+  keyPoints: string[];
+  earlierBlock: string;
+  retryNote?: string;
+}): { role: string; content: string }[] {
+  const system =
+    'You are a senior macro editor who tracks long-running stories across many daily briefings. ' +
+    'You write the TOPIC page for a story, which is a different article from the daily briefing. ' +
+    'Respond with ONE valid JSON object and nothing else: no markdown, no code fences, no commentary.';
+
+  const user =
+    `Topic hub: "${input.topicName}" (${input.vertical}).\n\n` +
+    `Today's daily briefing headline (published on another page — do NOT reuse it):\n` +
+    `"${input.title}"\n` +
+    `Its takeaways (context only — do NOT copy or paraphrase these):\n` +
+    input.keyPoints.map((p) => `- ${p}`).join('\n') +
+    `\n\nEarlier briefings in this topic:\n${input.earlierBlock}\n\n` +
+    `Write the topic-page article: how today's development moves the "${input.topicName}" story ` +
+    `forward, measured against the earlier briefings.\n` +
+    `Rules:\n` +
+    `- topicTitle: a NEW headline about the topic's trajectory. Use different key words from today's headline.\n` +
+    `- topicSummary: 350-500 words of plain prose in exactly three sections. Each section starts with its\n` +
+    `  header on its own line, then a blank line, then paragraphs separated by blank lines:\n` +
+    `  WHAT CHANGED\n  HOW WE GOT HERE\n  SIGNALS TO WATCH\n` +
+    `- topicKeyPoints: 4-6 short topic-level implications (not today's facts), each a full sentence.\n` +
+    `- Refer to earlier briefings by their date where relevant.\n` +
+    `- Write every sentence in your own words. Never copy a sentence from the takeaways above.\n` +
+    `- Do not invent statistics, quotes, or people/organisation names that are not in the input.\n` +
+    `- No markdown, no asterisks, no bullet symbols inside strings.\n` +
+    (input.retryNote ? `- IMPORTANT: ${input.retryNote}\n` : '') +
+    `\nJSON shape:\n` +
+    `{"topicTitle": "...", "topicSummary": "WHAT CHANGED\\n\\n...\\n\\nHOW WE GOT HERE\\n\\n...\\n\\nSIGNALS TO WATCH\\n\\n...", "topicKeyPoints": ["...", "..."]}`;
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ];
+}
+
+/**
+ * Llama 8B routinely writes literal newlines/tabs inside JSON string values
+ * (the summary's paragraph breaks), which strict JSON.parse rejects. Escape
+ * control characters that occur inside string literals; leave the rest alone.
+ */
+function escapeControlCharsInStrings(json: string): string {
+  let out = '';
+  let inString = false;
+  let escaped = false;
+  for (const ch of json) {
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      } else if (ch === '\n') {
+        out += '\\n';
+        continue;
+      } else if (ch === '\r') {
+        continue;
+      } else if (ch === '\t') {
+        out += '\\t';
+        continue;
+      } else if (ch < ' ') {
+        continue;
+      }
+    } else if (ch === '"') {
+      inString = true;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+export function parseTopicCopy(raw: string): TopicCopy | null {
+  let parsed: Partial<Record<keyof TopicCopy, unknown>>;
+  try {
+    parsed = JSON.parse(escapeControlCharsInStrings(extractJson(raw)));
+  } catch (error) {
+    console.warn('[topics] RunPod output was not valid JSON:', String(error), raw.slice(0, 300));
+    return null;
+  }
+  const title = typeof parsed.topicTitle === 'string' ? cleanLine(parsed.topicTitle) : '';
+  const summary = typeof parsed.topicSummary === 'string' ? cleanTopicSummary(parsed.topicSummary) : '';
+  const keyPoints = Array.isArray(parsed.topicKeyPoints)
+    ? parsed.topicKeyPoints
+        .filter((p): p is string => typeof p === 'string')
+        .map(cleanLine)
+        .filter((p) => p.length > 0)
+    : [];
+  if (!title || !summary || keyPoints.length === 0) {
+    console.warn('[topics] RunPod output incomplete (title/summary/keyPoints missing)');
+    return null;
+  }
+  const presentHeaders = TOPIC_SECTION_HEADERS.filter((h) => summary.includes(h));
+  if (presentHeaders.length < 2) {
+    console.warn(`[topics] RunPod summary missing section headers (found ${presentHeaders.length}/3)`);
+    return null;
+  }
+  return { topicTitle: title, topicSummary: summary, topicKeyPoints: keyPoints.slice(0, 6) };
+}
+
+/**
+ * Generates the /topics article (Title, Summary, Key points) on RunPod and
+ * enforces that it differs from the daily copy. One in-job retry with a
+ * corrective note; returns null if nothing acceptable came back. RunPod
+ * transport errors propagate so the QStash job is retried.
  */
 export async function generateTopicCopy(input: {
   vertical: BriefingVertical;
   topicId: string;
   excludeId?: string;
   title: string;
+  summary: string;
   keyPoints: string[];
 }): Promise<TopicCopy | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
+  const prisma = getPrisma();
+  const [topic, earlier] = await Promise.all([
+    prisma.topic.findUnique({ where: { id: input.topicId }, select: { name: true } }),
+    getRecentTopicArticles(input.topicId, input.excludeId),
+  ]);
+  if (!topic) return null;
 
-  try {
-    const prisma = getPrisma();
-    const [topic, earlier] = await Promise.all([
-      prisma.topic.findUnique({ where: { id: input.topicId }, select: { name: true } }),
-      getRecentTopicArticles(input.topicId, input.excludeId),
-    ]);
-    if (!topic) return null;
+  const earlierBlock = earlier.length
+    ? earlier
+        .map((a) => `- ${a.date}: ${a.title}\n` + a.keyPoints.slice(0, 3).map((p) => `    • ${p}`).join('\n'))
+        .join('\n')
+    : '- (no earlier briefings in this topic yet)';
 
-    const earlierBlock = earlier.length
-      ? earlier
-          .map((a) => `- ${a.date}: ${a.title}\n` + a.keyPoints.slice(0, 3).map((p) => `    • ${p}`).join('\n'))
-          .join('\n')
-      : '- (no earlier briefings in this topic yet)';
+  const daily = { title: input.title, summary: input.summary, keyPoints: input.keyPoints };
+  let retryNote: string | undefined;
+  const startedAt = Date.now();
 
-    const prompt =
-      `You are writing the TOPIC page version of today's MacroStance ${input.vertical} briefing.\n` +
-      `Topic hub: "${topic.name}".\n\n` +
-      `Today's daily briefing (already published on another page — do NOT restate it):\n` +
-      `Title: ${input.title}\n` +
-      input.keyPoints.map((p) => `- ${p}`).join('\n') +
-      `\n\nEarlier briefings in this topic:\n${earlierBlock}\n\n` +
-      `Write a storyline analysis: how today's development moves the "${topic.name}" story\n` +
-      `forward, measured against what came before. Rules:\n` +
-      `- Different angle from the daily briefing: the arc of the topic, not today's event recap.\n` +
-      `- Never copy or paraphrase a sentence or takeaway from the daily briefing above.\n` +
-      `- Reference earlier briefings by their date where relevant.\n` +
-      `- Do not invent statistics, quotes or named sources.\n` +
-      `- topicSummary: max 600 words, plain text, exactly these section headers on their own\n` +
-      `  lines (no markdown, no asterisks), paragraphs separated by blank lines:\n` +
-      `  WHAT CHANGED\n  HOW WE GOT HERE\n  SIGNALS TO WATCH\n` +
-      `- topicTitle: a headline about the topic's trajectory, clearly different from today's title.\n` +
-      `- topicKeyPoints: 4-6 topic-level implications (not daily facts).\n\n` +
-      `Respond with PURE JSON only:\n` +
-      `{ "topicTitle": "...", "topicSummary": "...", "topicKeyPoints": ["..."] }`;
-
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create(
-      {
-        model: 'claude-opus-5-5',
-        max_tokens: 4000,
-        output_config: { effort: 'low' },
-        system:
-          'You are a senior macro editor who tracks long-running stories across many daily ' +
-          'briefings. You always respond with valid JSON only — never markdown fences.',
-        messages: [{ role: 'user', content: prompt }],
-      },
-      // The daily cron runs all pipelines inside one 300s function; cap this call.
-      { timeout: 90_000, maxRetries: 1 },
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    // A cold first attempt can eat most of /api/topics/process's 300s budget.
+    // Only retry in-job when the worker was warm; otherwise return null and let
+    // QStash's retry (a fresh invocation hitting the now-warm worker) handle it.
+    if (attempt > 1 && Date.now() - startedAt > SECOND_ATTEMPT_CUTOFF_MS) {
+      console.warn(`[topics] skipping in-job retry after ${Math.round((Date.now() - startedAt) / 1000)}s`);
+      break;
+    }
+    const raw = await generateWithRunpod(
+      buildTopicCopyMessages({
+        vertical: input.vertical,
+        topicName: topic.name,
+        title: input.title,
+        keyPoints: input.keyPoints,
+        earlierBlock,
+        retryNote,
+      }),
+      { maxTokens: 1800 },
     );
-
-    if (response.stop_reason !== 'end_turn') {
-      console.warn(`[pipeline] topic copy skipped: stop_reason=${response.stop_reason}`);
-      return null;
+    const copy = parseTopicCopy(raw);
+    if (!copy) {
+      retryNote =
+        'Your previous answer was not valid JSON with all three fields and the section headers. ' +
+        'Follow the JSON shape exactly.';
+      continue;
     }
-    const text = response.content.find((b) => b.type === 'text');
-    if (!text || text.type !== 'text') return null;
-
-    const parsed = parseClaudeJson<Partial<TopicCopy>>(text.text);
-    const keyPoints = Array.isArray(parsed.topicKeyPoints)
-      ? parsed.topicKeyPoints.filter((p): p is string => typeof p === 'string' && p.trim() !== '')
-      : [];
-    if (!parsed.topicTitle?.trim() || !parsed.topicSummary?.trim() || keyPoints.length === 0) {
-      console.warn('[pipeline] topic copy skipped: incomplete JSON');
-      return null;
-    }
-    // Same headline as the daily page would defeat the purpose.
-    if (parsed.topicTitle.trim().toLowerCase() === input.title.trim().toLowerCase()) return null;
-
-    return {
-      topicTitle: parsed.topicTitle.trim(),
-      topicSummary: parsed.topicSummary.replace(/\*\*/g, '').trim(),
-      topicKeyPoints: keyPoints,
-    };
-  } catch (error) {
-    console.error('[pipeline] topic copy generation failed', error);
-    return null;
+    const report = checkTopicCopyDistinct(copy, daily);
+    console.log(
+      `[topics] attempt ${attempt}: title="${copy.topicTitle}" titleJaccard=${report.titleJaccard} ` +
+        `summaryOverlap=${report.summaryOverlap} copiedKeyPoint=${report.copiedKeyPoint ? 'yes' : 'no'}`,
+    );
+    if (report.ok) return copy;
+    retryNote =
+      `Your previous headline "${copy.topicTitle}" or wording was too similar to the daily briefing. ` +
+      `Use a clearly different headline (different key words) and entirely your own sentences.`;
   }
+  return null;
+}
+
+export interface TopicCopyJob {
+  vertical: BriefingVertical;
+  articleId: string;
+  title: string;
+}
+
+const topicsQstash = new Client({ token: process.env.QSTASH_TOKEN ?? '' });
+
+// VERCEL_URL (injected by Vercel, no protocol) targets this exact deployment;
+// SITE_URL is the local-dev fallback — same as pulse/overview.
+function selfBaseUrl(): string | undefined {
+  return process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.SITE_URL;
+}
+
+/**
+ * Called from each vertical's saveSummaryArticle after the row is written.
+ * Never throws — the daily article is already saved.
+ */
+export async function enqueueTopicCopy(job: TopicCopyJob): Promise<boolean> {
+  try {
+    // x-vercel-protection-bypass: VERCEL_URL sits behind Deployment Protection.
+    // timeout must exceed /api/topics/process's runtime so QStash doesn't retry
+    // (and double-bill RunPod) while the first attempt is still running.
+    await topicsQstash.publishJSON({
+      url: `${selfBaseUrl()}/api/topics/process`,
+      body: job,
+      headers: { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? '' },
+      timeout: '295s',
+      retries: 2,
+    });
+    console.log(`[topics] enqueued topic copy for ${job.vertical} "${job.title}"`);
+    return true;
+  } catch (error) {
+    console.error(`[topics] enqueue failed for ${job.vertical} "${job.title}"`, error);
+    return false;
+  }
+}
+
+async function loadBriefingRow(vertical: BriefingVertical, id: string) {
+  const prisma = getPrisma();
+  const select = { id: true, topicId: true, title: true, summary: true, keyPoints: true } as const;
+  if (vertical === 'geopolitics') return prisma.geopoliticsArticle.findUnique({ where: { id }, select });
+  if (vertical === 'markets') return prisma.marketsArticle.findUnique({ where: { id }, select });
+  return prisma.techArticle.findUnique({ where: { id }, select });
+}
+
+async function writeTopicCopy(vertical: BriefingVertical, id: string, copy: TopicCopy) {
+  const prisma = getPrisma();
+  const data = topicCopyFields(copy);
+  if (vertical === 'geopolitics') await prisma.geopoliticsArticle.update({ where: { id }, data });
+  else if (vertical === 'markets') await prisma.marketsArticle.update({ where: { id }, data });
+  else await prisma.techArticle.update({ where: { id }, data });
+}
+
+/**
+ * QStash worker body (/api/topics/process). Stale jobs return normally;
+ * a failed generation throws so QStash retries (bounded by `retries: 2`).
+ */
+export async function processTopicCopy(
+  job: TopicCopyJob,
+): Promise<{ status: 'written' | 'stale'; title?: string }> {
+  if (!['geopolitics', 'markets', 'tech'].includes(job?.vertical) || !job.articleId) {
+    console.warn('[topics] malformed job, dropping', job);
+    return { status: 'stale' };
+  }
+  const row = await loadBriefingRow(job.vertical, job.articleId);
+  // A same-day re-run may have replaced this article; that run enqueued its own job.
+  if (!row || !row.topicId || row.title !== job.title) {
+    console.log(`[topics] stale job for ${job.vertical} "${job.title}", skipping`);
+    return { status: 'stale' };
+  }
+
+  const copy = await generateTopicCopy({
+    vertical: job.vertical,
+    topicId: row.topicId,
+    excludeId: row.id,
+    title: row.title,
+    summary: row.summary,
+    keyPoints: Array.isArray(row.keyPoints) ? (row.keyPoints as string[]) : [],
+  });
+  if (!copy) {
+    throw new Error(`no acceptable topic copy for ${job.vertical} "${job.title}"`);
+  }
+
+  await writeTopicCopy(job.vertical, row.id, copy);
+  console.log(`[topics] wrote topic copy for ${job.vertical} "${job.title}" → "${copy.topicTitle}"`);
+  return { status: 'written', title: copy.topicTitle };
 }
 
 /**

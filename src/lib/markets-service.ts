@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getPrisma } from './db';
 import { detectImportance } from '@/services/news';
 import type { SummaryArticle, SourceArticle } from '@/types/markets';
-import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic, generateTopicCopy, topicCopyFields } from '@/lib/summary-pipeline';
+import { buildLaneDirective, buildTopicDirective, getRecentBriefingTitles, canonicalizeSlug, getTopicChoices, parseClaudeJson, resolveUniqueSlug, safeDecodeSlug, selectImportantArticles, toSlug, upsertTopic, enqueueTopicCopy, topicCopyFields } from '@/lib/summary-pipeline';
 
 interface NewsApiArticle {
   title: string | null;
@@ -279,17 +279,6 @@ export async function saveMarketsSummaryArticle(
   // nullable, so a topic hiccup never blocks the article from saving.
   const topicId = data.topic ? await upsertTopic(data.topic, 'markets') : null;
 
-  // Distinct storyline copy for the /topics/ URL (null on failure — the
-  // article still saves and the topic page falls back to the daily copy).
-  const topicCopy = topicId
-    ? await generateTopicCopy({
-        vertical: 'markets',
-        topicId,
-        excludeId: existing?.id,
-        title: data.title,
-        keyPoints: data.keyPoints,
-      })
-    : null;
 
   const payload = {
     title: data.title,
@@ -303,7 +292,9 @@ export async function saveMarketsSummaryArticle(
     tags: data.tags,
     date: data.date,
     topicId,
-    ...topicCopyFields(topicCopy),
+    // Cleared on every write (a same-day re-run must not keep the previous
+    // article's /topics copy); /api/topics/process fills it in on RunPod.
+    ...topicCopyFields(null),
   };
 
   let row: Awaited<ReturnType<typeof prisma.marketsArticle.create>>;
@@ -320,6 +311,10 @@ export async function saveMarketsSummaryArticle(
     const slug = await resolveUniqueSlug(payload.slug, 'markets');
     row = await prisma.marketsArticle.create({ data: { ...payload, slug } });
   }
+
+  // The /topics article (own Title/Summary/Key points) is generated on RunPod
+  // by a QStash job — too slow to run inside the shared 300s cron.
+  if (topicId) await enqueueTopicCopy({ vertical: 'markets', articleId: row.id, title: row.title });
 
   return mapDbToSummary(row);
 }
