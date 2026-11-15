@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ReCaptchaProvider } from 'next-recaptcha-v3';
 import ContactContent from './ContactContent';
 import { buildMetadata } from '@/lib/seo';
 import './contact.css';
@@ -11,5 +12,11 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default function ContactPage() {
-  return <ContactContent />;
+  // reCAPTCHA is only needed here — scoping the provider to /contact keeps
+  // Google's api.js (and its <link rel="preload">) off every other page.
+  return (
+    <ReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}>
+      <ContactContent />
+    </ReCaptchaProvider>
+  );
 }
