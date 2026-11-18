@@ -1,0 +1,272 @@
+/* Base styles for /topics/{topicSlug}/{articleSlug} pages.
+   Ported from src/components/geopolitics/geopolitics.css (geo-* → topics-*)
+   so this page no longer depends on the shared vertical stylesheet.
+   Page-specific overrides live in ./topics.css (imported after this file). */
+
+.topics-root *,
+.topics-root *::before,
+.topics-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Restore nav-menu paddings suppressed by the wildcard reset above */
+.topics-root .nav-desktop-dropdown-link {
+  padding: 10px 16px;
+}
+.topics-root .nav-drawer-links {
+  padding: 8px 0;
+}
+.topics-root .nav-drawer-link {
+  padding: 14px 24px;
+}
+
+.topics-root {
+  --bg: #0a0c0f;
+  --surface: #111418;
+  --surface2: #181c22;
+  --border: #1e2530;
+  --text: #e8eaf0;
+  --muted: #6b7385;
+  --accent: #b2945b;
+  --accent2: #4b9fe8;
+  --positive: #3ecf8e;
+  --negative: #f55f5f;
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Fira Sans', sans-serif;
+}
+
+/* ── Top nav (sticky, matches the .nav-menu hamburger breakpoint) ── */
+.topics-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+@media (max-width: 1024px) {
+  .topics-top-nav {
+    z-index: 1000;
+  }
+}
+
+.topics-top-nav .logo span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+/* ── Main Content ── */
+.topics-main {
+  padding: 40px 48px;
+  overflow-y: auto;
+}
+
+/* Topic badge + date row */
+.topics-article-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.topics-region-badge {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 6px 10px;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.topics-article-date {
+  font-family: 'Inconsolata', monospace;
+  font-size: 14px;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+
+/* Headline */
+.topics-headline {
+  font-family: 'Gideon Roman', serif;
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+/* Double rule */
+.topics-rule {
+  border: none;
+  border-top: 3px double var(--border);
+  margin-bottom: 24px;
+}
+
+/* Body text (single column) */
+.topics-body {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 40px;
+}
+
+/* In-article section headers (WHAT CHANGED, HOW WE GOT HERE, …) are semantic
+   <h2> elements pinned to 1em so they keep the original h4 visual scale. */
+.topics-body > h2 {
+  color: var(--accent2);
+  font-size: 1em;
+}
+
+.topics-body p {
+  margin-bottom: 1.2em;
+}
+.topics-body p:first-of-type::first-letter {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 4.5em;
+  font-weight: 900;
+  line-height: 0.8;
+  float: left;
+  margin-right: 8px;
+  margin-top: 4px;
+  color: var(--accent);
+}
+
+/* Key Takeaways */
+.topics-takeaways {
+  margin-bottom: 36px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.topics-takeaways-title {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.topics-takeaway-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+/* Takeaway points are content paragraphs, not headings. Re-declare the
+   heading font here since <p> doesn't get it from the global heading rule. */
+.topics-takeaway-item p {
+  font-family: 'Gideon Roman', serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+.topics-takeaway-item:last-child {
+  border-bottom: none;
+}
+.topics-takeaway-arrow {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-style: normal;
+}
+
+/* Tags */
+.topics-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+.topics-tag {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 10px;
+  background: transparent;
+}
+
+/* Sources grid (legacy "Source Articles" fallback for rows without topic copy) */
+.topics-sources-title {
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.topics-sources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.topics-source-card {
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  background: var(--surface);
+  transition: background 0.15s;
+}
+.topics-source-card:hover {
+  background: var(--surface2);
+}
+.topics-source-name {
+  font-family: 'Inconsolata', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.topics-source-link {
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s, color 0.15s;
+}
+.topics-source-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Cross-link to the day's legacy /{vertical}/{slug} briefing */
+.topics-crosslink {
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.topics-crosslink a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.topics-crosslink a:hover {
+  text-decoration: underline;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .topics-main {
+    padding: 24px 20px;
+  }
+  .topics-body p:first-of-type::first-letter {
+    font-size: 3.5em;
+  }
+}

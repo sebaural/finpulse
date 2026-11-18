@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { fetchArticleBySlug, fetchStorylineSources } from '@/lib/topics-service';
+import { fetchArticleBySlug } from '@/lib/topics-service';
 import { canonicalizeSlug } from '@/lib/summary-pipeline';
 import AuthorBioCard from '@/components/author/AuthorBioCard';
 import RelatedBriefings from '@/components/related/RelatedBriefings';
@@ -17,7 +17,7 @@ import {
   newsArticleSchema,
 } from '@/lib/seo';
 import { truncateDescription } from '@/lib/stripMarkdown';
-import '@/components/geopolitics/geopolitics.css';
+import './topics-article.css';
 import './topics.css';
 
 // Next.js 16: params is async and must be awaited.
@@ -156,11 +156,6 @@ export default async function ArticleSpokePage({ params }: Props) {
   const sourceArticles = Array.isArray(data.sourceArticles)
     ? (data.sourceArticles as SourceArticleLike[])
     : [];
-  // Distinct pages list sources across the whole storyline; legacy rows keep
-  // the single-briefing list (their legacy URL canonicalizes here anyway).
-  const storylineSources = view.distinct
-    ? await fetchStorylineSources(topic.id, data)
-    : [];
   const dailyBriefingPath = `/${article.type}/${canonicalizeSlug(data.slug)}`;
 
   const articleSchema = {
@@ -176,6 +171,11 @@ export default async function ArticleSpokePage({ params }: Props) {
       backstory: keyPoints[0],
     }),
     ...(view.distinct ? { '@type': 'AnalysisNewsArticle' } : {}),
+    // This page uses its own topics-* classes, not the shared .geo-* selectors.
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.topics-headline', '.topics-body'],
+    },
     about: {
       '@type': 'Thing',
       name: topic.name,
@@ -199,10 +199,10 @@ export default async function ArticleSpokePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }}
       />
-      <div className="geo-root topics-root">
-        {/* Geopolitics-style dark top nav (kept inside geo-root for the theme). */}
+      <div className="topics-root">
+        {/* Dark top nav (kept inside .topics-root for the theme tokens). */}
         <div
-          className="geo-top-nav"
+          className="topics-top-nav"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -230,26 +230,26 @@ export default async function ArticleSpokePage({ params }: Props) {
           <NavMenu variant="dark" />
         </div>
 
-        <main className="geo-main">
-          <article className="topcis-article">
-            <div className="geo-article-meta">
-              <Link href={`/topics/${topicSlug}`} className="geo-region-badge">
+        <main className="topics-main">
+          <article className="topics-article">
+            <div className="topics-article-meta">
+              <Link href={`/topics/${topicSlug}`} className="topics-region-badge">
                 {`See All ${topicSlug} Articles`}
               </Link>
-              <span className="geo-article-date">{formatFullDate(data.date)}</span>
+              <span className="topics-article-date">{formatFullDate(data.date)}</span>
             </div>
 
-            <h1 className="geo-headline">{view.title}</h1>
-            <hr className="geo-rule" />
+            <h1 className="topics-headline">{view.title}</h1>
+            <hr className="topics-rule" />
 
-            <div className="geo-body">{renderSummary(view.summary)}</div>
+            <div className="topics-body">{renderSummary(view.summary)}</div>
 
             {keyPoints.length > 0 && (
-              <section className="geo-takeaways">
-                <h2 className="geo-takeaways-title">Key Takeaways</h2>
+              <section className="topics-takeaways">
+                <h2 className="topics-takeaways-title">Key Takeaways</h2>
                 {keyPoints.map((point, i) => (
-                  <div key={i} className="geo-takeaway-item">
-                    <span className="geo-takeaway-arrow" aria-hidden="true">▸</span>
+                  <div key={i} className="topics-takeaway-item">
+                    <span className="topics-takeaway-arrow" aria-hidden="true">▸</span>
                     <p>{point}</p>
                   </div>
                 ))}
@@ -257,58 +257,35 @@ export default async function ArticleSpokePage({ params }: Props) {
             )}
 
             {tags.length > 0 && (
-              <div className="geo-tags">
+              <div className="topics-tags">
                 {tags.map((tag) => (
-                  <span key={tag} className="geo-tag">{tag}</span>
+                  <span key={tag} className="topics-tag">{tag}</span>
                 ))}
               </div>
             )}
 
             {view.distinct && (
-              <p className="geo-crosslink">
-                <Link href={dailyBriefingPath} className="geo-source-link">
+              <p className="topics-crosslink">
+                <Link href={dailyBriefingPath} className="topics-source-link">
                   {`Read the day's ${SECTION_LABEL[article.type]} briefing: ${data.title} →`}
                 </Link>
               </p>
             )}
 
-            {view.distinct && storylineSources.length > 0 && (
-              <section>
-                <h2 className="geo-sources-title">Sources Across This Storyline</h2>
-                <div className="geo-sources-grid">
-                  {storylineSources.map((src) => (
-                    <div key={src.url} className="geo-source-card">
-                      <p className="geo-source-name">
-                        {src.source ? `${src.source} · ${src.date}` : src.date}
-                      </p>
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="geo-source-link"
-                      >
-                        {src.title ?? src.url}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
             {!view.distinct && sourceArticles.length > 0 && (
               <section>
-                <h2 className="geo-sources-title">Source Articles</h2>
-                <div className="geo-sources-grid">
+                <h2 className="topics-sources-title">Source Articles</h2>
+                <div className="topics-sources-grid">
                   {sourceArticles
                     .filter((src) => src.url && !src.url.includes('rt.com'))
                     .map((src, i) => (
-                      <div key={i} className="geo-source-card">
-                        <p className="geo-source-name">{src.source}</p>
+                      <div key={i} className="topics-source-card">
+                        <p className="topics-source-name">{src.source}</p>
                         <a
                           href={src.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="geo-source-link"
+                          className="topics-source-link"
                         >
                           {src.title}
                         </a>
@@ -323,7 +300,7 @@ export default async function ArticleSpokePage({ params }: Props) {
 
       <AuthorBioCard />
 
-      {/* Cross-article internal linking. Rendered OUTSIDE .geo-root so it carries
+      {/* Cross-article internal linking. Rendered OUTSIDE .topics-root so it carries
           its own theme tokens via .related-root (same as the vertical pages). */}
       <RelatedBriefings currentSlug={articleSlug} currentTags={tags} />
     </>

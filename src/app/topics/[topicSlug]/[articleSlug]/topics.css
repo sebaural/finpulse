@@ -1,21 +1,21 @@
-.topcis-article {
+.topics-article {
     width: 75vw;
     margin: 0 auto !important;
 }
 
-.topcis-article .geo-region-badge {
+.topics-article .topics-region-badge {
     font-size: 14px;
     font-weight: 900;
     padding: 5px 20px;
 }
 
-.topcis-article .geo-region-badge:hover, 
-.topcis-article .geo-region-badge:focus {
+.topics-article .topics-region-badge:hover, 
+.topics-article .topics-region-badge:focus {
     background-color: var(--accent);
     color: #000;
 }
 
-.topcis-article .geo-article-date   {
+.topics-article .topics-article-date   {
     color: var(--text);
     font-size: 20px;
 } 
@@ -23,10 +23,10 @@
 /* // Mobile responsiveness */
 
 @media (max-width: 768px) {
-    .topcis-article {
+    .topics-article {
         width: 90vw !important;
     }
-    .topcis-article .geo-article-date   {
+    .topics-article .topics-article-date   {
     font-size: 16px;
 } 
 }
